@@ -1,0 +1,13 @@
+:host {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: var(--dock-height, 4rem);
+	z-index: 50;
+}
+
+.dock-container {
+	height: 100%;
+}
+

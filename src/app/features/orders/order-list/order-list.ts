@@ -27,7 +27,7 @@ interface OrderItemDto {
   styleUrl: './order-list.css',
 })
 export class OrderList {
-  protected showTable = false;
+  protected showTable = true;
   protected orders: OrderDto[] = [
     {
       id: '1',

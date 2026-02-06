@@ -1,4 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import "tailwindcss";
-@plugin "daisyui";
+@import 'tailwindcss';
+@plugin 'daisyui';
+
+:root {
+  --dock-height: 5rem; /* central dock height used across app */
+}
+
+/* Utility to reserve bottom space equal to dock height */
+.reserve-dock-space {
+  padding-bottom: var(--dock-height);
+}

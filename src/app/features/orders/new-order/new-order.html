@@ -1,1 +1,61 @@
-<p>new-order works!</p>
+<label class="input mb-4 outline-transparent">
+  <app-icon name="icon-search" class="h-[1em] opacity-50" fill="#000000" />
+  <input
+    type="search"
+    class="grow"
+    placeholder="Search"
+    [formControl]="filterForm.controls.searchTerm"
+  />
+</label>
+
+<form [formGroup]="filterForm">
+  <input class="btn btn-square me-2" type="reset" value="×" (click)="resetFilters()" />
+  <input
+    class="btn checked:btn-neutral me-2"
+    type="checkbox"
+    aria-label="Drink"
+    formControlName="filterDrink"
+  />
+  <input
+    class="btn checked:btn-neutral me-2"
+    type="checkbox"
+    aria-label="Food"
+    formControlName="filterFood"
+  />
+</form>
+
+<div class="divider"></div>
+
+<div class="reserve-dock-space">
+  @if (isLoading()) {
+    <div class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-error mb-4">
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (!isLoading() && !error()) {
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      @for (p of products(); track p.id) {
+        <div class="card bg-base-100 cursor-pointer shadow-md">
+          <figure>
+            <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />
+          </figure>
+          <div class="card-body justify-between">
+            <h2 class="card-title">
+              {{ p.name }}
+            </h2>
+            <div class="card-actions mt-4 items-center justify-between">
+              ₱{{ p.price | number: '1.2-2' }}
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
