@@ -1,0 +1,71 @@
+<div class="mb-4 flex justify-end">
+  <button
+    class="btn btn-sm btn-outline mr-2"
+    [class.btn-active]="!showTable"
+    (click)="showTable = false"
+  >
+    Cards
+  </button>
+  <button class="btn btn-sm btn-outline" [class.btn-active]="showTable" (click)="showTable = true">
+    Table
+  </button>
+</div>
+
+@if (!showTable) {
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    @for (order of orders; track order.id) {
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body">
+          <h2 class="card-title">Order #{{ order.orderNumber }}</h2>
+          <p class="text-xs text-gray-400">ID: {{ order.id }}</p>
+          <p>
+            Status: <span class="badge badge-outline">{{ order.status }}</span>
+          </p>
+          <p>Created: {{ order.createdAt | date: 'short' }}</p>
+          <p>Items:</p>
+          <ul class="ml-6 list-disc">
+            @for (item of order.items; track item.id) {
+              <li>
+                {{ item.name }} x{{ item.quantity }}
+                <span class="text-xs text-gray-400">(${{ item.price }})</span>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (showTable) {
+  <div class="overflow-x-auto">
+    <table class="table w-full">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Items</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders; track order.id) {
+          <tr>
+            <td>{{ order.orderNumber }}</td>
+            <td>
+              <span class="badge badge-outline">{{ order.status }}</span>
+            </td>
+            <td>{{ order.createdAt | date: 'short' }}</td>
+            <td>
+              <ul>
+                @for (item of order.items; track item.id) {
+                  <li>{{ item.name }} x{{ item.quantity }}</li>
+                }
+              </ul>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
