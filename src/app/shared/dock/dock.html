@@ -1,0 +1,13 @@
+@if (auth.isLoggedIn$ | async) {
+  <div class="dock dock-md justify-center">
+    <a [routerLink]="['orders/new']" [routerLinkActive]="'dock-active'">
+      <app-icon name="icon-plus" class="size-[1.2em]" fill="#FFFFFF"></app-icon>
+      <span class="dock-label">New Order</span>
+    </a>
+
+    <a [routerLink]="['orders/list']" [routerLinkActive]="'dock-active'">
+      <app-icon name="icon-file" class="size-[1.2em]" fill="#FFFFFF"></app-icon>
+      <span class="dock-label">Orders</span>
+    </a>
+  </div>
+}
