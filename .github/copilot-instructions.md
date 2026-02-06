@@ -21,8 +21,147 @@
 - **Group related files:** Keep component files and their tests together in the same directory.
 - **One concept per file:** Prefer one component, directive, or service per file.
 
+## Application Architecture
+
+This application follows a **feature-based architecture** with clear separation of concerns:
+
+### Directory Structure
+
+```
+src/app/
+├── core/                      # App-wide singleton services and infrastructure
+│   ├── auth/                  # Authentication module  
+│   │   ├── auth.service.ts    # Authentication service
+│   │   ├── auth.guard.ts      # Route guard
+│   │   └── auth.guard.spec.ts # Guard tests
+│   └── services/              # App-wide API/data services
+│       ├── product.service.ts # Product API service
+│       └── order.service.ts   # Order API service
+│
+├── shared/                    # Reusable UI components and models
+│   ├── components/            # Shared components
+│   │   ├── dock/
+│   │   ├── header/
+│   │   ├── icons/
+│   │   └── layout/
+│   └── models/                # Shared data models/interfaces
+│       ├── product.models.ts
+│       └── order.models.ts
+│
+└── features/                  # Feature modules
+    ├── home/
+    ├── login/
+    └── orders/
+        ├── orders.ts
+        ├── new-order/
+        └── order-list/
+```
+
+### Module Guidelines
+
+**Core Module (`core/`)**
+- Contains singleton services used app-wide
+- Auth-related code (services, guards, interceptors)
+- **API/data services** that are used across multiple features (ProductService, OrderService, etc.)
+- Global state management services
+- **When to use:** If a service is used in 2+ feature modules, put it in `core/services/`
+- **Import core services anywhere in the app**
+- Never import feature-specific code into core
+
+**Shared Module (`shared/`)**
+- Reusable UI components, directives, and pipes
+- Shared data models and interfaces (DTOs, enums, types)
+- **No services should be in shared/** (use `core/services/` instead)
+- Shared components should be presentation-focused
+- Can be imported by any feature module
+
+**Features (`features/`)**
+- Self-contained feature modules
+- Each feature has its own components, templates, and styles
+- Feature-specific logic stays within the feature
+- Features can import from core and shared
+- Features should not import from other features
+
+### Code Style
+
+**Control Flow Statements**
+- **Always use braces:** All `if`, `else`, `for`, `while`, and `do-while` statements must use braces, even for single-line bodies.
+- **Logical grouping:** Add blank lines to separate logical sections within methods for better readability.
+
+**Example:**
+```typescript
+// ✓ Correct
+if (condition) {
+  doSomething();
+}
+
+// ✗ Incorrect
+if (condition) doSomething();
+
+// ✓ Correct - with logical grouping
+login() {
+  const credentials = this.getCredentials();
+  
+  if (!credentials.isValid) {
+    this.showError('Invalid credentials');
+    return;
+  }
+  
+  this.auth.login(credentials);
+  this.router.navigateByUrl('/home');
+}
+```
+
+### Environment Configuration
+
+**Environment Files**
+- Use `src/environments/environment.development.ts` for development configuration
+- Use `src/environments/environment.ts` for production configuration
+- Always import from `environment.development.ts` in services (Angular handles file replacement during builds)
+
+**Configuration Structure:**
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:5282/api'
+};
+```
+
+**Usage:**
+```typescript
+import { environment } from '../../../environments/environment.development';
+
+@Injectable({ providedIn: 'root' })
+export class ProductService {
+  private readonly baseUrl = `${environment.apiUrl}/products`;
+}
+```
+
+**File Replacements:**
+- Production builds automatically replace `environment.development.ts` with `environment.ts`
+- Configured in `angular.json` under `configurations.production.fileReplacements`
+
 ### Dependency Injection
 - **Prefer `inject()` over constructor injection:** Use the `inject()` function for dependencies for readability and type inference.
+
+### Forms
+- **Always use Reactive Forms:** Use `ReactiveFormsModule` with `FormControl`, `FormGroup`, and `FormBuilder` instead of template-driven forms (`ngModel`).
+- **Form validation:** Apply validators to form controls for client-side validation.
+- **Debounce user input:** Use RxJS operators like `debounceTime()` on `valueChanges` for search/filter inputs.
+
+**Example:**
+```typescript
+protected readonly filterForm = new FormGroup({
+  searchTerm: new FormControl(''),
+  isActive: new FormControl(true)
+});
+
+ngOnInit() {
+  this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
+    this.loadData();
+  });
+}
+```
 
 ### Components & Directives
 - **Selector naming:** Use application-specific prefixes for selectors.
