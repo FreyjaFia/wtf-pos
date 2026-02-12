@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { environment } from '@environments/environment.development';
+import { ProductDto, ProductListDto, ProductTypeEnum } from '@shared/models';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { environment } from '../../../environments/environment.development';
-import { ProductDto, ProductListDto, ProductTypeEnum } from '../../shared/models/product.models';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {

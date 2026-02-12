@@ -1,12 +1,11 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
-import { Home } from './features/home/home';
-import { Login } from './features/login/login';
-import { NewOrder } from './features/orders/new-order/new-order';
-import { OrderList } from './features/orders/order-list/order-list';
-import { Orders } from './features/orders/orders';
-import { Test } from './features/test/test';
-import { Layout } from './shared/components/layout/layout';
+import { authGuard } from '@core/guards/auth.guard';
+import { Home } from '@features/home/home';
+import { Login } from '@features/login/login';
+import { NewOrder } from '@features/orders/new-order/new-order';
+import { OrderList } from '@features/orders/order-list/order-list';
+import { Orders } from '@features/orders/orders';
+import { Layout } from '@shared/components';
 
 export const routes: Routes = [
   {
@@ -26,10 +25,6 @@ export const routes: Routes = [
       {
         path: 'home',
         component: Home,
-      },
-      {
-        path: 'test',
-        component: Test,
       },
       {
         path: 'orders',

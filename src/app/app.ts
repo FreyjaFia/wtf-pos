@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { IconsSprite } from './shared/components/icons/icons-sprite/icons-sprite';
+import { IconsSprite } from '@shared/components';
 
 @Component({
   selector: 'app-root',

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'app-icon',
@@ -8,8 +8,8 @@ import { Component, Input } from '@angular/core';
   styleUrl: './icon.css',
 })
 export class Icon {
-  @Input() name!: string;
-  @Input() size: string = '24';
-  @Input() fill: string = 'currentColor';
-  @Input() class?: string;
+  readonly name = input.required<string>();
+  readonly size = input('24');
+  readonly fill = input('currentColor');
+  readonly class = input<string | undefined>(undefined);
 }
