@@ -1,31 +1,39 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs';
 import { ProductService } from '../../../core/services/product.service';
+import { OrderService } from '../../../core/services/order.service';
 import { Icon } from '../../../shared/components/icons/icon/icon';
+import { CartItemDto } from '../../../shared/models/cart.models';
 import { ProductDto, ProductTypeEnum } from '../../../shared/models/product.models';
+import { CheckoutModal } from '../checkout-modal/checkout-modal';
+import { CreateOrderCommand, OrderStatusEnum } from '../../../shared/models/order.models';
 
 @Component({
   selector: 'app-new-order',
-  imports: [CommonModule, ReactiveFormsModule, Icon],
+  imports: [CommonModule, ReactiveFormsModule, Icon, CheckoutModal],
   templateUrl: './new-order.html',
   styleUrl: './new-order.css',
 })
 export class NewOrder implements OnInit {
+  @ViewChild(CheckoutModal) checkoutModal!: CheckoutModal;
   private readonly productService = inject(ProductService);
-
-  protected readonly products = signal<ProductDto[]>([]);
-  protected readonly productsCache = signal<ProductDto[]>([]);
-  protected readonly isLoading = signal(false);
-  protected readonly error = signal<string | null>(null);
-  private previousSearchTerm = '';
+  private readonly orderService = inject(OrderService);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
     filterDrink: new FormControl(false),
     filterFood: new FormControl(false),
   });
+  protected readonly cart = signal<CartItemDto[]>([]);
+  protected readonly products = signal<ProductDto[]>([]);
+  protected readonly productsCache = signal<ProductDto[]>([]);
+  protected readonly isLoading = signal(false);
+  protected readonly error = signal<string | null>(null);
+
+  protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
+  protected totalPrice = () => this.cart().reduce((s, i) => s + i.qty * i.price, 0);
 
   ngOnInit() {
     this.loadProducts();
@@ -62,6 +70,75 @@ export class NewOrder implements OnInit {
       });
   }
 
+  addToCart(p: ProductDto) {
+    const existing = this.cart().find((c) => c.productId === p.id);
+    if (existing) {
+      this.cart.set(this.cart().map((c) => (c.productId === p.id ? { ...c, qty: c.qty + 1 } : c)));
+    } else {
+      this.cart.set([
+        ...this.cart(),
+        { productId: p.id, name: p.name, price: p.price, qty: 1, imageUrl: p.imageUrl },
+      ]);
+    }
+  }
+
+  increment(productId: string) {
+    this.cart.set(
+      this.cart().map((c) => (c.productId === productId ? { ...c, qty: c.qty + 1 } : c)),
+    );
+  }
+
+  decrement(productId: string) {
+    const item = this.cart().find((c) => c.productId === productId);
+    if (!item) return;
+    if (item.qty <= 1) {
+      this.cart.set(this.cart().filter((c) => c.productId !== productId));
+    } else {
+      this.cart.set(
+        this.cart().map((c) => (c.productId === productId ? { ...c, qty: c.qty - 1 } : c)),
+      );
+    }
+  }
+
+  clearAll() {
+    this.cart.set([]);
+  }
+
+  checkout() {
+    if (this.cart().length === 0) {
+      return;
+    }
+
+    const command: CreateOrderCommand = {
+      customerId: null,
+      items: this.cart().map((c) => ({
+        id: '00000000-0000-0000-0000-000000000000',
+        productId: c.productId,
+        quantity: c.qty,
+      })),
+      status: OrderStatusEnum.Pending,
+    };
+
+    this.orderService.createOrder(command).subscribe({
+      next: (order) => {
+        console.log('Order created', order);
+        this.clearAll();
+      },
+      error: (err) => {
+        console.error('Failed to create order', err);
+        this.error.set(err.message || 'Failed to create order');
+      },
+    });
+  }
+
+  resetFilters() {
+    this.filterForm.reset({
+      searchTerm: '',
+      filterDrink: false,
+      filterFood: false,
+    });
+  }
+
   private applyFiltersToCache() {
     const { searchTerm, filterDrink, filterFood } = this.filterForm.value;
 
@@ -85,13 +162,5 @@ export class NewOrder implements OnInit {
     }
 
     this.products.set(items);
-  }
-
-  resetFilters() {
-    this.filterForm.reset({
-      searchTerm: '',
-      filterDrink: false,
-      filterFood: false,
-    });
   }
 }

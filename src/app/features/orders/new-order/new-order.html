@@ -1,61 +1,131 @@
-<label class="input mb-4 outline-transparent">
-  <app-icon name="icon-search" class="h-[1em] opacity-50" fill="#000000" />
-  <input
-    type="search"
-    class="grow"
-    placeholder="Search"
-    [formControl]="filterForm.controls.searchTerm"
-  />
-</label>
+<div class="fixed top-20 right-0 bottom-20 left-0 flex gap-4 px-4">
+  <div class="flex-1 overflow-y-auto pr-84">
+    <div class="bg-base-100 sticky top-0 z-10 pb-4">
+      <label class="input mb-4 outline-transparent">
+        <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
+        <input
+          type="search"
+          class="grow"
+          placeholder="Search"
+          [formControl]="filterForm.controls.searchTerm"
+        />
+      </label>
 
-<form [formGroup]="filterForm">
-  <input class="btn btn-square me-2" type="reset" value="×" (click)="resetFilters()" />
-  <input
-    class="btn checked:btn-neutral me-2"
-    type="checkbox"
-    aria-label="Drink"
-    formControlName="filterDrink"
-  />
-  <input
-    class="btn checked:btn-neutral me-2"
-    type="checkbox"
-    aria-label="Food"
-    formControlName="filterFood"
-  />
-</form>
+      <form [formGroup]="filterForm">
+        <input class="btn btn-square me-2" type="reset" value="×" (click)="resetFilters()" />
+        <input
+          class="btn checked:btn-neutral me-2"
+          type="checkbox"
+          aria-label="Drink"
+          formControlName="filterDrink"
+        />
+        <input
+          class="btn checked:btn-neutral me-2"
+          type="checkbox"
+          aria-label="Food"
+          formControlName="filterFood"
+        />
+      </form>
 
-<div class="divider"></div>
-
-<div class="reserve-dock-space">
-  @if (isLoading()) {
-    <div class="flex justify-center py-8">
-      <span class="loading loading-spinner loading-lg"></span>
+      <div class="divider"></div>
     </div>
-  }
+    @if (isLoading()) {
+      <div class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    }
 
-  @if (error()) {
-    <div class="alert alert-error mb-4">
-      <span>{{ error() }}</span>
+    @if (error()) {
+      <div class="alert alert-error mb-4">
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    @if (!isLoading() && !error()) {
+      <div class="flex gap-6">
+        <div class="flex-1 overflow-auto pr-2">
+          <div class="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+            @for (p of products(); track p.id) {
+              <div class="card bg-base-100 cursor-pointer shadow-md" (click)="addToCart(p)">
+                <figure>
+                  <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />
+                </figure>
+                <div class="card-body justify-between">
+                  <h2 class="card-title">{{ p.name }}</h2>
+                  <div class="card-actions mt-4 items-center justify-between">
+                    <div>₱{{ p.price | number: '1.2-2' }}</div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <aside
+    class="bg-base-100 fixed top-20 right-4 bottom-20 flex w-80 flex-col rounded p-4 shadow-md"
+  >
+    <div class="mb-3 flex shrink-0 items-center justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">New Order</h3>
+        <div class="text-sm opacity-70">{{ itemCount() }} items</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="clearAll()">Clear</button>
     </div>
-  }
 
-  @if (!isLoading() && !error()) {
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      @for (p of products(); track p.id) {
-        <div class="card bg-base-100 cursor-pointer shadow-md">
-          <figure>
-            <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />
-          </figure>
-          <div class="card-body justify-between">
-            <h2 class="card-title">
-              {{ p.name }}
-            </h2>
-            <div class="card-actions mt-4 items-center justify-between">
-              ₱{{ p.price | number: '1.2-2' }}
+    <div class="-mx-4 flex-1 overflow-auto px-4">
+      @if (cart().length === 0) {
+        <div class="text-sm opacity-60">No items added</div>
+      }
+
+      @for (c of cart(); track c.productId) {
+        <div class="flex items-center gap-3 border-b py-2">
+          <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 rounded object-cover" />
+          <div class="flex w-full flex-col gap-4">
+            <div class="flex flex-row items-center justify-between">
+              <div class="text-sm font-medium">{{ c.name }}</div>
+              <div class="text-sm opacity-70">₱{{ c.price | number: '1.2-2' }}</div>
+            </div>
+            <div class="flex flex-row items-center justify-between">
+              <div class="flex items-center gap-2 text-sm">
+                <button
+                  class="btn btn-xs min-w-[1.6rem] px-2 py-1"
+                  (click)="decrement(c.productId)"
+                >
+                  -
+                </button>
+                <div class="px-2">{{ c.qty }}</div>
+                <button
+                  class="btn btn-xs min-w-[1.6rem] px-2 py-1"
+                  (click)="increment(c.productId)"
+                >
+                  +
+                </button>
+              </div>
+              <div class="w-20 text-right">₱{{ c.qty * c.price | number: '1.2-2' }}</div>
             </div>
           </div>
         </div>
       }
     </div>
-  }
+
+    <div class="divider"></div>
+
+    <div class="mb-3 flex shrink-0 items-center justify-between">
+      <div class="text-sm opacity-80">Total</div>
+      <div class="text-lg font-semibold">₱{{ totalPrice() | number: '1.2-2' }}</div>
+    </div>
+
+    <button
+      class="btn btn-neutral w-full shrink-0"
+      (click)="checkoutModal.triggerOpen()"
+      [disabled]="cart().length === 0"
+    >
+      Checkout
+    </button>
+  </aside>
 </div>
+
+<app-checkout-modal (orderConfirmed)="checkout()" />
