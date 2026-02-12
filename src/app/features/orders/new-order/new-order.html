@@ -46,7 +46,10 @@
         <div class="flex-1 overflow-auto pr-2">
           <div class="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3">
             @for (p of products(); track p.id) {
-              <div class="card bg-base-100 cursor-pointer shadow-md" (click)="addToCart(p)">
+              <div
+                class="card bg-base-100 cursor-pointer border border-gray-100"
+                (click)="addToCart(p)"
+              >
                 <figure>
                   <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />
                 </figure>
@@ -65,7 +68,7 @@
   </div>
 
   <aside
-    class="bg-base-100 fixed top-20 right-4 bottom-20 flex w-80 flex-col rounded p-4 shadow-md"
+    class="bg-base-100 fixed top-20 right-4 bottom-20 flex w-80 flex-col rounded border border-gray-100 p-4"
   >
     <div class="mb-3 flex shrink-0 items-center justify-between">
       <div>
@@ -80,8 +83,8 @@
         <div class="text-sm opacity-60">No items added</div>
       }
 
-      @for (c of cart(); track c.productId) {
-        <div class="flex items-center gap-3 border-b py-2">
+      @for (c of cart(); track c.productId; let last = $last) {
+        <div class="flex items-center gap-3 py-2" [class.border-b]="!last">
           <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 rounded object-cover" />
           <div class="flex w-full flex-col gap-4">
             <div class="flex flex-row items-center justify-between">
@@ -118,14 +121,27 @@
       <div class="text-lg font-semibold">₱{{ totalPrice() | number: '1.2-2' }}</div>
     </div>
 
-    <button
-      class="btn btn-neutral w-full shrink-0"
-      (click)="checkoutModal.triggerOpen()"
-      [disabled]="cart().length === 0"
-    >
-      Checkout
-    </button>
+    <div class="flex gap-2">
+      <button
+        class="btn btn-outline flex-1 shrink-0"
+        (click)="onOrderSaved()"
+        [disabled]="cart().length === 0"
+      >
+        Save
+      </button>
+      <button
+        class="btn btn-neutral flex-1 shrink-0"
+        (click)="checkout()"
+        [disabled]="cart().length === 0"
+      >
+        Checkout
+      </button>
+    </div>
   </aside>
 </div>
 
-<app-checkout-modal (orderConfirmed)="checkout()" />
+<app-checkout-modal
+  [cartItems]="cart()"
+  [totalPrice]="totalPrice()"
+  (orderConfirmed)="onOrderConfirmed($event)"
+/>

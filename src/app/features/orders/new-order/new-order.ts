@@ -2,13 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs';
-import { ProductService } from '../../../core/services/product.service';
 import { OrderService } from '../../../core/services/order.service';
+import { ProductService } from '../../../core/services/product.service';
 import { Icon } from '../../../shared/components/icons/icon/icon';
 import { CartItemDto } from '../../../shared/models/cart.models';
+import {
+  CreateOrderCommand,
+  OrderStatusEnum,
+  PaymentMethodEnum,
+} from '../../../shared/models/order.models';
 import { ProductDto, ProductTypeEnum } from '../../../shared/models/product.models';
 import { CheckoutModal } from '../checkout-modal/checkout-modal';
-import { CreateOrderCommand, OrderStatusEnum } from '../../../shared/models/order.models';
 
 @Component({
   selector: 'app-new-order',
@@ -109,6 +113,10 @@ export class NewOrder implements OnInit {
       return;
     }
 
+    this.checkoutModal.triggerOpen();
+  }
+
+  onOrderSaved() {
     const command: CreateOrderCommand = {
       customerId: null,
       items: this.cart().map((c) => ({
@@ -121,8 +129,42 @@ export class NewOrder implements OnInit {
 
     this.orderService.createOrder(command).subscribe({
       next: (order) => {
+        console.log('Order saved', order);
+        this.clearAll();
+        this.error.set(null);
+      },
+      error: (err) => {
+        console.error('Failed to save order', err);
+        this.error.set(err.message || 'Failed to save order');
+      },
+    });
+  }
+
+  onOrderConfirmed(event: {
+    paymentMethod: PaymentMethodEnum;
+    amountReceived?: number;
+    changeAmount?: number;
+    tips?: number;
+  }) {
+    const command: CreateOrderCommand = {
+      customerId: null,
+      items: this.cart().map((c) => ({
+        id: '00000000-0000-0000-0000-000000000000',
+        productId: c.productId,
+        quantity: c.qty,
+      })),
+      status: OrderStatusEnum.Pending,
+      paymentMethod: event.paymentMethod,
+      amountReceived: event.amountReceived ?? null,
+      changeAmount: event.changeAmount ?? null,
+      tips: event.tips ?? null,
+    };
+
+    this.orderService.createOrder(command).subscribe({
+      next: (order) => {
         console.log('Order created', order);
         this.clearAll();
+        this.error.set(null);
       },
       error: (err) => {
         console.error('Failed to create order', err);
