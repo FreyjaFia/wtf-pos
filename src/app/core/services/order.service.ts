@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -39,36 +39,68 @@ export class OrderService {
     }
 
     return this.http.get<OrderListDto>(this.baseUrl, { params }).pipe(
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error fetching orders:', error);
-        return throwError(() => new Error('Failed to fetch orders. Please try again later.'));
+
+        const errorMessage =
+          error.status === 0
+            ? 'Unable to connect to server. Please check your connection.'
+            : 'Failed to fetch orders. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
       }),
     );
   }
 
   getOrder(id: string): Observable<OrderDto> {
     return this.http.get<OrderDto>(`${this.baseUrl}/${id}`).pipe(
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error fetching order:', error);
-        return throwError(() => new Error('Failed to fetch order. Please try again later.'));
+
+        const errorMessage =
+          error.status === 404
+            ? 'Order not found.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to fetch order. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
       }),
     );
   }
 
   createOrder(command: CreateOrderCommand): Observable<OrderDto> {
     return this.http.post<OrderDto>(this.baseUrl, command).pipe(
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error creating order:', error);
-        return throwError(() => new Error('Failed to create order. Please try again later.'));
+
+        const errorMessage =
+          error.status === 400
+            ? 'Invalid order data. Please check your input.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to create order. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
       }),
     );
   }
 
   updateOrder(command: UpdateOrderCommand): Observable<OrderDto> {
     return this.http.put<OrderDto>(`${this.baseUrl}/${command.id}`, command).pipe(
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error updating order:', error);
-        return throwError(() => new Error('Failed to update order. Please try again later.'));
+
+        const errorMessage =
+          error.status === 404
+            ? 'Order not found.'
+            : error.status === 400
+              ? 'Invalid order data. Please check your input.'
+              : error.status === 0
+                ? 'Unable to connect to server. Please check your connection.'
+                : 'Failed to update order. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
       }),
     );
   }

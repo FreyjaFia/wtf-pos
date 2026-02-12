@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -39,18 +39,32 @@ export class ProductService {
     }
 
     return this.http.get<ProductListDto>(this.baseUrl, { params }).pipe(
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error fetching products:', error);
-        return throwError(() => new Error('Failed to fetch products. Please try again later.'));
+
+        const errorMessage =
+          error.status === 0
+            ? 'Unable to connect to server. Please check your connection.'
+            : 'Failed to fetch products. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
       }),
     );
   }
 
   getProduct(id: string): Observable<ProductDto> {
     return this.http.get<ProductDto>(`${this.baseUrl}/${id}`).pipe(
-      catchError((error) => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error fetching product:', error);
-        return throwError(() => new Error('Failed to fetch product. Please try again later.'));
+
+        const errorMessage =
+          error.status === 404
+            ? 'Product not found.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to fetch product. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
       }),
     );
   }
