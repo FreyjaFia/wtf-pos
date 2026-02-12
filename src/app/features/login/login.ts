@@ -1,10 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '@core/services';
+import { AlertComponent, Icon } from '@shared/components';
 import { finalize, timeout } from 'rxjs/operators';
-import { AuthService } from '../../core/services/auth.service';
-import { AlertComponent } from '../../shared/components/alert/alert';
-import { Icon } from '../../shared/components/icons/icon/icon';
 
 @Component({
   selector: 'app-login',
@@ -53,9 +52,8 @@ export class Login implements OnInit {
               this.router.navigateByUrl('/home');
             }
           },
-          error: (err) => {
+          error: () => {
             // Refresh failed or expired, stay on login
-            console.log('Refresh token expired or invalid', err);
           },
         });
     }
@@ -79,13 +77,11 @@ export class Login implements OnInit {
           if (ok) {
             this.router.navigateByUrl('/home');
           } else {
-            console.log('ok but error');
             this.errorMessage.set('Login failed. Invalid response from server.');
             this.showError.set(true);
           }
         },
         error: (err) => {
-          console.log('error');
           if (err.name === 'TimeoutError') {
             this.errorMessage.set('Login request timed out. Please try again.');
           } else {

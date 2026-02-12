@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { environment } from '@environments/environment.development';
+import { LoginDto } from '@shared/models';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment.development';
-import { LoginDto } from '../../shared/models/auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -19,8 +19,6 @@ export class AuthService {
 
     return this.http.post<LoginDto>(`${this.baseUrl}/login`, { username, password }).pipe(
       tap((res) => {
-        console.log('Login response:', res);
-
         if (res?.accessToken) {
           localStorage.setItem('token', res.accessToken);
 
@@ -89,14 +87,16 @@ export class AuthService {
     try {
       const decoded = this.decodeToken(token);
 
-      if (!decoded || !decoded['exp']) {
+      if (!decoded || !decoded['exp'] || typeof decoded['exp'] !== 'number') {
         return true;
       }
+
+      const exp = decoded['exp'] as number;
 
       // Current time in seconds
       const currentTime = Math.floor(Date.now() / 1000);
       // Refresh token 5 minutes before expiration
-      const expirationThreshold = decoded['exp'] - 5 * 60;
+      const expirationThreshold = exp - 5 * 60;
 
       return currentTime >= expirationThreshold;
     } catch {
@@ -119,12 +119,13 @@ export class AuthService {
     try {
       const decoded = this.decodeToken(token);
 
-      if (!decoded || !decoded['exp']) {
+      if (!decoded || !decoded['exp'] || typeof decoded['exp'] !== 'number') {
         return false;
       }
 
+      const exp = decoded['exp'] as number;
       const currentTime = Math.floor(Date.now() / 1000);
-      return currentTime < decoded['exp'];
+      return currentTime < exp;
     } catch {
       console.error('Error validating token');
       return false;
@@ -171,7 +172,7 @@ export class AuthService {
   /**
    * Decodes a JWT token and returns its payload
    */
-  private decodeToken(token: string): Record<string, any> | null {
+  private decodeToken(token: string): Record<string, unknown> | null {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');

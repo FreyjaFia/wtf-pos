@@ -5,7 +5,7 @@
     [class.max-w-5xl]="showSummary()"
   >
     <!-- Left: Checkout Form (determines modal height) -->
-    <div [class.pe-80]="showSummary()">
+    <div [class.pe-75]="showSummary()">
       <div class="mb-6 flex items-center justify-between">
         <h3 class="text-2xl font-bold">Checkout</h3>
         <button type="button" (click)="toggleSummary()" class="btn btn-ghost btn-sm gap-2">
@@ -48,10 +48,11 @@
             <h4 class="mb-4 text-lg font-semibold">Cash Payment Details</h4>
             <div class="grid grid-cols-2 gap-4">
               <div class="form-control">
-                <label class="label">
+                <label for="amountReceived" class="label">
                   <span class="label-text text-sm">Amount Received</span>
                 </label>
                 <input
+                  id="amountReceived"
                   type="number"
                   placeholder="₱0.00"
                   formControlName="amountReceived"
@@ -61,10 +62,11 @@
                 />
               </div>
               <div class="form-control">
-                <label class="label">
+                <label for="tips" class="label">
                   <span class="label-text text-sm">Tips (optional)</span>
                 </label>
                 <input
+                  id="tips"
                   type="number"
                   placeholder="₱0.00"
                   formControlName="tips"
@@ -75,13 +77,27 @@
               </div>
             </div>
             <div
-              class="bg-base-100 mt-4 flex items-center justify-between rounded-lg border border-gray-300 p-3"
+              class="bg-base-100 mt-4 flex items-center justify-between rounded-lg border p-3"
+              [class.border-gray-300]="change() >= 0"
+              [class.border-red-300]="change() < 0"
+              [class.bg-red-50]="change() < 0"
             >
-              <span class="text-lg font-medium">Change:</span>
-              <span class="text-2xl font-bold" [class.text-red-600]="change() < 0">
-                ₱{{ change() | number: '1.2-2' }}
+              <span class="text-lg font-medium">
+                {{ change() < 0 ? 'Amount Owed:' : 'Change:' }}
+              </span>
+              <span
+                class="text-2xl font-bold"
+                [class.text-red-600]="change() < 0"
+                [class.text-green-600]="change() > 0"
+              >
+                ₱{{ (change() < 0 ? -change() : change()) | number: '1.2-2' }}
               </span>
             </div>
+            @if (change() < 0) {
+              <p class="mt-2 text-sm text-red-600">
+                Insufficient payment. Please enter at least ₱{{ totalPrice() | number: '1.2-2' }}.
+              </p>
+            }
           </div>
         }
 
@@ -99,12 +115,12 @@
 
       <!-- Action Buttons -->
       <div class="modal-action mt-6 flex gap-3">
-        <button type="button" class="btn btn-ghost" (click)="cancelCheckout()">Cancel</button>
+        <button type="button" class="btn btn-outline" (click)="cancelCheckout()">Cancel</button>
         <button
           type="button"
           class="btn btn-neutral"
           (click)="confirmOrder()"
-          [disabled]="paymentForm.invalid"
+          [disabled]="isConfirmDisabled"
         >
           Confirm & Pay
         </button>
@@ -119,7 +135,7 @@
         <h4 class="mb-4 shrink-0 text-lg font-bold">Order Summary</h4>
 
         <div class="min-h-0 flex-1 space-y-3 overflow-y-auto">
-          @for (item of cartItems; track item.productId; let last = $last) {
+          @for (item of cartItems(); track item.productId; let last = $last) {
             <div class="flex gap-3 pb-3" [class.border-b]="!last">
               <img
                 [src]="item.imageUrl"
@@ -138,7 +154,7 @@
         <div class="mt-auto shrink-0 border-t pt-4">
           <div class="flex items-center justify-between text-lg font-bold">
             <span>Total:</span>
-            <span>₱{{ totalPrice.toFixed(2) }}</span>
+            <span>₱{{ totalPrice().toFixed(2) }}</span>
           </div>
         </div>
       </div>

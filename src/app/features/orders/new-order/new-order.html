@@ -1,31 +1,33 @@
 <div class="fixed top-20 right-0 bottom-20 left-0 flex gap-4 px-4">
+  <!-- Toast Alert at top center -->
+  @if (showError() && error()) {
+    <div class="fixed top-24 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
+      <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
+    </div>
+  }
+
   <div class="flex-1 overflow-y-auto pr-84">
     <div class="bg-base-100 sticky top-0 z-10 pb-4">
-      <label class="input mb-4 outline-transparent">
-        <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
-        <input
-          type="search"
-          class="grow"
-          placeholder="Search"
-          [formControl]="filterForm.controls.searchTerm"
-        />
-      </label>
+      <div class="mb-4 flex items-center gap-2">
+        <label class="input input-sm outline-transparent">
+          <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
+          <input
+            type="search"
+            class="grow"
+            placeholder="Search by product name"
+            [formControl]="filterForm.controls.searchTerm"
+          />
+        </label>
 
-      <form [formGroup]="filterForm">
-        <input class="btn btn-square me-2" type="reset" value="×" (click)="resetFilters()" />
-        <input
-          class="btn checked:btn-neutral me-2"
-          type="checkbox"
-          aria-label="Drink"
-          formControlName="filterDrink"
+        <app-filter-dropdown
+          [title]="'Type'"
+          [icon]="'icon-status'"
+          [options]="filterOptions()"
+          [selectedIds]="selectedProductTypes()"
+          (filterChange)="onProductTypeFilterChange($event)"
+          (filterReset)="onProductTypeFilterReset()"
         />
-        <input
-          class="btn checked:btn-neutral me-2"
-          type="checkbox"
-          aria-label="Food"
-          formControlName="filterFood"
-        />
-      </form>
+      </div>
 
       <div class="divider"></div>
     </div>
@@ -35,20 +37,18 @@
       </div>
     }
 
-    @if (error()) {
-      <div class="alert alert-error mb-4">
-        <span>{{ error() }}</span>
-      </div>
-    }
-
-    @if (!isLoading() && !error()) {
+    @if (!isLoading()) {
       <div class="flex gap-6">
         <div class="flex-1 overflow-auto pr-2">
           <div class="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3">
             @for (p of products(); track p.id) {
               <div
                 class="card bg-base-100 cursor-pointer border border-gray-100"
+                role="button"
+                tabindex="0"
                 (click)="addToCart(p)"
+                (keydown.enter)="addToCart(p)"
+                (keydown.space)="addToCart(p)"
               >
                 <figure>
                   <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />

@@ -1,15 +1,14 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '@environments/environment.development';
 import {
   CreateOrderCommand,
   OrderDto,
-  OrderListDto,
   OrderStatusEnum,
   UpdateOrderCommand,
-} from '../../shared/models/order.models';
+} from '@shared/models';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
@@ -17,14 +16,10 @@ export class OrderService {
   private readonly baseUrl = `${environment.apiUrl}/orders`;
 
   getOrders(query?: {
-    page?: number;
-    pageSize?: number;
     status?: OrderStatusEnum | null;
     customerId?: string | null;
-  }): Observable<OrderListDto> {
+  }): Observable<OrderDto[]> {
     let params = new HttpParams();
-    params = params.set('page', String(query?.page ?? 1));
-    params = params.set('pageSize', String(query?.pageSize ?? 10));
 
     if (
       query?.status !== undefined &&
@@ -38,7 +33,7 @@ export class OrderService {
       params = params.set('customerId', query.customerId);
     }
 
-    return this.http.get<OrderListDto>(this.baseUrl, { params }).pipe(
+    return this.http.get<OrderDto[]>(this.baseUrl, { params }).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching orders:', error);
 

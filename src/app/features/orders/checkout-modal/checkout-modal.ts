@@ -1,17 +1,7 @@
 import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  EventEmitter,
-  Input,
-  Output,
-  ViewChild,
-  signal,
-} from '@angular/core';
+import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CartItemDto } from '../../../shared/models/cart.models';
-import { PaymentMethodEnum } from '../../../shared/models/order.models';
+import { CartItemDto, PaymentMethodEnum } from '@shared/models';
 
 @Component({
   selector: 'app-checkout-modal',
@@ -19,14 +9,13 @@ import { PaymentMethodEnum } from '../../../shared/models/order.models';
   templateUrl: './checkout-modal.html',
   styleUrl: './checkout-modal.css',
 })
-export class CheckoutModal implements AfterViewInit {
-  @ViewChild('checkoutDialog', { read: ElementRef, static: true })
-  checkoutDialog!: ElementRef<HTMLDialogElement>;
+export class CheckoutModal {
+  readonly checkoutDialog = viewChild.required<ElementRef<HTMLDialogElement>>('checkoutDialog');
 
-  @Input() cartItems: CartItemDto[] = [];
-  @Input() totalPrice: number = 0;
+  readonly cartItems = input<CartItemDto[]>([]);
+  readonly totalPrice = input<number>(0);
 
-  @Output() orderConfirmed = new EventEmitter<{
+  readonly orderConfirmed = output<{
     paymentMethod: PaymentMethodEnum;
     amountReceived?: number;
     changeAmount?: number;
@@ -44,11 +33,23 @@ export class CheckoutModal implements AfterViewInit {
   protected readonly change = signal<number>(0);
   protected readonly showSummary = signal<boolean>(false);
 
-  ngAfterViewInit() {
-    this.checkoutDialog.nativeElement.addEventListener('close', () => {
-      this.resetForm();
-    });
+  protected get isConfirmDisabled(): boolean {
+    const paymentMethod = this.paymentForm.get('paymentMethod')?.value;
 
+    // Disable if form is invalid
+    if (this.paymentForm.invalid) {
+      return true;
+    }
+
+    // For Cash payment, disable if change is negative (insufficient payment)
+    if (paymentMethod === PaymentMethodEnum.Cash) {
+      return this.change() < 0;
+    }
+
+    return false;
+  }
+
+  constructor() {
     this.paymentForm.get('amountReceived')?.valueChanges.subscribe(() => {
       this.calculateChange();
     });
@@ -60,7 +61,9 @@ export class CheckoutModal implements AfterViewInit {
 
   triggerOpen() {
     this.resetForm();
-    this.checkoutDialog.nativeElement.showModal();
+    // Calculate initial change to show the amount owed
+    this.calculateChange();
+    this.checkoutDialog().nativeElement.showModal();
   }
 
   toggleSummary() {
@@ -70,11 +73,15 @@ export class CheckoutModal implements AfterViewInit {
   calculateChange() {
     const paymentMethod = this.paymentForm.get('paymentMethod')?.value;
     const amountReceived = this.paymentForm.get('amountReceived')?.value;
-    const tips = this.paymentForm.get('tips')?.value ?? 0;
 
-    if (paymentMethod === PaymentMethodEnum.Cash && amountReceived) {
-      const calculatedChange = amountReceived - this.totalPrice;
-      this.change.set(calculatedChange);
+    if (paymentMethod === PaymentMethodEnum.Cash) {
+      if (amountReceived !== null && amountReceived !== undefined) {
+        const calculatedChange = amountReceived - this.totalPrice();
+        this.change.set(calculatedChange);
+      } else {
+        // Show negative total as initial change when no amount entered
+        this.change.set(-this.totalPrice());
+      }
     } else {
       this.change.set(0);
     }
@@ -89,13 +96,6 @@ export class CheckoutModal implements AfterViewInit {
       return;
     }
 
-    if (paymentMethod === PaymentMethodEnum.Cash) {
-      if (!amountReceived || amountReceived < this.totalPrice) {
-        alert('Please enter an amount at least equal to the total price');
-        return;
-      }
-    }
-
     this.orderConfirmed.emit({
       paymentMethod,
       amountReceived:
@@ -104,11 +104,11 @@ export class CheckoutModal implements AfterViewInit {
       tips: tips ?? undefined,
     });
 
-    this.checkoutDialog.nativeElement.close();
+    this.checkoutDialog().nativeElement.close();
   }
 
   cancelCheckout() {
-    this.checkoutDialog.nativeElement.close();
+    this.checkoutDialog().nativeElement.close();
   }
 
   private resetForm() {

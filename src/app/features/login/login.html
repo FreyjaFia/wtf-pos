@@ -21,8 +21,9 @@
     <form [formGroup]="loginForm" (ngSubmit)="login()">
       <!-- Username -->
       <div class="mb-4">
-        <label class="mb-2 block text-sm font-medium text-gray-700">Username</label>
+        <label for="username" class="mb-2 block text-sm font-medium text-gray-700">Username</label>
         <input
+          id="username"
           formControlName="username"
           type="text"
           placeholder="Enter your username"
@@ -32,8 +33,9 @@
 
       <!-- Password -->
       <div class="mb-4">
-        <label class="mb-2 block text-sm font-medium text-gray-700">Password</label>
+        <label for="password" class="mb-2 block text-sm font-medium text-gray-700">Password</label>
         <input
+          id="password"
           formControlName="password"
           type="password"
           placeholder="Enter your password"
