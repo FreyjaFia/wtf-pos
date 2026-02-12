@@ -6,6 +6,11 @@ export enum OrderStatusEnum {
   ForDelivery = 3
 }
 
+export enum PaymentMethodEnum {
+  Cash = 1,
+  GCash = 2
+}
+
 export interface OrderItemDto {
   id: string;
   productId: string;
@@ -36,6 +41,10 @@ export interface CreateOrderCommand {
   customerId?: string | null;
   items: OrderItemDto[];
   status: OrderStatusEnum;
+  paymentMethod?: PaymentMethodEnum | null;
+  amountReceived?: number | null;
+  changeAmount?: number | null;
+  tips?: number | null;
 }
 
 export interface UpdateOrderCommand {

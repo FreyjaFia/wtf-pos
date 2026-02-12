@@ -1,11 +1,150 @@
-<dialog #checkoutDialog id="checkout" class="modal">
-  <div class="modal-box">
-    <h3 class="text-lg font-bold">Hello!</h3>
-    <p class="py-4">Press ESC key or click the button below to close</p>
-    <div class="modal-action">
-      <form method="dialog">
-        <button class="btn">Close</button>
+<dialog #checkoutDialog id="checkout" class="modal items-center p-4">
+  <div
+    class="modal-box relative overflow-hidden"
+    [class.max-w-2xl]="!showSummary()"
+    [class.max-w-5xl]="showSummary()"
+  >
+    <!-- Left: Checkout Form (determines modal height) -->
+    <div [class.pe-80]="showSummary()">
+      <div class="mb-6 flex items-center justify-between">
+        <h3 class="text-2xl font-bold">Checkout</h3>
+        <button type="button" (click)="toggleSummary()" class="btn btn-ghost btn-sm gap-2">
+          <span>{{ showSummary() ? 'Hide Order' : 'View Order' }}</span>
+          <span class="text-lg transition-transform" [class.rotate-180]="showSummary()">→</span>
+        </button>
+      </div>
+
+      <form [formGroup]="paymentForm" class="space-y-4">
+        <!-- Payment Method -->
+        <div class="bg-base-100 rounded-lg border border-gray-100 p-4">
+          <h4 class="mb-4 text-lg font-semibold">Payment Method</h4>
+          <div class="flex gap-4">
+            <label class="flex flex-1 cursor-pointer items-center gap-3">
+              <input
+                type="radio"
+                [value]="PaymentMethodEnum.Cash"
+                formControlName="paymentMethod"
+                class="radio radio-neutral"
+                (change)="calculateChange()"
+              />
+              <span class="text-base font-medium">Cash</span>
+            </label>
+            <label class="flex flex-1 cursor-pointer items-center gap-3">
+              <input
+                type="radio"
+                [value]="PaymentMethodEnum.GCash"
+                formControlName="paymentMethod"
+                class="radio radio-neutral"
+                (change)="calculateChange()"
+              />
+              <span class="text-base font-medium">GCash</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Cash Payment Details -->
+        @if (paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.Cash) {
+          <div class="bg-base-100 rounded-lg border border-gray-100 p-4">
+            <h4 class="mb-4 text-lg font-semibold">Cash Payment Details</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text text-sm">Amount Received</span>
+                </label>
+                <input
+                  type="number"
+                  placeholder="₱0.00"
+                  formControlName="amountReceived"
+                  class="input input-bordered outline-transparent"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text text-sm">Tips (optional)</span>
+                </label>
+                <input
+                  type="number"
+                  placeholder="₱0.00"
+                  formControlName="tips"
+                  class="input input-bordered outline-transparent"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            <div
+              class="bg-base-100 mt-4 flex items-center justify-between rounded-lg border border-gray-300 p-3"
+            >
+              <span class="text-lg font-medium">Change:</span>
+              <span class="text-2xl font-bold" [class.text-red-600]="change() < 0">
+                ₱{{ change() | number: '1.2-2' }}
+              </span>
+            </div>
+          </div>
+        }
+
+        <!-- Special Instructions -->
+        <div class="bg-base-100 rounded-lg border border-gray-100 p-4">
+          <h4 class="mb-4 text-lg font-semibold">Special Instructions</h4>
+          <textarea
+            placeholder="Add any notes or special instructions"
+            formControlName="notes"
+            class="textarea textarea-bordered w-full outline-transparent"
+            rows="3"
+          ></textarea>
+        </div>
       </form>
+
+      <!-- Action Buttons -->
+      <div class="modal-action mt-6 flex gap-3">
+        <button type="button" class="btn btn-ghost" (click)="cancelCheckout()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-neutral"
+          (click)="confirmOrder()"
+          [disabled]="paymentForm.invalid"
+        >
+          Confirm & Pay
+        </button>
+      </div>
     </div>
+
+    <!-- Right: Order Summary (absolute — does NOT affect modal height) -->
+    @if (showSummary()) {
+      <div
+        class="bg-base-100 absolute inset-y-0 right-0 flex w-72 flex-col border-l border-gray-200 p-6 pl-6"
+      >
+        <h4 class="mb-4 shrink-0 text-lg font-bold">Order Summary</h4>
+
+        <div class="min-h-0 flex-1 space-y-3 overflow-y-auto">
+          @for (item of cartItems; track item.productId; let last = $last) {
+            <div class="flex gap-3 pb-3" [class.border-b]="!last">
+              <img
+                [src]="item.imageUrl"
+                [alt]="item.name"
+                class="h-12 w-12 shrink-0 rounded object-cover"
+              />
+              <div class="flex-1">
+                <p class="text-sm font-semibold">{{ item.name }}</p>
+                <p class="text-xs opacity-70">{{ item.qty }} × ₱{{ item.price.toFixed(2) }}</p>
+                <p class="text-sm font-semibold">₱{{ (item.qty * item.price).toFixed(2) }}</p>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="mt-auto shrink-0 border-t pt-4">
+          <div class="flex items-center justify-between text-lg font-bold">
+            <span>Total:</span>
+            <span>₱{{ totalPrice.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    }
   </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
 </dialog>
