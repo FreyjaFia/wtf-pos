@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { OrderService } from '@core/services';
 import { AlertComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import { OrderDto, OrderStatusEnum } from '@shared/models';
@@ -17,6 +18,7 @@ type SortDirection = 'asc' | 'desc';
 })
 export class OrderList implements OnInit {
   private readonly orderService = inject(OrderService);
+  private readonly router = inject(Router);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
@@ -163,8 +165,13 @@ export class OrderList implements OnInit {
     return order.updatedAt || order.createdAt;
   }
 
-  getItemsText(count: number): string {
+  getItemsText(order: OrderDto): string {
+    const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
     return count === 1 ? '1 item' : `${count} items`;
+  }
+
+  editOrder(order: OrderDto) {
+    this.router.navigate(['/orders/editor', order.id]);
   }
 
   private applyFiltersToCache() {
