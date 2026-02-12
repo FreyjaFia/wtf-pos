@@ -96,6 +96,10 @@ export class CheckoutModal {
       return;
     }
 
+    // Close and immediately hide to prevent backdrop/focus artifacts during navigation
+    const dialog = this.checkoutDialog().nativeElement;
+    dialog.close();
+
     this.orderConfirmed.emit({
       paymentMethod,
       amountReceived:
@@ -103,8 +107,6 @@ export class CheckoutModal {
       changeAmount: paymentMethod === PaymentMethodEnum.Cash ? this.change() : undefined,
       tips: tips ?? undefined,
     });
-
-    this.checkoutDialog().nativeElement.close();
   }
 
   cancelCheckout() {
