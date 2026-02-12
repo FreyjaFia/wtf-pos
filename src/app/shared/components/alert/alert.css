@@ -1,0 +1,7 @@
+.alert {
+  transition: opacity 0.3s ease-out;
+}
+
+.alert-dismissing {
+  opacity: 0;
+}

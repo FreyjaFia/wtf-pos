@@ -1,0 +1,17 @@
+<div
+  [class]="'alert alert-soft alert-' + type() + (isDismissing() ? ' alert-dismissing' : '')"
+  role="alert"
+>
+  <app-icon [name]="iconId" [fill]="'none'" [class]="'h-6 w-6 shrink-0 stroke-current'" />
+
+  <span>{{ message() }}</span>
+
+  <button
+    type="button"
+    class="btn btn-sm btn-circle btn-ghost"
+    (click)="dismiss()"
+    aria-label="Close alert"
+  >
+    <app-icon name="icon-close" [fill]="'none'" [class]="'h-6 w-6 stroke-current'" />
+  </button>
+</div>
