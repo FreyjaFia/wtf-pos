@@ -1,29 +1,34 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService, ProductService } from '@core/services';
 import { AlertComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import {
   CartItemDto,
   CreateOrderCommand,
+  OrderDto,
   OrderStatusEnum,
   PaymentMethodEnum,
   ProductDto,
   ProductTypeEnum,
+  UpdateOrderCommand,
 } from '@shared/models';
 import { debounceTime } from 'rxjs';
 import { CheckoutModal } from '../checkout-modal/checkout-modal';
 
 @Component({
-  selector: 'app-new-order',
+  selector: 'app-order-editor',
   imports: [CommonModule, ReactiveFormsModule, Icon, CheckoutModal, AlertComponent, FilterDropdown],
-  templateUrl: './new-order.html',
-  styleUrl: './new-order.css',
+  templateUrl: './order-editor.html',
+  styleUrl: './order-editor.css',
 })
-export class NewOrder implements OnInit {
+export class OrderEditor implements OnInit {
   readonly checkoutModal = viewChild.required(CheckoutModal);
   private readonly productService = inject(ProductService);
   private readonly orderService = inject(OrderService);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
@@ -33,8 +38,11 @@ export class NewOrder implements OnInit {
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
   protected readonly isLoading = signal(false);
+  protected readonly isLoadingOrder = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showError = signal(false);
+  protected readonly editMode = signal(false);
+  protected readonly currentOrder = signal<OrderDto | null>(null);
 
   protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
   protected totalPrice = () => this.cart().reduce((s, i) => s + i.qty * i.price, 0);
@@ -51,11 +59,47 @@ export class NewOrder implements OnInit {
   ]);
 
   ngOnInit() {
-    this.loadProducts();
+    const orderId = this.activatedRoute.snapshot.paramMap.get('id');
+    if (orderId) {
+      this.editMode.set(true);
+      this.loadOrderForEditing(orderId);
+    } else {
+      this.loadProducts();
+    }
 
     this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       this.applyFiltersToCache();
     });
+  }
+
+  loadOrderForEditing(orderId: string) {
+    this.isLoadingOrder.set(true);
+    this.error.set(null);
+
+    this.orderService.getOrder(orderId).subscribe({
+      next: (order) => {
+        this.currentOrder.set(order);
+        this.populateCartFromOrder(order);
+        this.loadProducts();
+        this.isLoadingOrder.set(false);
+      },
+      error: (err) => {
+        this.error.set(err.message || 'Failed to load order');
+        this.showError.set(true);
+        this.isLoadingOrder.set(false);
+      },
+    });
+  }
+
+  private populateCartFromOrder(order: OrderDto) {
+    const cartItems: CartItemDto[] = order.items.map((item) => ({
+      productId: item.productId,
+      name: '', // Will be populated after product load
+      price: 0,
+      qty: item.quantity,
+      imageUrl: '',
+    }));
+    this.cart.set(cartItems);
   }
 
   loadProducts() {
@@ -76,6 +120,23 @@ export class NewOrder implements OnInit {
         next: (result) => {
           this.productsCache.set(result.products);
           this.applyFiltersToCache();
+
+          // If in edit mode, enrich cart items with product data
+          if (this.editMode()) {
+            const enrichedCart = this.cart().map((cartItem) => {
+              const product = result.products.find((p) => p.id === cartItem.productId);
+              return product
+                ? {
+                    ...cartItem,
+                    name: product.name,
+                    price: product.price,
+                    imageUrl: product.imageUrl,
+                  }
+                : cartItem;
+            });
+            this.cart.set(enrichedCart);
+          }
+
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -119,6 +180,10 @@ export class NewOrder implements OnInit {
     this.cart.set([]);
   }
 
+  cancel() {
+    this.router.navigate(['/orders/list']);
+  }
+
   checkout() {
     if (this.cart().length === 0) {
       return;
@@ -128,28 +193,15 @@ export class NewOrder implements OnInit {
   }
 
   onOrderSaved() {
-    const command: CreateOrderCommand = {
-      customerId: null,
-      items: this.cart().map((c) => ({
-        id: '00000000-0000-0000-0000-000000000000',
-        productId: c.productId,
-        quantity: c.qty,
-      })),
-      status: OrderStatusEnum.Pending,
-    };
+    if (this.cart().length === 0) {
+      return;
+    }
 
-    this.orderService.createOrder(command).subscribe({
-      next: () => {
-        this.clearAll();
-        this.error.set(null);
-        this.showError.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to save order', err);
-        this.error.set(err.message || 'Failed to save order');
-        this.showError.set(true);
-      },
-    });
+    if (this.editMode()) {
+      this.updateExistingOrder(OrderStatusEnum.Pending);
+    } else {
+      this.createNewOrder(OrderStatusEnum.Pending);
+    }
   }
 
   onOrderConfirmed(event: {
@@ -158,6 +210,22 @@ export class NewOrder implements OnInit {
     changeAmount?: number;
     tips?: number;
   }) {
+    if (this.editMode()) {
+      this.updateExistingOrder(OrderStatusEnum.Pending, event);
+    } else {
+      this.createNewOrder(OrderStatusEnum.Pending, event);
+    }
+  }
+
+  private createNewOrder(
+    status: OrderStatusEnum,
+    event?: {
+      paymentMethod: PaymentMethodEnum;
+      amountReceived?: number;
+      changeAmount?: number;
+      tips?: number;
+    },
+  ) {
     const command: CreateOrderCommand = {
       customerId: null,
       items: this.cart().map((c) => ({
@@ -165,22 +233,63 @@ export class NewOrder implements OnInit {
         productId: c.productId,
         quantity: c.qty,
       })),
-      status: OrderStatusEnum.Pending,
-      paymentMethod: event.paymentMethod,
-      amountReceived: event.amountReceived ?? null,
-      changeAmount: event.changeAmount ?? null,
-      tips: event.tips ?? null,
+      status,
+      ...(event && {
+        paymentMethod: event.paymentMethod,
+        amountReceived: event.amountReceived ?? null,
+        changeAmount: event.changeAmount ?? null,
+        tips: event.tips ?? null,
+      }),
     };
 
     this.orderService.createOrder(command).subscribe({
       next: () => {
-        this.clearAll();
-        this.error.set(null);
-        this.showError.set(false);
+        this.router.navigate(['/orders/list']);
       },
       error: (err) => {
         console.error('Failed to create order', err);
         this.error.set(err.message || 'Failed to create order');
+        this.showError.set(true);
+      },
+    });
+  }
+
+  private updateExistingOrder(
+    status: OrderStatusEnum,
+    event?: {
+      paymentMethod: PaymentMethodEnum;
+      amountReceived?: number;
+      changeAmount?: number;
+      tips?: number;
+    },
+  ) {
+    const order = this.currentOrder();
+    if (!order) return;
+
+    const command: UpdateOrderCommand = {
+      id: order.id,
+      customerId: order.customerId ?? null,
+      items: this.cart().map((c) => ({
+        id: '00000000-0000-0000-0000-000000000000',
+        productId: c.productId,
+        quantity: c.qty,
+      })),
+      status,
+      ...(event && {
+        paymentMethod: event.paymentMethod,
+        amountReceived: event.amountReceived ?? null,
+        changeAmount: event.changeAmount ?? null,
+        tips: event.tips ?? null,
+      }),
+    };
+
+    this.orderService.updateOrder(command).subscribe({
+      next: () => {
+        this.router.navigate(['/orders/list']);
+      },
+      error: (err) => {
+        console.error('Failed to update order', err);
+        this.error.set(err.message || 'Failed to update order');
         this.showError.set(true);
       },
     });

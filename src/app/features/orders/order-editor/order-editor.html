@@ -6,40 +6,49 @@
     </div>
   }
 
-  <div class="flex-1 overflow-y-auto pr-84">
-    <div class="bg-base-100 sticky top-0 z-10 pb-4">
-      <div class="mb-4 flex items-center gap-2">
-        <label class="input input-sm outline-transparent">
-          <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
-          <input
-            type="search"
-            class="grow"
-            placeholder="Search by product name"
-            [formControl]="filterForm.controls.searchTerm"
-          />
-        </label>
-
-        <app-filter-dropdown
-          [title]="'Type'"
-          [icon]="'icon-status'"
-          [options]="filterOptions()"
-          [selectedIds]="selectedProductTypes()"
-          (filterChange)="onProductTypeFilterChange($event)"
-          (filterReset)="onProductTypeFilterReset()"
-        />
-      </div>
-
-      <div class="divider"></div>
-    </div>
-    @if (isLoading()) {
+  <div class="flex flex-1 flex-col pr-84">
+    @if (editMode() && isLoadingOrder()) {
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     }
 
-    @if (!isLoading()) {
-      <div class="flex gap-6">
-        <div class="flex-1 overflow-auto pr-2">
+    @if (!editMode() || !isLoadingOrder()) {
+      <!-- Search bar (outside scroll container, no z-index needed) -->
+      <div class="bg-base-100 shrink-0 pb-4">
+        <div class="mb-4 flex items-center gap-2">
+          <label class="input input-sm outline-transparent">
+            <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
+            <input
+              type="search"
+              class="grow"
+              placeholder="Search by product name"
+              [formControl]="filterForm.controls.searchTerm"
+            />
+          </label>
+
+          <app-filter-dropdown
+            [title]="'Type'"
+            [icon]="'icon-status'"
+            [options]="filterOptions()"
+            [selectedIds]="selectedProductTypes()"
+            (filterChange)="onProductTypeFilterChange($event)"
+            (filterReset)="onProductTypeFilterReset()"
+          />
+        </div>
+
+        <div class="divider"></div>
+      </div>
+
+      <!-- Scrollable product grid -->
+      @if (isLoading()) {
+        <div class="flex justify-center py-8">
+          <span class="loading loading-spinner loading-lg"></span>
+        </div>
+      }
+
+      @if (!isLoading()) {
+        <div class="flex-1 overflow-y-auto">
           <div class="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3">
             @for (p of products(); track p.id) {
               <div
@@ -63,7 +72,7 @@
             }
           </div>
         </div>
-      </div>
+      }
     }
   </div>
 
@@ -72,10 +81,17 @@
   >
     <div class="mb-3 flex shrink-0 items-center justify-between">
       <div>
-        <h3 class="text-lg font-semibold">New Order</h3>
+        @if (editMode()) {
+          <h3 class="text-lg font-semibold">Edit Order</h3>
+          @if (currentOrder()) {
+            <div class="text-sm opacity-70">#{{ currentOrder()!.orderNumber }}</div>
+          }
+        } @else {
+          <h3 class="text-lg font-semibold">New Order</h3>
+        }
         <div class="text-sm opacity-70">{{ itemCount() }} items</div>
       </div>
-      <button class="btn btn-ghost btn-sm" (click)="clearAll()">Clear</button>
+      <button class="btn btn-outline btn-sm" (click)="clearAll()">Clear</button>
     </div>
 
     <div class="-mx-4 flex-1 overflow-auto px-4">
@@ -122,6 +138,9 @@
     </div>
 
     <div class="flex gap-2">
+      @if (editMode()) {
+        <button class="btn btn-dash flex-1 shrink-0" (click)="cancel()">Cancel</button>
+      }
       <button
         class="btn btn-outline flex-1 shrink-0"
         (click)="onOrderSaved()"
@@ -137,11 +156,11 @@
         Checkout
       </button>
     </div>
+
+    <app-checkout-modal
+      [cartItems]="cart()"
+      [totalPrice]="totalPrice()"
+      (orderConfirmed)="onOrderConfirmed($event)"
+    />
   </aside>
 </div>
-
-<app-checkout-modal
-  [cartItems]="cart()"
-  [totalPrice]="totalPrice()"
-  (orderConfirmed)="onOrderConfirmed($event)"
-/>
