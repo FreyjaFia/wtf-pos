@@ -4,7 +4,6 @@
 	right: 0;
 	bottom: 0;
 	height: var(--dock-height, 4rem);
-	z-index: 50;
 }
 
 .dock-container {
