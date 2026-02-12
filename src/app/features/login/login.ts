@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs/operators';
@@ -12,7 +12,7 @@ import { Icon } from '../../shared/components/icons/icon/icon';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   protected loading = false;
@@ -23,6 +23,43 @@ export class Login {
     username: new FormControl('', Validators.required),
     password: new FormControl('', Validators.required),
   });
+
+  ngOnInit() {
+    this.checkExistingSession();
+  }
+
+  /**
+   * Check if user has a valid token or refresh token on page load
+   * If valid, redirect to home. If expired, try to refresh and redirect.
+   */
+  private checkExistingSession() {
+    // Check if token is already valid
+    if (this.auth.isTokenValid()) {
+      this.router.navigateByUrl('/home');
+      return;
+    }
+
+    // Check if we have a refresh token and try to refresh
+    const refreshToken = this.auth.getRefreshToken();
+
+    if (refreshToken) {
+      this.auth
+        .refreshToken()
+        .pipe(timeout(30000))
+        .subscribe({
+          next: (ok) => {
+            if (ok) {
+              // Token refreshed successfully, redirect to home
+              this.router.navigateByUrl('/home');
+            }
+          },
+          error: (err) => {
+            // Refresh failed or expired, stay on login
+            console.log('Refresh token expired or invalid', err);
+          },
+        });
+    }
+  }
 
   login() {
     const { username, password } = this.loginForm.value;
@@ -42,13 +79,13 @@ export class Login {
           if (ok) {
             this.router.navigateByUrl('/home');
           } else {
-            console.log('ok but error')
+            console.log('ok but error');
             this.errorMessage.set('Login failed. Invalid response from server.');
             this.showError.set(true);
           }
         },
         error: (err) => {
-            console.log('error')
+          console.log('error');
           if (err.name === 'TimeoutError') {
             this.errorMessage.set('Login request timed out. Please try again.');
           } else {
