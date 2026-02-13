@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
@@ -17,6 +17,7 @@ export class ProductDetailsComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
 
   protected readonly product = signal<ProductDto | null>(null);
   protected readonly isLoading = signal(false);
@@ -59,6 +60,43 @@ export class ProductDetailsComponent implements OnInit {
 
   protected hideSuccess() {
     this.showSuccess.set(false);
+  }
+
+  protected hideError() {
+    this.showError.set(false);
+  }
+
+  protected goBack() {
+    this.location.back();
+  }
+
+  protected navigateToEdit() {
+    if (this.product()) {
+      this.router.navigate(['/settings/products/edit', this.product()!.id]);
+    }
+  }
+
+  protected deleteProduct() {
+    if (!this.product()) {
+      return;
+    }
+
+    const productId = this.product()!.id;
+    const confirmed = window.confirm('Are you sure you want to delete this product?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.productService.deleteProduct(productId).subscribe({
+      next: () => {
+        this.router.navigateByUrl('/settings/products');
+      },
+      error: (err) => {
+        this.error.set(err.message || 'Failed to delete product');
+        this.showError.set(true);
+      },
+    });
   }
 
   protected getProductCategoryName(category: ProductCategoryEnum): string {
