@@ -3,7 +3,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { CreateProductDto, ProductTypeEnum, UpdateProductDto } from '@shared/models';
+import { CreateProductDto, ProductCategoryEnum, UpdateProductDto } from '@shared/models';
 import { Icon } from '@shared/components';
 
 @Component({
@@ -22,7 +22,7 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isSaving = signal(false);
   protected readonly isUploading = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly ProductTypeEnum = ProductTypeEnum;
+  protected readonly ProductCategoryEnum = ProductCategoryEnum;
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
   protected readonly currentImageUrl = signal<string | null>(null);
@@ -36,7 +36,7 @@ export class ProductEditorComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required, Validators.min(0.01), Validators.max(999999.99)],
     }),
-    type: new FormControl<ProductTypeEnum>(ProductTypeEnum.Drink, {
+    category: new FormControl<ProductCategoryEnum>(ProductCategoryEnum.Drink, {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -65,7 +65,7 @@ export class ProductEditorComponent implements OnInit {
         this.productForm.patchValue({
           name: product.name,
           price: product.price,
-          type: product.type,
+          category: product.category,
           isAddOn: product.isAddOn,
           isActive: product.isActive,
         });
@@ -112,7 +112,10 @@ export class ProductEditorComponent implements OnInit {
         },
       });
     } else {
-      const createDto: CreateProductDto = formValue;
+      const createDto: CreateProductDto = {
+        ...formValue,
+        category: formValue.category as ProductCategoryEnum,
+      };
 
       this.productService.createProduct(createDto).subscribe({
         next: (createdProduct) => {

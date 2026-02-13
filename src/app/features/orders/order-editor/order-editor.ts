@@ -10,8 +10,8 @@ import {
   OrderDto,
   OrderStatusEnum,
   PaymentMethodEnum,
+  ProductCategoryEnum,
   ProductDto,
-  ProductTypeEnum,
   UpdateOrderCommand,
 } from '@shared/models';
 import { debounceTime } from 'rxjs';
@@ -33,7 +33,7 @@ export class OrderEditor implements OnInit {
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
   });
-  protected readonly selectedProductTypes = signal<ProductTypeEnum[]>([]);
+  protected readonly selectedProductCategories = signal<ProductCategoryEnum[]>([]);
   protected readonly cart = signal<CartItemDto[]>([]);
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
@@ -49,11 +49,11 @@ export class OrderEditor implements OnInit {
 
   protected readonly filterOptions = computed<FilterOption[]>(() => [
     {
-      id: ProductTypeEnum.Drink,
+      id: ProductCategoryEnum.Drink,
       label: 'Drink',
     },
     {
-      id: ProductTypeEnum.Food,
+      id: ProductCategoryEnum.Food,
       label: 'Food',
     },
   ]);
@@ -111,7 +111,7 @@ export class OrderEditor implements OnInit {
     this.productService
       .getProducts({
         searchTerm: searchTerm || null,
-        type: null,
+        category: null,
         isActive: true,
       })
       .subscribe({
@@ -300,7 +300,7 @@ export class OrderEditor implements OnInit {
   private applyFiltersToCache() {
     const { searchTerm } = this.filterForm.value;
 
-    const allowedTypes = this.selectedProductTypes();
+    const allowedCategories = this.selectedProductCategories();
 
     let items = [...this.productsCache()];
 
@@ -309,20 +309,20 @@ export class OrderEditor implements OnInit {
       items = items.filter((p) => p.name.toLowerCase().includes(lowerSearchTerm));
     }
 
-    if (allowedTypes.length > 0) {
-      items = items.filter((p) => allowedTypes.includes(p.type));
+    if (allowedCategories.length > 0) {
+      items = items.filter((p) => allowedCategories.includes(p.category));
     }
 
     this.products.set(items);
   }
 
-  onProductTypeFilterChange(selectedIds: (string | number)[]) {
-    this.selectedProductTypes.set(selectedIds as ProductTypeEnum[]);
+  onProductCategoryFilterChange(selectedIds: (string | number)[]) {
+    this.selectedProductCategories.set(selectedIds as ProductCategoryEnum[]);
     this.applyFiltersToCache();
   }
 
-  onProductTypeFilterReset() {
-    this.selectedProductTypes.set([]);
+  onProductCategoryFilterReset() {
+    this.selectedProductCategories.set([]);
     this.applyFiltersToCache();
   }
 }

@@ -55,8 +55,8 @@ export class ProductDetailsComponent implements OnInit {
     }
   }
 
-  protected getProductTypeName(type: ProductTypeEnum): string {
-    return ProductTypeEnum[type];
+  protected getProductCategoryName(category: ProductCategoryEnum): string {
+    return ProductCategoryEnum[category];
   }
 
   protected deleteProduct() {

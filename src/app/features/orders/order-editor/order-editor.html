@@ -28,12 +28,12 @@
           </label>
 
           <app-filter-dropdown
-            [title]="'Type'"
-            [icon]="'icon-status'"
+            [title]="'Category'"
+            [icon]="'icon-box'"
             [options]="filterOptions()"
-            [selectedIds]="selectedProductTypes()"
-            (filterChange)="onProductTypeFilterChange($event)"
-            (filterReset)="onProductTypeFilterReset()"
+            [selectedIds]="selectedProductCategories()"
+            (filterChange)="onProductCategoryFilterChange($event)"
+            (filterReset)="onProductCategoryFilterReset()"
           />
         </div>
       </div>
