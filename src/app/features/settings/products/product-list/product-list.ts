@@ -29,7 +29,6 @@ export class ProductListComponent implements OnInit {
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
 
   protected readonly selectedTypes = signal<number[]>([]);
-  protected readonly selectedAddOns = signal<string[]>([]);
   protected readonly selectedStatuses = signal<string[]>(['active']);
 
   protected readonly filterForm = new FormGroup({
@@ -44,11 +43,6 @@ export class ProductListComponent implements OnInit {
     { id: ProductCategoryEnum.Food, label: 'Food' },
     { id: ProductCategoryEnum.Dessert, label: 'Dessert' },
     { id: ProductCategoryEnum.Other, label: 'Other' },
-  ]);
-
-  protected readonly addOnOptions = computed<FilterOption[]>(() => [
-    { id: 'yes', label: 'Yes' },
-    { id: 'no', label: 'No' },
   ]);
 
   protected readonly statusOptions = computed<FilterOption[]>(() => [
@@ -83,17 +77,11 @@ export class ProductListComponent implements OnInit {
 
     const searchTerm = this.filterForm.value.searchTerm || null;
     const types = this.selectedTypes();
-    const addOns = this.selectedAddOns();
     const statuses = this.selectedStatuses();
 
     let category: ProductCategoryEnum | null = null;
     if (types.length === 1) {
       category = types[0] as ProductCategoryEnum;
-    }
-
-    let isAddOn: boolean | null = null;
-    if (addOns.length === 1) {
-      isAddOn = addOns[0] === 'yes';
     }
 
     let isActive: boolean | null = null;
@@ -105,7 +93,6 @@ export class ProductListComponent implements OnInit {
       .getProducts({
         searchTerm,
         category,
-        isAddOn,
         isActive,
       })
       .subscribe({
@@ -167,16 +154,6 @@ export class ProductListComponent implements OnInit {
 
   protected onTypeFilterReset() {
     this.selectedTypes.set([]);
-    this.loadProducts();
-  }
-
-  protected onAddOnFilterChange(selectedIds: (string | number)[]) {
-    this.selectedAddOns.set(selectedIds as string[]);
-    this.loadProducts();
-  }
-
-  protected onAddOnFilterReset() {
-    this.selectedAddOns.set([]);
     this.loadProducts();
   }
 

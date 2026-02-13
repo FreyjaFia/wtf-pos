@@ -15,21 +15,11 @@
     <!-- Type Filter Dropdown -->
     <app-filter-dropdown
       [title]="'Type'"
-      [icon]="'icon-box'"
+      [icon]="'icon-category'"
       [options]="typeOptions()"
       [selectedIds]="selectedTypes()"
       (filterChange)="onTypeFilterChange($event)"
       (filterReset)="onTypeFilterReset()"
-    />
-
-    <!-- Add-on Filter Dropdown -->
-    <app-filter-dropdown
-      [title]="'Add-on'"
-      [icon]="'icon-plus'"
-      [options]="addOnOptions()"
-      [selectedIds]="selectedAddOns()"
-      (filterChange)="onAddOnFilterChange($event)"
-      (filterReset)="onAddOnFilterReset()"
     />
 
     <!-- Status Filter Dropdown -->
@@ -105,13 +95,19 @@
                     />
                   } @else {
                     <div class="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
-                      <app-icon name="icon-box" [class]="'h-5 w-5 text-gray-400'" [fill]="'currentColor'" />
+                      <app-icon
+                        name="icon-box"
+                        [class]="'h-5 w-5 text-gray-400'"
+                        [fill]="'currentColor'"
+                      />
                     </div>
                   }
                 </td>
                 <td class="font-medium">{{ product.name }}</td>
                 <td>
-                  <span class="badge badge-ghost">{{ getProductCategoryName(product.category) }}</span>
+                  <span class="badge badge-ghost">{{
+                    getProductCategoryName(product.category)
+                  }}</span>
                 </td>
                 <td class="text-right font-semibold">₱{{ product.price.toFixed(2) }}</td>
                 <td class="text-center">
