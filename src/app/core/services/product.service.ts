@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment.development';
-import { ProductDto, ProductListDto, ProductTypeEnum } from '@shared/models';
+import { CreateProductDto, ProductDto, ProductTypeEnum, UpdateProductDto } from '@shared/models';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -11,22 +11,18 @@ export class ProductService {
   private readonly baseUrl = `${environment.apiUrl}/products`;
 
   getProducts(query?: {
-    page?: number;
-    pageSize?: number;
     searchTerm?: string | null;
     type?: ProductTypeEnum | null;
     isAddOn?: boolean | null;
     isActive?: boolean | null;
-  }): Observable<ProductListDto> {
+  }): Observable<ProductDto[]> {
     let params = new HttpParams();
-    params = params.set('page', String(query?.page ?? 1));
-    params = params.set('pageSize', String(query?.pageSize ?? 10));
 
     if (query?.searchTerm) {
       params = params.set('searchTerm', query.searchTerm);
     }
 
-    if (query?.type) {
+    if (query?.type !== undefined && query?.type !== null) {
       params = params.set('type', String(query.type));
     }
 
@@ -38,7 +34,7 @@ export class ProductService {
       params = params.set('isActive', String(query.isActive));
     }
 
-    return this.http.get<ProductListDto>(this.baseUrl, { params }).pipe(
+    return this.http.get<ProductDto[]>(this.baseUrl, { params }).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching products:', error);
 
@@ -63,6 +59,78 @@ export class ProductService {
             : error.status === 0
               ? 'Unable to connect to server. Please check your connection.'
               : 'Failed to fetch product. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  createProduct(product: CreateProductDto): Observable<ProductDto> {
+    return this.http.post<ProductDto>(this.baseUrl, product).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error creating product:', error);
+
+        const errorMessage =
+          error.status === 0
+            ? 'Unable to connect to server. Please check your connection.'
+            : 'Failed to create product. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  updateProduct(product: UpdateProductDto): Observable<ProductDto> {
+    return this.http.put<ProductDto>(`${this.baseUrl}/${product.id}`, product).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error updating product:', error);
+
+        const errorMessage =
+          error.status === 404
+            ? 'Product not found.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to update product. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  deleteProduct(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error deleting product:', error);
+
+        const errorMessage =
+          error.status === 404
+            ? 'Product not found.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to delete product. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  uploadProductImage(productId: string, file: File): Observable<ProductDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<ProductDto>(`${this.baseUrl}/${productId}/upload-image`, formData).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error uploading product image:', error);
+
+        let errorMessage = 'Failed to upload image. Please try again later.';
+
+        if (error.status === 400) {
+          errorMessage = error.error || 'Invalid file. Please check file type and size.';
+        } else if (error.status === 404) {
+          errorMessage = 'Product not found.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
 
         return throwError(() => new Error(errorMessage));
       }),
