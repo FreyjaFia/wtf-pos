@@ -43,6 +43,11 @@ export class OrderEditor implements OnInit {
   protected readonly editMode = signal(false);
   protected readonly currentOrder = signal<OrderDto | null>(null);
 
+  protected readonly isCompleted = computed(() => {
+    const order = this.currentOrder();
+    return order?.status === OrderStatusEnum.Completed;
+  });
+
   protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
   protected totalPrice = () => this.cart().reduce((s, i) => s + i.qty * i.price, 0);
 
@@ -101,10 +106,12 @@ export class OrderEditor implements OnInit {
   }
 
   private populateCartFromOrder(order: OrderDto) {
+    const isCompleted = order.status === OrderStatusEnum.Completed;
+
     const cartItems: CartItemDto[] = order.items.map((item) => ({
       productId: item.productId,
-      name: '', // Will be populated after product load
-      price: 0,
+      name: '',
+      price: isCompleted ? (item.price ?? 0) : 0,
       qty: item.quantity,
       imageUrl: '',
     }));
@@ -136,7 +143,7 @@ export class OrderEditor implements OnInit {
                 ? {
                     ...cartItem,
                     name: product.name,
-                    price: product.price,
+                    price: this.isCompleted() ? cartItem.price : product.price,
                     imageUrl: product.imageUrl,
                   }
                 : cartItem;
@@ -218,9 +225,9 @@ export class OrderEditor implements OnInit {
     tips?: number;
   }) {
     if (this.editMode()) {
-      this.updateExistingOrder(OrderStatusEnum.Pending, event);
+      this.updateExistingOrder(OrderStatusEnum.Completed, event);
     } else {
-      this.createNewOrder(OrderStatusEnum.Pending, event);
+      this.createNewOrder(OrderStatusEnum.Completed, event);
     }
   }
 
