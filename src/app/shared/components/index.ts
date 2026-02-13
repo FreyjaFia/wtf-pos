@@ -1,4 +1,5 @@
 export * from './alert/alert';
+export * from './badge/badge';
 export * from './dock/dock';
 export * from './filter-dropdown/filter-dropdown';
 export * from './header/header';
