@@ -101,11 +101,28 @@
                 </div>
 
                 <!-- Is Add-on -->
-                <label class="flex w-fit cursor-pointer items-center gap-3">
-                  <input type="checkbox" formControlName="isAddOn" class="checkbox checkbox-sm" />
+                <label
+                  class="flex w-fit items-center gap-3"
+                  [class.cursor-pointer]="!isEditMode()"
+                  [class.cursor-not-allowed]="isEditMode()"
+                  [class.opacity-50]="isEditMode()"
+                  [class.pointer-events-none]="isEditMode()"
+                >
+                  <input
+                    type="checkbox"
+                    formControlName="isAddOn"
+                    class="checkbox checkbox-sm"
+                    [disabled]="isEditMode()"
+                  />
                   <div>
                     <span class="text-sm font-medium">Is Add-on</span>
-                    <p class="text-base-content/60 text-xs">Mark this product as an add-on item</p>
+                    <p class="text-base-content/60 text-xs">
+                      @if (isEditMode()) {
+                        Cannot change after initial setup
+                      } @else {
+                        Mark this product as an add-on item
+                      }
+                    </p>
                   </div>
                 </label>
 
@@ -117,6 +134,24 @@
                     <p class="text-base-content/60 text-xs">Only active products are visible</p>
                   </div>
                 </label>
+
+                <!-- Add-ons Manager Button (show only in edit mode) -->
+                @if (isEditMode() && productId) {
+                  <div class="divider my-2"></div>
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-primary w-full"
+                    (click)="openAddOnsManager()"
+                    [disabled]="isSaving()"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                      </path>
+                    </svg>
+                    Manage Add-ons
+                  </button>
+                }
 
                 <!-- Actions -->
                 <div class="flex justify-end gap-2 pt-2">
@@ -210,3 +245,6 @@
     </div>
   }
 </div>
+
+<!-- Add-ons Swapper Modal -->
+<app-addons-swapper></app-addons-swapper>

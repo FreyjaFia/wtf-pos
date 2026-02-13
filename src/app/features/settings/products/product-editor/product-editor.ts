@@ -1,14 +1,14 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { AlertComponent, Icon } from '@shared/components';
+import { AlertComponent, AddonsSwapperComponent, Icon } from '@shared/components';
 import { CreateProductDto, ProductCategoryEnum, UpdateProductDto } from '@shared/models';
 
 @Component({
   selector: 'app-product-editor',
-  imports: [CommonModule, ReactiveFormsModule, Icon, AlertComponent],
+  imports: [CommonModule, ReactiveFormsModule, Icon, AlertComponent, AddonsSwapperComponent],
   templateUrl: './product-editor.html',
 })
 export class ProductEditorComponent implements OnInit {
@@ -16,6 +16,8 @@ export class ProductEditorComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
+
+  @ViewChild(AddonsSwapperComponent) addonsSwapper!: AddonsSwapperComponent;
 
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
@@ -45,7 +47,7 @@ export class ProductEditorComponent implements OnInit {
     isActive: new FormControl(true, { nonNullable: true }),
   });
 
-  private productId: string | null = null;
+  protected productId: string | null = null;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -276,5 +278,23 @@ export class ProductEditorComponent implements OnInit {
 
   protected hideError() {
     this.showError.set(false);
+  }
+
+  protected openAddOnsManager() {
+    if (!this.productId) {
+      this.error.set('Please save the product first before managing add-ons.');
+      this.showError.set(true);
+      return;
+    }
+
+    const modal = document.querySelector('#addons-swapper-modal') as HTMLDialogElement;
+
+    if (modal) {
+      if (this.addonsSwapper) {
+        this.addonsSwapper.productId = this.productId;
+        this.addonsSwapper.ngAfterViewInit();
+      }
+      modal.showModal();
+    }
   }
 }
