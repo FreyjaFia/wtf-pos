@@ -4,11 +4,11 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
 import { CreateProductDto, ProductCategoryEnum, UpdateProductDto } from '@shared/models';
-import { Icon } from '@shared/components';
+import { AlertComponent, Icon } from '@shared/components';
 
 @Component({
   selector: 'app-product-editor',
-  imports: [CommonModule, ReactiveFormsModule, Icon],
+  imports: [CommonModule, ReactiveFormsModule, Icon, AlertComponent],
   templateUrl: './product-editor.html',
 })
 export class ProductEditorComponent implements OnInit {
@@ -21,6 +21,7 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isSaving = signal(false);
   protected readonly isUploading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly showError = signal(false);
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
@@ -58,6 +59,7 @@ export class ProductEditorComponent implements OnInit {
   private loadProduct(id: string) {
     this.isLoading.set(true);
     this.error.set(null);
+    this.showError.set(false);
 
     this.productService.getProduct(id).subscribe({
       next: (product) => {
@@ -73,6 +75,7 @@ export class ProductEditorComponent implements OnInit {
       },
       error: (err) => {
         this.error.set(err.message);
+        this.showError.set(true);
         this.isLoading.set(false);
       },
     });
@@ -86,6 +89,7 @@ export class ProductEditorComponent implements OnInit {
 
     this.isSaving.set(true);
     this.error.set(null);
+    this.showError.set(false);
 
     const formValue = this.productForm.getRawValue();
 
@@ -102,11 +106,12 @@ export class ProductEditorComponent implements OnInit {
             this.uploadImage();
           } else {
             this.isSaving.set(false);
-            this.navigateToList();
+            this.navigateToDetails(this.productId!);
           }
         },
         error: (err) => {
           this.error.set(err.message);
+          this.showError.set(true);
           this.isSaving.set(false);
         },
       });
@@ -123,11 +128,12 @@ export class ProductEditorComponent implements OnInit {
             this.uploadImage(createdProduct.id);
           } else {
             this.isSaving.set(false);
-            this.navigateToList();
+            this.navigateToDetails(createdProduct.id);
           }
         },
         error: (err) => {
           this.error.set(err.message);
+          this.showError.set(true);
           this.isSaving.set(false);
         },
       });
@@ -145,12 +151,14 @@ export class ProductEditorComponent implements OnInit {
 
       if (!allowedTypes.includes(file.type)) {
         this.error.set('Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.');
+        this.showError.set(true);
         return;
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         this.error.set('File size exceeds 5MB limit.');
+        this.showError.set(true);
         return;
       }
 
@@ -188,6 +196,7 @@ export class ProductEditorComponent implements OnInit {
 
     this.isUploading.set(true);
     this.error.set(null);
+    this.showError.set(false);
 
     this.productService.uploadProductImage(id, file).subscribe({
       next: (updatedProduct) => {
@@ -198,12 +207,16 @@ export class ProductEditorComponent implements OnInit {
         this.isSaving.set(false);
 
         if (productId) {
-          // If we just created the product and uploaded image, navigate to list
-          this.navigateToList();
+          // If we just created the product and uploaded image, navigate to details
+          this.navigateToDetails(productId);
+        } else if (this.productId) {
+          // Update flow with image upload
+          this.navigateToDetails(this.productId);
         }
       },
       error: (err) => {
         this.error.set(err.message);
+        this.showError.set(true);
         this.isUploading.set(false);
         this.isSaving.set(false);
       },
@@ -212,6 +225,12 @@ export class ProductEditorComponent implements OnInit {
 
   protected navigateToList() {
     this.router.navigate(['/settings/products']);
+  }
+
+  private navigateToDetails(productId: string) {
+    this.router.navigate(['/settings/products/details', productId], {
+      queryParams: { saved: true },
+    });
   }
 
   protected getErrorMessage(controlName: string): string | null {
@@ -252,5 +271,9 @@ export class ProductEditorComponent implements OnInit {
   protected hasError(controlName: string): boolean {
     const control = this.productForm.get(controlName);
     return !!control && control.invalid && control.touched;
+  }
+
+  protected hideError() {
+    this.showError.set(false);
   }
 }
