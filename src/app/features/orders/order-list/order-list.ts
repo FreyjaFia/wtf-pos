@@ -3,7 +3,13 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OrderService } from '@core/services';
-import { AlertComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
+import {
+  AlertComponent,
+  BadgeComponent,
+  FilterDropdown,
+  Icon,
+  type FilterOption,
+} from '@shared/components';
 import { OrderDto, OrderStatusEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
@@ -12,9 +18,15 @@ type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-order-list',
-  imports: [CommonModule, ReactiveFormsModule, Icon, AlertComponent, FilterDropdown],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    Icon,
+    AlertComponent,
+    FilterDropdown,
+    BadgeComponent,
+  ],
   templateUrl: './order-list.html',
-  styleUrl: './order-list.css',
 })
 export class OrderList implements OnInit {
   private readonly orderService = inject(OrderService);
@@ -132,16 +144,16 @@ export class OrderList implements OnInit {
     this.showError.set(false);
   }
 
-  getStatusClass(status: OrderStatusEnum): string {
+  getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' {
     switch (status) {
       case OrderStatusEnum.Pending:
-        return 'badge-warning';
+        return 'warning';
       case OrderStatusEnum.Completed:
-        return 'badge-success';
+        return 'success';
       case OrderStatusEnum.Cancelled:
-        return 'badge-error';
+        return 'error';
       default:
-        return 'badge-ghost';
+        return 'info';
     }
   }
 
