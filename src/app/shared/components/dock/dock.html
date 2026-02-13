@@ -1,5 +1,5 @@
 @if (auth.isLoggedIn$ | async) {
-  <div class="dock dock-md z-0 justify-center">
+  <div class="dock dock-md relative z-0 shrink-0 justify-center border-t border-gray-100">
     <a [routerLink]="['orders/editor']" [routerLinkActive]="'dock-active'">
       <app-icon name="icon-plus" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
       <span class="dock-label">New Order</span>
@@ -8,6 +8,11 @@
     <a [routerLink]="['orders/list']" [routerLinkActive]="'dock-active'">
       <app-icon name="icon-file" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
       <span class="dock-label">Orders</span>
+    </a>
+
+    <a [routerLink]="['settings']" [routerLinkActive]="'dock-active'">
+      <app-icon name="icon-settings" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
+      <span class="dock-label">Settings</span>
     </a>
   </div>
 }

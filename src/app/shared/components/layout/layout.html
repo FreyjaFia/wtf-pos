@@ -1,7 +1,9 @@
-<app-header />
+<div class="flex h-screen flex-col overflow-hidden">
+  <app-header />
 
-<div class="h-screen overflow-hidden pt-20">
-  <router-outlet></router-outlet>
+  <div class="mx-6 my-6 flex-1 overflow-auto">
+    <router-outlet />
+  </div>
+
+  <app-dock />
 </div>
-
-<app-dock />
