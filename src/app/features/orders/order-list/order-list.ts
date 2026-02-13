@@ -53,19 +53,16 @@ export class OrderList implements OnInit {
       id: OrderStatusEnum.Pending,
       label: 'Pending',
       count: this.statusCounts()[OrderStatusEnum.Pending],
-      colorClass: 'text-warning',
     },
     {
       id: OrderStatusEnum.Completed,
       label: 'Completed',
       count: this.statusCounts()[OrderStatusEnum.Completed],
-      colorClass: 'text-success',
     },
     {
       id: OrderStatusEnum.Cancelled,
       label: 'Cancelled',
       count: this.statusCounts()[OrderStatusEnum.Cancelled],
-      colorClass: 'text-error',
     },
   ]);
 
