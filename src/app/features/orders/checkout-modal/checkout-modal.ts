@@ -2,10 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CartItemDto, PaymentMethodEnum } from '@shared/models';
+import { Icon } from '@shared/components';
 
 @Component({
   selector: 'app-checkout-modal',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, Icon],
   templateUrl: './checkout-modal.html',
   styleUrl: './checkout-modal.css',
 })
