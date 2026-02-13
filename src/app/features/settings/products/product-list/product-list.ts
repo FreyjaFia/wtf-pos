@@ -3,7 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { FilterDropdown, Icon, type FilterOption } from '@shared/components';
+import { FilterDropdown, Icon, BadgeComponent, type FilterOption } from '@shared/components';
 import { ProductCategoryEnum, ProductDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
@@ -12,9 +12,8 @@ type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-product-list',
-  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown],
+  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
   templateUrl: './product-list.html',
-  styleUrl: './product-list.css',
   host: {
     class: 'block h-full',
   },
@@ -24,7 +23,9 @@ export class ProductListComponent implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly products = signal<ProductDto[]>([]);
+  protected readonly productsCache = signal<ProductDto[]>([]);
   protected readonly isLoading = signal(false);
+  protected readonly isRefreshing = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
 
@@ -39,7 +40,7 @@ export class ProductListComponent implements OnInit {
   protected readonly sortDirection = signal<SortDirection>('asc');
 
   protected readonly categoryCounts = computed(() => {
-    const cache = this.products();
+    const cache = this.productsCache();
     return {
       [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink).length,
       [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food).length,
@@ -49,7 +50,7 @@ export class ProductListComponent implements OnInit {
   });
 
   protected readonly statusCounts = computed(() => {
-    const cache = this.products();
+    const cache = this.productsCache();
     return {
       active: cache.filter((p) => p.isActive).length,
       inactive: cache.filter((p) => !p.isActive).length,
@@ -85,7 +86,7 @@ export class ProductListComponent implements OnInit {
     this.loadProducts();
 
     this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
-      this.loadProducts();
+      this.applyFiltersToCache();
     });
   }
 
@@ -93,36 +94,50 @@ export class ProductListComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    const searchTerm = this.filterForm.value.searchTerm || null;
-    const types = this.selectedTypes();
-    const statuses = this.selectedStatuses();
+    this.productService.getProducts().subscribe({
+      next: (data) => {
+        this.productsCache.set(data);
+        this.applyFiltersToCache();
+        this.isLoading.set(false);
+        this.isRefreshing.set(false);
+      },
+      error: (err) => {
+        this.error.set(err.message);
+        this.isLoading.set(false);
+        this.isRefreshing.set(false);
+      },
+    });
+  }
 
-    let category: ProductCategoryEnum | null = null;
-    if (types.length === 1) {
-      category = types[0] as ProductCategoryEnum;
+  protected refresh() {
+    this.isRefreshing.set(true);
+    this.loadProducts();
+  }
+
+  private applyFiltersToCache() {
+    const { searchTerm } = this.filterForm.value;
+    let items = [...this.productsCache()];
+
+    if (searchTerm && searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      items = items.filter((p) => p.name.toLowerCase().includes(lowerSearch));
     }
 
-    let isActive: boolean | null = null;
-    if (statuses.length === 1) {
-      isActive = statuses[0] === 'active';
+    const selectedTypes = this.selectedTypes();
+    if (selectedTypes.length > 0) {
+      items = items.filter((p) => selectedTypes.includes(p.category));
     }
 
-    this.productService
-      .getProducts({
-        searchTerm,
-        category,
-        isActive,
-      })
-      .subscribe({
-        next: (data) => {
-          this.products.set(data);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.error.set(err.message);
-          this.isLoading.set(false);
-        },
+    const selectedStatuses = this.selectedStatuses();
+    if (selectedStatuses.length > 0) {
+      items = items.filter((p) => {
+        if (selectedStatuses.includes('active') && p.isActive) return true;
+        if (selectedStatuses.includes('inactive') && !p.isActive) return true;
+        return false;
       });
+    }
+
+    this.products.set(items);
   }
 
   protected navigateToEditor(productId?: string) {
@@ -167,21 +182,21 @@ export class ProductListComponent implements OnInit {
 
   protected onTypeFilterChange(selectedIds: (string | number)[]) {
     this.selectedTypes.set(selectedIds as number[]);
-    this.loadProducts();
+    this.applyFiltersToCache();
   }
 
   protected onTypeFilterReset() {
     this.selectedTypes.set([]);
-    this.loadProducts();
+    this.applyFiltersToCache();
   }
 
   protected onStatusFilterChange(selectedIds: (string | number)[]) {
     this.selectedStatuses.set(selectedIds as string[]);
-    this.loadProducts();
+    this.applyFiltersToCache();
   }
 
   protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
-    this.loadProducts();
+    this.applyFiltersToCache();
   }
 }
