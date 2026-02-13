@@ -2,14 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { ProductDto, ProductTypeEnum } from '@shared/models';
-import { Icon } from '@shared/components';
+import { BadgeComponent, Icon } from '@shared/components';
+import { ProductCategoryEnum, ProductDto, ProductTypeEnum } from '@shared/models';
 
 @Component({
   selector: 'app-product-details',
-  imports: [CommonModule, Icon],
+  imports: [CommonModule, Icon, BadgeComponent],
   templateUrl: './product-details.html',
-  styleUrl: './product-details.css',
 })
 export class ProductDetailsComponent implements OnInit {
   private readonly productService = inject(ProductService);
