@@ -1,4 +1,4 @@
-<div class="fixed top-20 right-0 bottom-20 left-0 flex gap-4 px-4">
+<div class="flex h-full gap-4">
   <!-- Toast Alert at top center -->
   @if (showError() && error()) {
     <div class="fixed top-24 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
@@ -6,7 +6,7 @@
     </div>
   }
 
-  <div class="flex flex-1 flex-col pr-84">
+  <div class="flex flex-1 flex-col overflow-hidden">
     @if (editMode() && isLoadingOrder()) {
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-lg"></span>
@@ -15,8 +15,8 @@
 
     @if (!editMode() || !isLoadingOrder()) {
       <!-- Search bar (outside scroll container, no z-index needed) -->
-      <div class="bg-base-100 shrink-0 pb-4">
-        <div class="mb-4 flex items-center gap-2">
+      <div class="bg-base-100 mb-4 shrink-0">
+        <div class="flex items-center gap-2">
           <label class="input input-sm outline-transparent">
             <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
             <input
@@ -36,8 +36,6 @@
             (filterReset)="onProductTypeFilterReset()"
           />
         </div>
-
-        <div class="divider"></div>
       </div>
 
       <!-- Scrollable product grid -->
@@ -49,7 +47,7 @@
 
       @if (!isLoading()) {
         <div class="flex-1 overflow-y-auto">
-          <div class="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @for (p of products(); track p.id) {
               <div
                 class="card bg-base-100 cursor-pointer border border-gray-100"
@@ -76,9 +74,7 @@
     }
   </div>
 
-  <aside
-    class="bg-base-100 fixed top-20 right-4 bottom-20 flex w-80 flex-col rounded border border-gray-100 p-4"
-  >
+  <aside class="bg-base-100 flex w-80 shrink-0 flex-col rounded border border-gray-100 p-4">
     <div class="mb-3 flex shrink-0 items-center justify-between">
       <div>
         @if (editMode()) {

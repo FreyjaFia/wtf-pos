@@ -110,21 +110,19 @@ export class OrderEditor implements OnInit {
 
     this.productService
       .getProducts({
-        page: 1,
-        pageSize: 100,
         searchTerm: searchTerm || null,
         type: null,
         isActive: true,
       })
       .subscribe({
         next: (result) => {
-          this.productsCache.set(result.products);
+          this.productsCache.set(result);
           this.applyFiltersToCache();
 
           // If in edit mode, enrich cart items with product data
           if (this.editMode()) {
             const enrichedCart = this.cart().map((cartItem) => {
-              const product = result.products.find((p) => p.id === cartItem.productId);
+              const product = result.find((p: ProductDto) => p.id === cartItem.productId);
               return product
                 ? {
                     ...cartItem,

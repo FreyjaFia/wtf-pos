@@ -1,118 +1,114 @@
-<div class="fixed top-20 right-0 bottom-20 left-0 px-4">
-  <div class="container-fixed mx-auto flex h-full flex-col">
-    <!-- Toast Alert at top center -->
-    @if (showError() && error()) {
-      <div class="fixed top-24 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
-        <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
-      </div>
-    }
-
-    <!-- Header with Refresh Button (outside scroll container) -->
-    <div class="mb-4 flex shrink-0 items-center gap-2">
-      <!-- Search Input -->
-      <label class="input input-sm outline-transparent">
-        <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
-        <input
-          type="search"
-          class="grow"
-          placeholder="Search by order number"
-          [formControl]="filterForm.controls.searchTerm"
-        />
-      </label>
-
-      <!-- Status Filter Dropdown -->
-      <app-filter-dropdown
-        [title]="'Status'"
-        [icon]="'icon-status'"
-        [options]="filterOptions()"
-        [selectedIds]="selectedStatuses()"
-        (filterChange)="onStatusFilterChange($event)"
-        (filterReset)="onStatusFilterReset()"
-      />
-
-      <!-- Refresh Button (Far Right) -->
-      <button
-        class="btn btn-sm"
-        type="button"
-        (click)="refresh()"
-        [disabled]="isRefreshing()"
-        aria-label="Refresh orders"
-      >
-        @if (isRefreshing()) {
-          <span class="loading loading-spinner loading-xs"></span>
-        } @else {
-          <app-icon name="icon-refresh" [class]="'h-5 w-5'" [fill]="'currentColor'" />
-        }
-      </button>
+<div class="flex h-full flex-col">
+  <!-- Toast Alert at top center -->
+  @if (showError() && error()) {
+    <div class="fixed top-24 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
+      <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
     </div>
+  }
 
-    <!-- Loading State -->
-    @if (isLoading()) {
-      <div class="flex justify-center py-8">
-        <span class="loading loading-spinner loading-lg"></span>
+  <!-- Header with Refresh Button (outside scroll container) -->
+  <div class="mb-4 flex shrink-0 items-center gap-2">
+    <!-- Search Input -->
+    <label class="input input-sm outline-transparent">
+      <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
+      <input
+        type="search"
+        class="grow"
+        placeholder="Search by order number"
+        [formControl]="filterForm.controls.searchTerm"
+      />
+    </label>
+
+    <!-- Status Filter Dropdown -->
+    <app-filter-dropdown
+      [title]="'Status'"
+      [icon]="'icon-status'"
+      [options]="filterOptions()"
+      [selectedIds]="selectedStatuses()"
+      (filterChange)="onStatusFilterChange($event)"
+      (filterReset)="onStatusFilterReset()"
+    />
+
+    <!-- Refresh Button (Far Right) -->
+    <button
+      class="btn btn-sm"
+      type="button"
+      (click)="refresh()"
+      [disabled]="isRefreshing()"
+      aria-label="Refresh orders"
+    >
+      @if (isRefreshing()) {
+        <span class="loading loading-spinner loading-xs"></span>
+      } @else {
+        <app-icon name="icon-refresh" [class]="'h-5 w-5'" [fill]="'currentColor'" />
+      }
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+  }
+
+  <!-- Orders Table -->
+  @if (!isLoading()) {
+    @if (orders().length === 0) {
+      <div class="bg-base-100 rounded-lg p-8 text-center">
+        <p class="text-lg text-gray-500">No orders found</p>
+        <p class="text-sm text-gray-400">Try adjusting your filters</p>
+      </div>
+    } @else {
+      <div
+        class="isolate min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border border-gray-200"
+      >
+        <table class="table w-full">
+          <thead class="bg-base-100 sticky top-0 z-10">
+            <tr>
+              <th
+                class="hover:bg-base-200 cursor-pointer text-left"
+                (click)="toggleSort('orderNumber')"
+              >
+                <div class="flex items-center gap-1">
+                  Order Number
+                  @if (sortColumn() === 'orderNumber') {
+                    <span>{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+                </div>
+              </th>
+              <th class="hover:bg-base-200 cursor-pointer text-left" (click)="toggleSort('date')">
+                <div class="flex items-center gap-1">
+                  Date
+                  @if (sortColumn() === 'date') {
+                    <span>{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+                </div>
+              </th>
+              <th class="text-left">Status</th>
+              <th class="text-right">Items</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of orders(); track order.id) {
+              <tr class="hover cursor-pointer" (click)="editOrder(order)">
+                <td class="font-semibold">#{{ order.orderNumber }}</td>
+                <td>{{ getOrderDate(order) | date: 'd MMM, y' }}</td>
+                <td>
+                  <span class="badge badge-xs" [class]="getStatusClass(order.status)">
+                    {{ getStatusLabel(order.status) }}
+                  </span>
+                </td>
+                <td class="text-right text-sm text-gray-600">
+                  {{ getItemsText(order) }}
+                </td>
+                <td class="text-right font-semibold">₱{{ order.totalAmount | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
     }
-
-    <!-- Orders Table -->
-    @if (!isLoading()) {
-      @if (orders().length === 0) {
-        <div class="bg-base-100 rounded-lg p-8 text-center">
-          <p class="text-lg text-gray-500">No orders found</p>
-          <p class="text-sm text-gray-400">Try adjusting your filters</p>
-        </div>
-      } @else {
-        <div
-          class="isolate min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border border-gray-200"
-        >
-          <table class="table w-full">
-            <thead class="bg-base-100 sticky top-0 z-10">
-              <tr>
-                <th
-                  class="hover:bg-base-200 cursor-pointer text-left"
-                  (click)="toggleSort('orderNumber')"
-                >
-                  <div class="flex items-center gap-1">
-                    Order Number
-                    @if (sortColumn() === 'orderNumber') {
-                      <span>{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
-                    }
-                  </div>
-                </th>
-                <th class="hover:bg-base-200 cursor-pointer text-left" (click)="toggleSort('date')">
-                  <div class="flex items-center gap-1">
-                    Date
-                    @if (sortColumn() === 'date') {
-                      <span>{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
-                    }
-                  </div>
-                </th>
-                <th class="text-left">Status</th>
-                <th class="text-right">Items</th>
-                <th class="text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (order of orders(); track order.id) {
-                <tr class="hover cursor-pointer" (click)="editOrder(order)">
-                  <td class="font-semibold">#{{ order.orderNumber }}</td>
-                  <td>{{ getOrderDate(order) | date: 'd MMM, y' }}</td>
-                  <td>
-                    <span class="badge badge-xs" [class]="getStatusClass(order.status)">
-                      {{ getStatusLabel(order.status) }}
-                    </span>
-                  </td>
-                  <td class="text-right text-sm text-gray-600">
-                    {{ getItemsText(order) }}
-                  </td>
-                  <td class="text-right font-semibold">
-                    ₱{{ order.totalAmount | number: '1.2-2' }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    }
-  </div>
+  }
 </div>
