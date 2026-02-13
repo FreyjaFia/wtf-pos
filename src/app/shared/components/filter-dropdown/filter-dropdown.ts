@@ -13,7 +13,6 @@ export interface FilterOption {
   selector: 'app-filter-dropdown',
   imports: [CommonModule, Icon],
   templateUrl: './filter-dropdown.html',
-  styleUrl: './filter-dropdown.css',
 })
 export class FilterDropdown {
   readonly title = input<string>('Filter');

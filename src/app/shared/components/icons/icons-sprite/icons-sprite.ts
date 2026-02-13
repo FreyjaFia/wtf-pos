@@ -4,7 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-icons-sprite',
   imports: [],
   templateUrl: './icons-sprite.html',
-  styleUrl: './icons-sprite.css',
 })
 export class IconsSprite {
 

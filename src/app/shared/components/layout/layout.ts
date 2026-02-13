@@ -7,6 +7,5 @@ import { Header } from '../header/header';
   selector: 'app-layout',
   imports: [RouterOutlet, Dock, Header],
   templateUrl: './layout.html',
-  styleUrl: './layout.css',
 })
 export class Layout {}

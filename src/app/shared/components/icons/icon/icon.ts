@@ -5,7 +5,6 @@ import { Component, input } from '@angular/core';
   selector: 'app-icon',
   imports: [CommonModule],
   templateUrl: './icon.html',
-  styleUrl: './icon.css',
 })
 export class Icon {
   readonly name = input.required<string>();

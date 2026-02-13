@@ -6,7 +6,6 @@ import { AuthService } from '@core/services';
   selector: 'app-header',
   imports: [],
   templateUrl: './header.html',
-  styleUrl: './header.css',
 })
 export class Header {
   protected readonly auth = inject(AuthService);

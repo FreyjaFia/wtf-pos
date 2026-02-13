@@ -8,7 +8,6 @@ import { Icon } from '../icons/icon/icon';
   selector: 'app-dock',
   imports: [CommonModule, Icon, RouterLink, RouterModule],
   templateUrl: './dock.html',
-  styleUrl: './dock.css',
 })
 export class Dock {
   protected readonly auth = inject(AuthService);
