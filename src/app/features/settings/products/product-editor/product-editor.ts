@@ -1,10 +1,10 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { CreateProductDto, ProductCategoryEnum, UpdateProductDto } from '@shared/models';
 import { AlertComponent, Icon } from '@shared/components';
+import { CreateProductDto, ProductCategoryEnum, UpdateProductDto } from '@shared/models';
 
 @Component({
   selector: 'app-product-editor',
@@ -15,6 +15,7 @@ export class ProductEditorComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
 
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
@@ -223,8 +224,8 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected navigateToList() {
-    this.router.navigate(['/settings/products']);
+  protected goBack() {
+    this.location.back();
   }
 
   private navigateToDetails(productId: string) {
