@@ -1,0 +1,100 @@
+<dialog id="addons-swapper-modal" class="modal">
+  <div class="modal-box w-full max-w-4xl">
+    <h3 class="mb-4 text-lg font-bold">Manage Product Add-ons</h3>
+
+    <!-- Error Alert -->
+    @if (showError() && error()) {
+      <div class="mb-4">
+        <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
+      </div>
+    }
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="flex items-center justify-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    } @else {
+      <!-- Drag and Drop Lists -->
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <!-- Available Add-ons -->
+        <div>
+          <h4 class="mb-3 font-semibold text-gray-700">Available Add-ons</h4>
+          <ul
+            #availableList
+            class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4"
+          >
+            @for (addon of availableAddOns(); track addon.id) {
+              <li
+                [attr.data-id]="addon.id"
+                class="inline-flex cursor-grab items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+              >
+                <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-500'" />
+                <span>{{ addon.name }}</span>
+                <span class="ml-auto text-xs text-gray-500">₱{{ addon.price | number: '1.2-2' }}</span>
+              </li>
+            }
+            @if (availableAddOns().length === 0) {
+              <div class="flex items-center justify-center py-8 text-gray-500">
+                <p class="text-sm">No available add-ons</p>
+              </div>
+            }
+          </ul>
+        </div>
+
+        <!-- Assigned Add-ons -->
+        <div>
+          <h4 class="mb-3 font-semibold text-gray-700">Assigned Add-ons</h4>
+          <ul
+            #assignedList
+            class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-blue-50 p-4"
+          >
+            @for (addon of assignedAddOns(); track addon.id) {
+              <li
+                [attr.data-id]="addon.id"
+                class="inline-flex cursor-grab items-center gap-3 rounded-lg border border-blue-200 bg-blue-100 px-4 py-3 text-sm font-medium text-blue-900 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+              >
+                <app-icon name="icon-box" [class]="'h-4 w-4 text-blue-600'" />
+                <span>{{ addon.name }}</span>
+                <span class="ml-auto text-xs text-blue-600">₱{{ addon.price | number: '1.2-2' }}</span>
+              </li>
+            }
+            @if (assignedAddOns().length === 0) {
+              <div class="flex items-center justify-center py-8 text-gray-400">
+                <p class="text-sm">Drag add-ons here</p>
+              </div>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Info Text -->
+      <div class="mb-6 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
+        <p>
+          Drag and drop add-ons between the lists to manage which add-ons are available for this
+          product.
+        </p>
+      </div>
+    }
+
+    <!-- Modal Actions -->
+    <div class="modal-action">
+      <button class="btn btn-outline" (click)="closeModal()" type="button">Cancel</button>
+      <button
+        class="btn btn-neutral"
+        [disabled]="isLoading() || isSaving()"
+        (click)="saveAddOns()"
+        type="button"
+      >
+        @if (isSaving()) {
+          <span class="loading loading-spinner loading-sm"></span>
+        }
+        Save Add-ons
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button type="button">close</button>
+  </form>
+</dialog>

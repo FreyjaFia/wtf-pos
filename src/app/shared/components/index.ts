@@ -1,3 +1,4 @@
+export * from './addons-swapper/addons-swapper';
 export * from './alert/alert';
 export * from './badge/badge';
 export * from './dock/dock';

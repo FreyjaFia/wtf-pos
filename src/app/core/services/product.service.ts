@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment.development';
-import { CreateProductDto, ProductCategoryEnum, ProductDto, UpdateProductDto } from '@shared/models';
+import { CreateProductDto, ProductCategoryEnum, ProductDto, ProductSimpleDto, UpdateProductDto } from '@shared/models';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -126,6 +126,43 @@ export class ProductService {
 
         if (error.status === 400) {
           errorMessage = error.error || 'Invalid file. Please check file type and size.';
+        } else if (error.status === 404) {
+          errorMessage = 'Product not found.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  getProductAddOns(productId: string): Observable<ProductSimpleDto[]> {
+    return this.http.get<ProductSimpleDto[]>(`${this.baseUrl}/${productId}/addons`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error fetching product add-ons:', error);
+
+        const errorMessage =
+          error.status === 404
+            ? 'Product not found.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to fetch product add-ons. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  assignProductAddOns(productId: string, addOnIds: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${productId}/addons`, { productId, addOnIds }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error assigning product add-ons:', error);
+
+        let errorMessage = 'Failed to assign add-ons. Please try again later.';
+
+        if (error.status === 400) {
+          errorMessage = error.error?.message || 'Invalid request. Please check the selected add-ons.';
         } else if (error.status === 404) {
           errorMessage = 'Product not found.';
         } else if (error.status === 0) {

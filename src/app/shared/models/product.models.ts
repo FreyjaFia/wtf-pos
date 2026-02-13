@@ -1,8 +1,8 @@
 export enum ProductCategoryEnum {
-  Drink = 0,
-  Food = 1,
-  Dessert = 2,
-  Other = 3,
+  Drink = 1,
+  Food = 2,
+  Dessert = 3,
+  Other = 4,
 }
 
 // Deprecated: Use ProductCategoryEnum instead
@@ -57,4 +57,13 @@ export interface UpdateProductDto {
   category: ProductCategoryEnum;
   isAddOn: boolean;
   isActive: boolean;
+}
+
+export interface ProductSimpleDto {
+  id: string;
+  name: string;
+  price: number;
+  category: ProductCategoryEnum;
+  isActive: boolean;
+  imageUrl?: string | null;
 }
