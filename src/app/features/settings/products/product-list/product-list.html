@@ -54,11 +54,10 @@
     </button>
   </div>
 
-  <!-- Error Alert -->
-  @if (error()) {
-    <div class="alert alert-error mb-4 shrink-0">
-      <app-icon name="icon-error" [class]="'h-6 w-6'"></app-icon>
-      <span>{{ error() }}</span>
+  <!-- Toast Alert at top center -->
+  @if (showError() && error()) {
+    <div class="fixed top-20 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
+      <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
     </div>
   }
 
@@ -126,7 +125,9 @@
                 </td>
                 <td class="font-medium">{{ product.name }}</td>
                 <td>
-                  <app-badge variant="default">{{ getProductCategoryName(product.category) }}</app-badge>
+                  <app-badge variant="default">{{
+                    getProductCategoryName(product.category)
+                  }}</app-badge>
                 </td>
                 <td class="text-right font-semibold">₱{{ product.price.toFixed(2) }}</td>
                 <td class="text-center">
@@ -137,9 +138,9 @@
                   }
                 </td>
                 <td class="text-right">
-                  <div class="flex justify-end gap-2">
+                  <div class="flex justify-end gap-1">
                     <button
-                      class="btn btn-sm btn-neutral"
+                      class="btn btn-sm btn-ghost"
                       (click)="navigateToEditor(product.id); $event.stopPropagation()"
                       title="Edit"
                     >
