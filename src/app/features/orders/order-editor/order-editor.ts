@@ -47,14 +47,24 @@ export class OrderEditor implements OnInit {
   protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
   protected totalPrice = () => this.cart().reduce((s, i) => s + i.qty * i.price, 0);
 
+  protected readonly categoryCounts = computed(() => {
+    const cache = this.productsCache();
+    return {
+      [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink).length,
+      [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food).length,
+    };
+  });
+
   protected readonly filterOptions = computed<FilterOption[]>(() => [
     {
       id: ProductCategoryEnum.Drink,
       label: 'Drink',
+      count: this.categoryCounts()[ProductCategoryEnum.Drink],
     },
     {
       id: ProductCategoryEnum.Food,
       label: 'Food',
+      count: this.categoryCounts()[ProductCategoryEnum.Food],
     },
   ]);
 

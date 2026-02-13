@@ -38,16 +38,34 @@ export class ProductListComponent implements OnInit {
   protected readonly sortColumn = signal<SortColumn | null>('name');
   protected readonly sortDirection = signal<SortDirection>('asc');
 
+  protected readonly categoryCounts = computed(() => {
+    const cache = this.products();
+    return {
+      [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink).length,
+      [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food).length,
+      [ProductCategoryEnum.Dessert]: cache.filter((p) => p.category === ProductCategoryEnum.Dessert).length,
+      [ProductCategoryEnum.Other]: cache.filter((p) => p.category === ProductCategoryEnum.Other).length,
+    };
+  });
+
+  protected readonly statusCounts = computed(() => {
+    const cache = this.products();
+    return {
+      active: cache.filter((p) => p.isActive).length,
+      inactive: cache.filter((p) => !p.isActive).length,
+    };
+  });
+
   protected readonly typeOptions = computed<FilterOption[]>(() => [
-    { id: ProductCategoryEnum.Drink, label: 'Drink' },
-    { id: ProductCategoryEnum.Food, label: 'Food' },
-    { id: ProductCategoryEnum.Dessert, label: 'Dessert' },
-    { id: ProductCategoryEnum.Other, label: 'Other' },
+    { id: ProductCategoryEnum.Drink, label: 'Drink', count: this.categoryCounts()[ProductCategoryEnum.Drink] },
+    { id: ProductCategoryEnum.Food, label: 'Food', count: this.categoryCounts()[ProductCategoryEnum.Food] },
+    { id: ProductCategoryEnum.Dessert, label: 'Dessert', count: this.categoryCounts()[ProductCategoryEnum.Dessert] },
+    { id: ProductCategoryEnum.Other, label: 'Other', count: this.categoryCounts()[ProductCategoryEnum.Other] },
   ]);
 
   protected readonly statusOptions = computed<FilterOption[]>(() => [
-    { id: 'active', label: 'Active' },
-    { id: 'inactive', label: 'Inactive' },
+    { id: 'active', label: 'Active', count: this.statusCounts().active },
+    { id: 'inactive', label: 'Inactive', count: this.statusCounts().inactive },
   ]);
 
   protected readonly sortedProducts = computed(() => {
