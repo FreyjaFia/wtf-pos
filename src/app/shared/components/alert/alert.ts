@@ -1,11 +1,21 @@
-import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { Icon } from '../icons/icon/icon';
 
 export type AlertType = 'info' | 'success' | 'error' | 'warning';
 
 @Component({
   selector: 'app-alert',
-  imports: [Icon],
+  imports: [Icon, NgTemplateOutlet],
   templateUrl: './alert.html',
   styleUrl: './alert.css',
 })
@@ -22,11 +32,9 @@ export class AlertComponent {
     effect(() => {
       // Trigger effect when message changes
       this.message();
-
       const timer = setTimeout(() => {
         this.dismiss();
       }, 3000);
-
       this.destroyRef.onDestroy(() => clearTimeout(timer));
     });
   }
@@ -34,6 +42,16 @@ export class AlertComponent {
   protected get iconId(): string {
     return `icon-${this.type()}`;
   }
+
+  protected readonly alertLabel = computed(() => {
+    const labels: Record<AlertType, string> = {
+      success: 'Success',
+      error: 'Error',
+      warning: 'Warning',
+      info: 'Info',
+    };
+    return labels[this.type()];
+  });
 
   protected dismiss(): void {
     this.isDismissing.set(true);

@@ -1,17 +1,51 @@
-<div
-  [class]="'alert alert-soft alert-' + type() + (isDismissing() ? ' alert-dismissing' : '')"
-  role="alert"
->
-  <app-icon [name]="iconId" [fill]="'none'" [class]="'h-6 w-6 shrink-0 stroke-current'" />
+@switch (type()) {
+  @case ('success') {
+    <div
+      class="flex items-center gap-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-500"
+      [class.alert-dismissing]="isDismissing()"
+      role="alert"
+    >
+      <ng-container *ngTemplateOutlet="alertContent" />
+    </div>
+  }
+  @case ('error') {
+    <div
+      class="flex items-center gap-3 rounded-xl bg-red-50 p-4 text-sm text-red-500"
+      [class.alert-dismissing]="isDismissing()"
+      role="alert"
+    >
+      <ng-container *ngTemplateOutlet="alertContent" />
+    </div>
+  }
+  @case ('warning') {
+    <div
+      class="flex items-center gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-500"
+      [class.alert-dismissing]="isDismissing()"
+      role="alert"
+    >
+      <ng-container *ngTemplateOutlet="alertContent" />
+    </div>
+  }
+  @case ('info') {
+    <div
+      class="flex items-center gap-3 rounded-xl bg-indigo-50 p-4 text-sm text-indigo-600"
+      [class.alert-dismissing]="isDismissing()"
+      role="alert"
+    >
+      <ng-container *ngTemplateOutlet="alertContent" />
+    </div>
+  }
+}
 
-  <span>{{ message() }}</span>
-
+<ng-template #alertContent>
+  <app-icon [name]="iconId" [fill]="'none'" [class]="'h-5 w-5 shrink-0 stroke-current'" />
+  <span class="flex-1">{{ message() }}</span>
   <button
     type="button"
-    class="btn btn-sm btn-circle btn-ghost"
+    class="ml-auto shrink-0 cursor-pointer opacity-60 hover:opacity-100"
     (click)="dismiss()"
     aria-label="Close alert"
   >
-    <app-icon name="icon-close" [fill]="'none'" [class]="'h-6 w-6 stroke-current'" />
+    <app-icon name="icon-close" [fill]="'none'" [class]="'h-5 w-5 stroke-current'" />
   </button>
-</div>
+</ng-template>
