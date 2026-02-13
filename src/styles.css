@@ -2,3 +2,7 @@
 
 @import 'tailwindcss';
 @plugin 'daisyui';
+
+.hover\:bg-transition:hover {
+  transition: background-color 0.2s ease-in-out;
+}
