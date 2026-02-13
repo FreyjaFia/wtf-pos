@@ -1,0 +1,19 @@
+<div class="flex h-full overflow-hidden">
+  <!-- Sidebar Navigation -->
+  <div class="border-base-300 w-auto shrink-0 overflow-y-auto">
+    <h2 class="mb-6 text-2xl font-bold">Settings</h2>
+    <ul class="menu menu-compact w-full p-0">
+      <li>
+        <a routerLink="products" routerLinkActive="btn btn-soft" class="justify-start rounded-lg">
+          <app-icon name="icon-box" [class]="'h-5 w-5'"></app-icon>
+          Products
+        </a>
+      </li>
+    </ul>
+  </div>
+  <div class="divider lg:divider-horizontal"></div>
+  <!-- Content Area -->
+  <div class="flex-1 overflow-auto">
+    <router-outlet />
+  </div>
+</div>
