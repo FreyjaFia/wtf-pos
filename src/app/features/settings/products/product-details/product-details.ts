@@ -2,13 +2,16 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { BadgeComponent, Icon } from '@shared/components';
+import { AlertComponent, BadgeComponent, Icon } from '@shared/components';
 import { ProductCategoryEnum, ProductDto, ProductTypeEnum } from '@shared/models';
 
 @Component({
   selector: 'app-product-details',
-  imports: [CommonModule, Icon, BadgeComponent],
+  imports: [CommonModule, Icon, BadgeComponent, AlertComponent],
   templateUrl: './product-details.html',
+  host: {
+    class: 'block h-full',
+  },
 })
 export class ProductDetailsComponent implements OnInit {
   private readonly productService = inject(ProductService);
@@ -18,6 +21,9 @@ export class ProductDetailsComponent implements OnInit {
   protected readonly product = signal<ProductDto | null>(null);
   protected readonly isLoading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly showError = signal(false);
+  protected readonly successMessage = signal<string | null>(null);
+  protected readonly showSuccess = signal(false);
   protected readonly ProductTypeEnum = ProductTypeEnum;
 
   ngOnInit() {
@@ -26,11 +32,17 @@ export class ProductDetailsComponent implements OnInit {
     if (id) {
       this.loadProduct(id);
     }
+
+    if (this.route.snapshot.queryParamMap.get('saved')) {
+      this.successMessage.set('Product saved successfully.');
+      this.showSuccess.set(true);
+    }
   }
 
   private loadProduct(id: string) {
     this.isLoading.set(true);
     this.error.set(null);
+    this.showError.set(false);
 
     this.productService.getProduct(id).subscribe({
       next: (product) => {
@@ -39,39 +51,13 @@ export class ProductDetailsComponent implements OnInit {
       },
       error: (err) => {
         this.error.set(err.message);
+        this.showError.set(true);
         this.isLoading.set(false);
       },
     });
   }
 
-  protected navigateToList() {
-    this.router.navigate(['/settings/products']);
-  }
-
-  protected navigateToEdit() {
-    if (this.product()) {
-      this.router.navigate(['/settings/products/edit', this.product()!.id]);
-    }
-  }
-
-  protected getProductCategoryName(category: ProductCategoryEnum): string {
-    return ProductCategoryEnum[category];
-  }
-
-  protected deleteProduct() {
-    const product = this.product();
-
-    if (!product || !confirm(`Are you sure you want to delete "${product.name}"?`)) {
-      return;
-    }
-
-    this.productService.deleteProduct(product.id).subscribe({
-      next: () => {
-        this.navigateToList();
-      },
-      error: (err) => {
-        this.error.set(err.message);
-      },
-    });
+  protected hideSuccess() {
+    this.showSuccess.set(false);
   }
 }
