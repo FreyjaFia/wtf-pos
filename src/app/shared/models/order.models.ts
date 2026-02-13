@@ -14,6 +14,7 @@ export interface OrderItemDto {
   id: string;
   productId: string;
   quantity: number;
+  price?: number | null;
 }
 
 export interface OrderDto {
