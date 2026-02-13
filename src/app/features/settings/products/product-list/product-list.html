@@ -1,74 +1,52 @@
 <div class="flex h-full flex-col">
-  <!-- Header -->
-  <div class="mb-6 flex shrink-0 items-center justify-between">
-    <h1 class="text-3xl font-bold">Products</h1>
-    <button class="btn btn-neutral" (click)="navigateToEditor()">
-      <app-icon name="icon-plus" [class]="'mr-2 h-5 w-5'"></app-icon>
+  <!-- Header with Filters -->
+  <div class="mb-4 flex shrink-0 items-center gap-2">
+    <!-- Search Input -->
+    <label class="input input-sm outline-transparent">
+      <app-icon name="icon-search" [class]="'h-[1em] opacity-50'" [fill]="'#000000'" />
+      <input
+        type="search"
+        class="grow"
+        placeholder="Search by product name"
+        [formControl]="filterForm.controls.searchTerm"
+      />
+    </label>
+
+    <!-- Type Filter Dropdown -->
+    <app-filter-dropdown
+      [title]="'Type'"
+      [icon]="'icon-box'"
+      [options]="typeOptions()"
+      [selectedIds]="selectedTypes()"
+      (filterChange)="onTypeFilterChange($event)"
+      (filterReset)="onTypeFilterReset()"
+    />
+
+    <!-- Add-on Filter Dropdown -->
+    <app-filter-dropdown
+      [title]="'Add-on'"
+      [icon]="'icon-plus'"
+      [options]="addOnOptions()"
+      [selectedIds]="selectedAddOns()"
+      (filterChange)="onAddOnFilterChange($event)"
+      (filterReset)="onAddOnFilterReset()"
+    />
+
+    <!-- Status Filter Dropdown -->
+    <app-filter-dropdown
+      [title]="'Status'"
+      [icon]="'icon-status'"
+      [options]="statusOptions()"
+      [selectedIds]="selectedStatuses()"
+      (filterChange)="onStatusFilterChange($event)"
+      (filterReset)="onStatusFilterReset()"
+    />
+
+    <!-- Add Product Button (Far Right) -->
+    <button class="btn btn-sm btn-neutral ml-auto" (click)="navigateToEditor()">
+      <app-icon name="icon-plus" [class]="'h-4 w-4'" />
       Add Product
     </button>
-  </div>
-
-  <!-- Filters -->
-  <div class="bg-base-100 mb-6 shrink-0 rounded-lg p-6 shadow-md">
-    <h2 class="mb-4 text-lg font-semibold">Filters</h2>
-    <form [formGroup]="filterForm" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <!-- Search -->
-      <div class="form-control">
-        <label class="label" for="searchTerm">
-          <span class="label-text">Search</span>
-        </label>
-        <input
-          id="searchTerm"
-          type="text"
-          formControlName="searchTerm"
-          placeholder="Search by name..."
-          class="input input-bordered"
-        />
-      </div>
-
-      <!-- Type Filter -->
-      <div class="form-control">
-        <label class="label" for="typeFilter">
-          <span class="label-text">Type</span>
-        </label>
-        <select id="typeFilter" formControlName="type" class="select select-bordered">
-          <option [ngValue]="null">All Types</option>
-          <option [ngValue]="ProductTypeEnum.Drink">Drink</option>
-          <option [ngValue]="ProductTypeEnum.Food">Food</option>
-          <option [ngValue]="ProductTypeEnum.Dessert">Dessert</option>
-          <option [ngValue]="ProductTypeEnum.Other">Other</option>
-        </select>
-      </div>
-
-      <!-- Add-on Filter -->
-      <div class="form-control">
-        <label class="label" for="isAddOnFilter">
-          <span class="label-text">Add-on</span>
-        </label>
-        <select id="isAddOnFilter" formControlName="isAddOn" class="select select-bordered">
-          <option [ngValue]="null">All</option>
-          <option [ngValue]="true">Yes</option>
-          <option [ngValue]="false">No</option>
-        </select>
-      </div>
-
-      <!-- Active Filter -->
-      <div class="form-control">
-        <label class="label" for="isActiveFilter">
-          <span class="label-text">Status</span>
-        </label>
-        <select id="isActiveFilter" formControlName="isActive" class="select select-bordered">
-          <option [ngValue]="null">All</option>
-          <option [ngValue]="true">Active</option>
-          <option [ngValue]="false">Inactive</option>
-        </select>
-      </div>
-    </form>
-    <div class="mt-4">
-      <button type="button" class="btn btn-sm btn-ghost" (click)="clearFilters()">
-        Clear Filters
-      </button>
-    </div>
   </div>
 
   <!-- Error Alert -->
@@ -100,51 +78,64 @@
         <table class="table w-full">
           <thead class="bg-base-100 sticky top-0 z-10">
             <tr>
-              <th>Name</th>
-              <th>Price</th>
-              <th>Type</th>
-              <th>Add-on</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th class="w-12"></th>
+              <th class="hover:bg-base-200 cursor-pointer text-left" (click)="toggleSort('name')">
+                <div class="flex items-center gap-1">
+                  Name
+                  @if (sortColumn() === 'name') {
+                    <span>{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+                  }
+                </div>
+              </th>
+              <th class="text-left">Category</th>
+              <th class="text-right">Price</th>
+              <th class="text-center">Status</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (product of products(); track product.id) {
+            @for (product of sortedProducts(); track product.id) {
               <tr class="hover cursor-pointer" (click)="navigateToDetails(product.id)">
-                <td class="font-medium">{{ product.name }}</td>
-                <td>₱{{ product.price.toFixed(2) }}</td>
-                <td>
-                  <span class="badge badge-ghost">{{ getProductTypeName(product.type) }}</span>
-                </td>
-                <td>
-                  @if (product.isAddOn) {
-                    <span class="badge badge-info">Yes</span>
+                <td class="w-12">
+                  @if (product.imageUrl) {
+                    <img
+                      [src]="product.imageUrl"
+                      [alt]="product.name"
+                      class="aspect-square h-10 w-10 rounded object-cover"
+                    />
                   } @else {
-                    <span class="badge badge-ghost">No</span>
+                    <div class="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
+                      <app-icon name="icon-box" [class]="'h-5 w-5 text-gray-400'" [fill]="'currentColor'" />
+                    </div>
                   }
                 </td>
+                <td class="font-medium">{{ product.name }}</td>
                 <td>
+                  <span class="badge badge-ghost">{{ getProductCategoryName(product.category) }}</span>
+                </td>
+                <td class="text-right font-semibold">₱{{ product.price.toFixed(2) }}</td>
+                <td class="text-center">
                   @if (product.isActive) {
                     <span class="badge badge-success">Active</span>
                   } @else {
                     <span class="badge badge-error">Inactive</span>
                   }
                 </td>
-                <td>
-                  <div class="flex gap-2">
+                <td class="text-right">
+                  <div class="flex justify-end gap-2">
                     <button
                       class="btn btn-sm btn-neutral"
                       (click)="navigateToEditor(product.id); $event.stopPropagation()"
                       title="Edit"
                     >
-                      <app-icon name="icon-edit" [class]="'h-4 w-4'"></app-icon>
+                      <app-icon name="icon-edit" [class]="'h-4 w-4'" />
                     </button>
                     <button
                       class="btn btn-sm btn-ghost text-error"
                       (click)="deleteProduct(product); $event.stopPropagation()"
                       title="Delete"
                     >
-                      <app-icon name="icon-delete" [class]="'h-4 w-4'"></app-icon>
+                      <app-icon name="icon-delete" [class]="'h-4 w-4'" />
                     </button>
                   </div>
                 </td>

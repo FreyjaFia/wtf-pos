@@ -1,15 +1,18 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+﻿import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { ProductDto, ProductTypeEnum } from '@shared/models';
-import { Icon } from '@shared/components';
+import { FilterDropdown, Icon, type FilterOption } from '@shared/components';
+import { ProductCategoryEnum, ProductDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
+
+type SortColumn = 'name';
+type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-product-list',
-  imports: [CommonModule, ReactiveFormsModule, Icon],
+  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
   host: {
@@ -23,13 +26,47 @@ export class ProductListComponent implements OnInit {
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly ProductTypeEnum = ProductTypeEnum;
+  protected readonly ProductCategoryEnum = ProductCategoryEnum;
+
+  protected readonly selectedTypes = signal<number[]>([]);
+  protected readonly selectedAddOns = signal<string[]>([]);
+  protected readonly selectedStatuses = signal<string[]>(['active']);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
-    type: new FormControl<ProductTypeEnum | null>(null),
-    isAddOn: new FormControl<boolean | null>(null),
-    isActive: new FormControl<boolean | null>(true),
+  });
+
+  protected readonly sortColumn = signal<SortColumn | null>('name');
+  protected readonly sortDirection = signal<SortDirection>('asc');
+
+  protected readonly typeOptions = computed<FilterOption[]>(() => [
+    { id: ProductCategoryEnum.Drink, label: 'Drink' },
+    { id: ProductCategoryEnum.Food, label: 'Food' },
+    { id: ProductCategoryEnum.Dessert, label: 'Dessert' },
+    { id: ProductCategoryEnum.Other, label: 'Other' },
+  ]);
+
+  protected readonly addOnOptions = computed<FilterOption[]>(() => [
+    { id: 'yes', label: 'Yes' },
+    { id: 'no', label: 'No' },
+  ]);
+
+  protected readonly statusOptions = computed<FilterOption[]>(() => [
+    { id: 'active', label: 'Active' },
+    { id: 'inactive', label: 'Inactive' },
+  ]);
+
+  protected readonly sortedProducts = computed(() => {
+    const products = [...this.products()];
+
+    if (this.sortColumn() === 'name') {
+      products.sort((a, b) => {
+        const comparison = a.name.localeCompare(b.name);
+        return this.sortDirection() === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    return products;
   });
 
   ngOnInit() {
@@ -44,14 +81,32 @@ export class ProductListComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    const filters = this.filterForm.value;
+    const searchTerm = this.filterForm.value.searchTerm || null;
+    const types = this.selectedTypes();
+    const addOns = this.selectedAddOns();
+    const statuses = this.selectedStatuses();
+
+    let category: ProductCategoryEnum | null = null;
+    if (types.length === 1) {
+      category = types[0] as ProductCategoryEnum;
+    }
+
+    let isAddOn: boolean | null = null;
+    if (addOns.length === 1) {
+      isAddOn = addOns[0] === 'yes';
+    }
+
+    let isActive: boolean | null = null;
+    if (statuses.length === 1) {
+      isActive = statuses[0] === 'active';
+    }
 
     this.productService
       .getProducts({
-        searchTerm: filters.searchTerm || null,
-        type: filters.type || null,
-        isAddOn: filters.isAddOn,
-        isActive: filters.isActive,
+        searchTerm,
+        category,
+        isAddOn,
+        isActive,
       })
       .subscribe({
         next: (data) => {
@@ -92,16 +147,46 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  protected getProductTypeName(type: ProductTypeEnum): string {
-    return ProductTypeEnum[type];
+  protected getProductCategoryName(category: ProductCategoryEnum): string {
+    return ProductCategoryEnum[category];
   }
 
-  protected clearFilters() {
-    this.filterForm.reset({
-      searchTerm: '',
-      type: null,
-      isAddOn: null,
-      isActive: true,
-    });
+  protected toggleSort(column: SortColumn) {
+    if (this.sortColumn() === column) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortColumn.set(column);
+      this.sortDirection.set('asc');
+    }
+  }
+
+  protected onTypeFilterChange(selectedIds: (string | number)[]) {
+    this.selectedTypes.set(selectedIds as number[]);
+    this.loadProducts();
+  }
+
+  protected onTypeFilterReset() {
+    this.selectedTypes.set([]);
+    this.loadProducts();
+  }
+
+  protected onAddOnFilterChange(selectedIds: (string | number)[]) {
+    this.selectedAddOns.set(selectedIds as string[]);
+    this.loadProducts();
+  }
+
+  protected onAddOnFilterReset() {
+    this.selectedAddOns.set([]);
+    this.loadProducts();
+  }
+
+  protected onStatusFilterChange(selectedIds: (string | number)[]) {
+    this.selectedStatuses.set(selectedIds as string[]);
+    this.loadProducts();
+  }
+
+  protected onStatusFilterReset() {
+    this.selectedStatuses.set([]);
+    this.loadProducts();
   }
 }

@@ -1,9 +1,12 @@
-export enum ProductTypeEnum {
+export enum ProductCategoryEnum {
   Drink = 0,
   Food = 1,
   Dessert = 2,
   Other = 3,
 }
+
+// Deprecated: Use ProductCategoryEnum instead
+export const ProductTypeEnum = ProductCategoryEnum;
 
 export interface ProductPriceHistoryDto {
   id: string;
@@ -20,7 +23,7 @@ export interface ProductDto {
   id: string;
   name: string;
   price: number;
-  type: ProductTypeEnum;
+  category: ProductCategoryEnum;
   isAddOn: boolean;
   isActive: boolean;
   createdAt: string;
@@ -42,7 +45,7 @@ export interface ProductListDto {
 export interface CreateProductDto {
   name: string;
   price: number;
-  type: ProductTypeEnum;
+  category: ProductCategoryEnum;
   isAddOn: boolean;
   isActive: boolean;
 }
@@ -51,7 +54,7 @@ export interface UpdateProductDto {
   id: string;
   name: string;
   price: number;
-  type: ProductTypeEnum;
+  category: ProductCategoryEnum;
   isAddOn: boolean;
   isActive: boolean;
 }

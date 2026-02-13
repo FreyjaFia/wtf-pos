@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment.development';
-import { CreateProductDto, ProductDto, ProductTypeEnum, UpdateProductDto } from '@shared/models';
+import { CreateProductDto, ProductCategoryEnum, ProductDto, UpdateProductDto } from '@shared/models';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -12,7 +12,7 @@ export class ProductService {
 
   getProducts(query?: {
     searchTerm?: string | null;
-    type?: ProductTypeEnum | null;
+    category?: ProductCategoryEnum | null;
     isAddOn?: boolean | null;
     isActive?: boolean | null;
   }): Observable<ProductDto[]> {
@@ -22,8 +22,8 @@ export class ProductService {
       params = params.set('searchTerm', query.searchTerm);
     }
 
-    if (query?.type !== undefined && query?.type !== null) {
-      params = params.set('type', String(query.type));
+    if (query?.category !== undefined && query?.category !== null) {
+      params = params.set('category', String(query.category));
     }
 
     if (query?.isAddOn !== undefined && query?.isAddOn !== null) {
