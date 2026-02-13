@@ -60,4 +60,8 @@ export class ProductDetailsComponent implements OnInit {
   protected hideSuccess() {
     this.showSuccess.set(false);
   }
+
+  protected getProductCategoryName(category: ProductCategoryEnum): string {
+    return ProductCategoryEnum[category];
+  }
 }
