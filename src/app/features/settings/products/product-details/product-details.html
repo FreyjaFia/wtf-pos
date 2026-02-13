@@ -100,6 +100,30 @@
         }
       </div>
 
+      <!-- Add-ons Section -->
+      @if (addOns().length > 0) {
+        <div class="mt-6">
+          <h2 class="mb-4 text-xl">Associated Add-ons</h2>
+          <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            @for (addon of addOns(); track addon.id) {
+              <div class="card border border-gray-100 bg-base-100">
+                <div class="card-body p-4">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <p class="card-title text-base font-semibold">{{ addon.name }}</p>
+                      <p class="text-base-content/60 text-sm">₱{{ addon.price | number: '1.2-2' }}</p>
+                    </div>
+                    @if (!addon.isActive) {
+                      <app-badge variant="error">Inactive</app-badge>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Price History -->
       <div class="mt-6 flex min-h-0 flex-1 flex-col">
         <h2 class="mb-4 shrink-0 text-xl">Price History</h2>
