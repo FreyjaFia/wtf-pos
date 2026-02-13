@@ -6,6 +6,5 @@ import { Icon } from '@shared/components';
   selector: 'app-settings',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
   templateUrl: './settings.html',
-  styleUrl: './settings.css',
 })
 export class SettingsComponent {}

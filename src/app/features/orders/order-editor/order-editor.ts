@@ -21,7 +21,6 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
   selector: 'app-order-editor',
   imports: [CommonModule, ReactiveFormsModule, Icon, CheckoutModal, AlertComponent, FilterDropdown],
   templateUrl: './order-editor.html',
-  styleUrl: './order-editor.css',
 })
 export class OrderEditor implements OnInit {
   readonly checkoutModal = viewChild.required(CheckoutModal);

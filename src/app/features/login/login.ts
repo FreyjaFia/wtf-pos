@@ -9,7 +9,6 @@ import { finalize, timeout } from 'rxjs/operators';
   selector: 'app-login',
   imports: [ReactiveFormsModule, Icon, AlertComponent],
   templateUrl: './login.html',
-  styleUrl: './login.css',
 })
 export class Login implements OnInit {
   private readonly router = inject(Router);

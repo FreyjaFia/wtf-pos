@@ -6,7 +6,6 @@ import { AuthService } from '@core/services';
   selector: 'app-home',
   imports: [],
   templateUrl: './home.html',
-  styleUrl: './home.css',
 })
 export class Home {
   private readonly router = inject(Router);

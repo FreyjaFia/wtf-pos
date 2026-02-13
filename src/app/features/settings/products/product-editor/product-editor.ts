@@ -10,7 +10,6 @@ import { Icon } from '@shared/components';
   selector: 'app-product-editor',
   imports: [CommonModule, ReactiveFormsModule, Icon],
   templateUrl: './product-editor.html',
-  styleUrl: './product-editor.css',
 })
 export class ProductEditorComponent implements OnInit {
   private readonly productService = inject(ProductService);
