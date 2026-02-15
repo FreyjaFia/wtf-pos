@@ -1,14 +1,52 @@
 <div class="flex h-full flex-col">
   <!-- Header -->
-  <div class="mb-4 flex h-12 shrink-0 items-center justify-between">
-    <div class="flex items-center gap-4">
-      <button class="btn btn-ghost btn-sm gap-2" (click)="goBack()">
+  <div class="mb-4 flex shrink-0 flex-wrap items-start justify-between gap-3">
+    <div class="flex min-w-0 items-center gap-4">
+      <button class="btn btn-ghost btn-sm shrink-0 gap-2" (click)="goBack()">
         <app-icon name="icon-back" [class]="'h-5 w-5'" />
         Back
       </button>
-      <h1 class="text-2xl font-bold">
-        {{ isEditMode() ? 'Edit Product' : 'New Product' }}
-      </h1>
+      <div class="min-w-0">
+        <h1 class="truncate text-2xl font-bold">
+          {{ isEditMode() ? 'Edit Product' : 'New Product' }}
+        </h1>
+        @if (isEditMode() && lastUpdatedAt()) {
+          <p class="text-base-content/40 mt-1 text-xs">
+            Updated {{ lastUpdatedAt() | date: 'd MMM y, h:mm a' }}
+            @if (productId) {
+              ·
+              <button
+                type="button"
+                class="hover:text-base-content/70 cursor-pointer underline"
+                (click)="openPriceHistory()"
+              >
+                View Price History
+              </button>
+            }
+          </p>
+        }
+      </div>
+    </div>
+    <div class="flex shrink-0 gap-2">
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        (click)="goBack()"
+        [disabled]="isSaving()"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form="productForm"
+        class="btn btn-neutral btn-sm"
+        [disabled]="productForm.invalid || isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="loading loading-spinner loading-sm"></span>
+        }
+        {{ isEditMode() ? 'Update' : 'Create' }} Product
+      </button>
     </div>
   </div>
 
@@ -29,10 +67,10 @@
   <!-- Form -->
   @if (!isLoading()) {
     <div class="flex-1 overflow-y-auto">
-      <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
+      <form id="productForm" [formGroup]="productForm" (ngSubmit)="saveProduct()">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <!-- Left Column: Form Fields -->
-          <div class="lg:col-span-2">
+          <!-- Left Column: Core Details -->
+          <div class="space-y-6 lg:col-span-2">
             <div class="card bg-base-100 border border-gray-100">
               <div class="card-body space-y-5">
                 <!-- Name -->
@@ -51,6 +89,47 @@
                   @if (getErrorMessage('name')) {
                     <p class="text-error mt-1 text-sm">{{ getErrorMessage('name') }}</p>
                   }
+                </div>
+
+                <!-- Code -->
+                <div>
+                  <label class="mb-1 block text-sm font-medium" for="productCode">
+                    Product Code <span class="text-error">*</span>
+                  </label>
+                  <input
+                    id="productCode"
+                    type="text"
+                    formControlName="code"
+                    placeholder="Enter code (uppercase only)"
+                    maxlength="10"
+                    class="input input-bordered w-full uppercase"
+                    [class.input-error]="hasError('code')"
+                    (input)="onCodeInput($event)"
+                  />
+                  <p class="text-base-content/60 mt-1 text-xs">Max 10 characters, uppercase letters and numbers only</p>
+                  @if (getErrorMessage('code')) {
+                    <p class="text-error mt-1 text-sm">{{ getErrorMessage('code') }}</p>
+                  }
+                </div>
+
+                <!-- Description -->
+                <div>
+                  <div class="mb-1 flex items-baseline justify-between">
+                    <label class="block text-sm font-medium" for="productDescription">
+                      Description
+                    </label>
+                    <span class="text-base-content/40 text-xs">
+                      {{ productForm.controls.description.value.length }}/500
+                    </span>
+                  </div>
+                  <textarea
+                    id="productDescription"
+                    formControlName="description"
+                    placeholder="Brief product description"
+                    rows="3"
+                    maxlength="500"
+                    class="textarea textarea-bordered w-full"
+                  ></textarea>
                 </div>
 
                 <!-- Price -->
@@ -78,11 +157,54 @@
                     <p class="text-error mt-1 text-sm">{{ getErrorMessage('price') }}</p>
                   }
                 </div>
+              </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="card bg-base-100 border border-gray-100">
+              <div class="card-body space-y-5">
+                <!-- Toggles Row -->
+                <div class="flex flex-wrap gap-x-8 gap-y-4">
+                  <!-- Is Add-on -->
+                  <label
+                    class="flex w-fit items-center gap-3"
+                    [class.cursor-pointer]="!isEditMode()"
+                    [class.cursor-not-allowed]="isEditMode()"
+                    [class.opacity-50]="isEditMode()"
+                    [class.pointer-events-none]="isEditMode()"
+                  >
+                    <input
+                      type="checkbox"
+                      formControlName="isAddOn"
+                      class="toggle toggle-sm"
+                      [disabled]="isEditMode()"
+                    />
+                    <div>
+                      <span class="text-sm font-medium">Is Add-on</span>
+                      <p class="text-base-content/60 text-xs">
+                        @if (isEditMode()) {
+                          Cannot change after initial setup
+                        } @else {
+                          Mark this product as an add-on item
+                        }
+                      </p>
+                    </div>
+                  </label>
+
+                  <!-- Is Active -->
+                  <label class="flex w-fit cursor-pointer items-center gap-3">
+                    <input type="checkbox" formControlName="isActive" class="toggle toggle-sm" />
+                    <div>
+                      <span class="text-sm font-medium">Active</span>
+                      <p class="text-base-content/60 text-xs">Only active products are visible</p>
+                    </div>
+                  </label>
+                </div>
 
                 <!-- Category -->
                 <div>
                   <label class="mb-1 block text-sm font-medium" for="productCategory">
-                    Product Category <span class="text-error">*</span>
+                    Category <span class="text-error">*</span>
                   </label>
                   <select
                     id="productCategory"
@@ -95,91 +217,110 @@
                     <option [ngValue]="ProductCategoryEnum.Dessert">Dessert</option>
                     <option [ngValue]="ProductCategoryEnum.Other">Other</option>
                   </select>
+                  @if (productForm.controls.isAddOn.value) {
+                    <p class="text-base-content/40 mt-1 text-xs">
+                      Add-on products are always categorized as "Other".
+                    </p>
+                  }
                   @if (getErrorMessage('category')) {
                     <p class="text-error mt-1 text-sm">{{ getErrorMessage('category') }}</p>
                   }
                 </div>
-
-                <!-- Is Add-on -->
-                <label
-                  class="flex w-fit items-center gap-3"
-                  [class.cursor-pointer]="!isEditMode()"
-                  [class.cursor-not-allowed]="isEditMode()"
-                  [class.opacity-50]="isEditMode()"
-                  [class.pointer-events-none]="isEditMode()"
-                >
-                  <input
-                    type="checkbox"
-                    formControlName="isAddOn"
-                    class="checkbox checkbox-sm"
-                    [disabled]="isEditMode()"
-                  />
-                  <div>
-                    <span class="text-sm font-medium">Is Add-on</span>
-                    <p class="text-base-content/60 text-xs">
-                      @if (isEditMode()) {
-                        Cannot change after initial setup
-                      } @else {
-                        Mark this product as an add-on item
-                      }
-                    </p>
-                  </div>
-                </label>
-
-                <!-- Is Active -->
-                <label class="flex w-fit cursor-pointer items-center gap-3">
-                  <input type="checkbox" formControlName="isActive" class="checkbox checkbox-sm" />
-                  <div>
-                    <span class="text-sm font-medium">Active</span>
-                    <p class="text-base-content/60 text-xs">Only active products are visible</p>
-                  </div>
-                </label>
-
-                <!-- Add-ons Manager Button (show only in edit mode) -->
-                @if (isEditMode() && productId) {
-                  <div class="divider my-2"></div>
-                  <button
-                    type="button"
-                    class="btn btn-outline btn-primary w-full"
-                    (click)="openAddOnsManager()"
-                    [disabled]="isSaving()"
-                  >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                      </path>
-                    </svg>
-                    Manage Add-ons
-                  </button>
-                }
-
-                <!-- Actions -->
-                <div class="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    class="btn btn-outline"
-                    (click)="goBack()"
-                    [disabled]="isSaving()"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    class="btn btn-neutral"
-                    [disabled]="productForm.invalid || isSaving()"
-                  >
-                    @if (isSaving()) {
-                      <span class="loading loading-spinner loading-sm"></span>
-                    }
-                    {{ isEditMode() ? 'Update' : 'Create' }} Product
-                  </button>
-                </div>
               </div>
             </div>
+
+            <!-- Customization Card (edit mode, non-add-on products) -->
+            @if (isEditMode() && productId && !productForm.controls.isAddOn.value) {
+              <div class="card bg-base-100 border border-gray-100">
+                <div class="card-body">
+                  <h3 class="text-sm font-medium">Customization</h3>
+                  <p class="text-base-content/60 text-xs">
+                    Manage which add-ons are available for this product.
+                  </p>
+
+                  <!-- Add-on Summary -->
+                  @if (assignedAddOns().length > 0) {
+                    <div class="mt-2 space-y-1">
+                      <p class="text-xs font-medium">
+                        {{ assignedAddOns().length }}
+                        {{ assignedAddOns().length === 1 ? 'add-on' : 'add-ons' }} assigned:
+                      </p>
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (addon of assignedAddOns(); track addon.id) {
+                          <span
+                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700"
+                          >
+                            {{ addon.name }}
+                            <span class="text-blue-500">₱{{ addon.price | number: '1.2-2' }}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <div class="mt-3">
+                    <button
+                      type="button"
+                      class="btn btn-neutral btn-sm"
+                      (click)="openAddOnsManager()"
+                      [disabled]="isSaving()"
+                    >
+                      <app-icon name="icon-sliders" [class]="'h-4 w-4'" />
+                      Manage Add-ons
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Linked Products Card (edit mode, add-on products) -->
+            @if (isEditMode() && productId && productForm.controls.isAddOn.value) {
+              <div class="card bg-base-100 border border-gray-100">
+                <div class="card-body">
+                  <h3 class="text-sm font-medium">Linked Products</h3>
+                  <p class="text-base-content/60 text-xs">
+                    Manage which products use this add-on.
+                  </p>
+
+                  <!-- Linked Products Summary -->
+                  @if (linkedProducts().length > 0) {
+                    <div class="mt-2 space-y-1">
+                      <p class="text-xs font-medium">
+                        {{ linkedProducts().length }}
+                        {{ linkedProducts().length === 1 ? 'product' : 'products' }} linked:
+                      </p>
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (linked of linkedProducts(); track linked.id) {
+                          <span
+                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700"
+                          >
+                            {{ linked.name }}
+                            <span class="text-blue-500">₱{{ linked.price | number: '1.2-2' }}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <div class="mt-3">
+                    <button
+                      type="button"
+                      class="btn btn-neutral btn-sm"
+                      (click)="openProductsManager()"
+                      [disabled]="isSaving()"
+                    >
+                      <app-icon name="icon-sliders" [class]="'h-4 w-4'" />
+                      Manage Products
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
 
-          <!-- Right Column: Product Image -->
-          <div>
+          <!-- Right Column: Sidebar -->
+          <div class="space-y-6">
+            <!-- Product Image Card -->
             <div class="card bg-base-100 border border-gray-100">
               <div class="card-body">
                 <div class="mb-1 flex items-baseline justify-between">
@@ -248,3 +389,13 @@
 
 <!-- Add-ons Swapper Modal -->
 <app-addons-swapper></app-addons-swapper>
+
+<!-- Products Swapper Modal -->
+<app-products-swapper></app-products-swapper>
+
+<!-- Price History Drawer -->
+<app-price-history-drawer
+  [isOpen]="isHistoryOpen()"
+  [priceHistory]="priceHistory()"
+  (closed)="closePriceHistory()"
+/>

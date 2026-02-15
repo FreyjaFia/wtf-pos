@@ -3,13 +3,36 @@ import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '@core/services';
-import { AlertComponent, AddonsSwapperComponent, Icon } from '@shared/components';
-import { CreateProductDto, ProductCategoryEnum, UpdateProductDto } from '@shared/models';
+import {
+  AlertComponent,
+  AddonsSwapperComponent,
+  Icon,
+  PriceHistoryDrawerComponent,
+  ProductsSwapperComponent,
+} from '@shared/components';
+import {
+  CreateProductDto,
+  ProductCategoryEnum,
+  ProductPriceHistoryDto,
+  ProductSimpleDto,
+  UpdateProductDto,
+} from '@shared/models';
 
 @Component({
   selector: 'app-product-editor',
-  imports: [CommonModule, ReactiveFormsModule, Icon, AlertComponent, AddonsSwapperComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    Icon,
+    AlertComponent,
+    AddonsSwapperComponent,
+    ProductsSwapperComponent,
+    PriceHistoryDrawerComponent,
+  ],
   templateUrl: './product-editor.html',
+  host: {
+    class: 'block h-full',
+  },
 })
 export class ProductEditorComponent implements OnInit {
   private readonly productService = inject(ProductService);
@@ -18,6 +41,7 @@ export class ProductEditorComponent implements OnInit {
   private readonly location = inject(Location);
 
   @ViewChild(AddonsSwapperComponent) addonsSwapper!: AddonsSwapperComponent;
+  @ViewChild(ProductsSwapperComponent) productsSwapper!: ProductsSwapperComponent;
 
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
@@ -29,11 +53,24 @@ export class ProductEditorComponent implements OnInit {
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
   protected readonly currentImageUrl = signal<string | null>(null);
+  protected readonly isHistoryOpen = signal(false);
+  protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
+  protected readonly assignedAddOns = signal<ProductSimpleDto[]>([]);
+  protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
+  protected readonly lastUpdatedAt = signal<string | null>(null);
 
   protected readonly productForm = new FormGroup({
     name: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(100)],
+    }),
+    code: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(10), Validators.pattern(/^[A-Z0-9]+$/)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
     }),
     price: new FormControl(0, {
       nonNullable: true,
@@ -57,6 +94,15 @@ export class ProductEditorComponent implements OnInit {
       this.productId = id;
       this.loadProduct(id);
     }
+
+    this.productForm.controls.isAddOn.valueChanges.subscribe((isAddOn) => {
+      if (isAddOn) {
+        this.productForm.controls.category.setValue(ProductCategoryEnum.Other);
+        this.productForm.controls.category.disable();
+      } else {
+        this.productForm.controls.category.enable();
+      }
+    });
   }
 
   private loadProduct(id: string) {
@@ -68,12 +114,24 @@ export class ProductEditorComponent implements OnInit {
       next: (product) => {
         this.productForm.patchValue({
           name: product.name,
+          code: product.code,
+          description: product.description || '',
           price: product.price,
           category: product.category,
           isAddOn: product.isAddOn,
           isActive: product.isActive,
         });
         this.currentImageUrl.set(product.imageUrl || null);
+        this.priceHistory.set(product.priceHistory || []);
+        this.lastUpdatedAt.set(product.updatedAt || product.createdAt);
+
+        if (product.isAddOn) {
+          this.productForm.controls.category.disable();
+          this.loadLinkedProducts(id);
+        } else {
+          this.loadAssignedAddOns(id);
+        }
+
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -95,6 +153,10 @@ export class ProductEditorComponent implements OnInit {
     this.showError.set(false);
 
     const formValue = this.productForm.getRawValue();
+
+    if (formValue.isAddOn) {
+      formValue.category = ProductCategoryEnum.Other;
+    }
 
     if (this.isEditMode() && this.productId) {
       const updateDto: UpdateProductDto = {
@@ -259,12 +321,19 @@ export class ProductEditorComponent implements OnInit {
       return `${this.getFieldLabel(controlName)} cannot exceed ${control.errors['max'].max}`;
     }
 
+    if (control.errors['pattern']) {
+      if (controlName === 'code') {
+        return 'Product code must contain only uppercase letters and numbers';
+      }
+    }
+
     return null;
   }
 
   private getFieldLabel(controlName: string): string {
     const labels: Record<string, string> = {
       name: 'Product name',
+      code: 'Product code',
       price: 'Price',
       type: 'Product type',
     };
@@ -276,8 +345,28 @@ export class ProductEditorComponent implements OnInit {
     return !!control && control.invalid && control.touched;
   }
 
+  protected onCodeInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const uppercased = input.value.toUpperCase();
+    this.productForm.controls.code.setValue(uppercased, { emitEvent: false });
+  }
+
   protected hideError() {
     this.showError.set(false);
+  }
+
+  private loadAssignedAddOns(productId: string) {
+    this.productService.getProductAddOns(productId).subscribe({
+      next: (addons) => this.assignedAddOns.set(addons),
+      error: () => this.assignedAddOns.set([]),
+    });
+  }
+
+  private loadLinkedProducts(productId: string) {
+    this.productService.getLinkedProducts(productId).subscribe({
+      next: (linked) => this.linkedProducts.set(linked),
+      error: () => this.linkedProducts.set([]),
+    });
   }
 
   protected openAddOnsManager() {
@@ -294,7 +383,56 @@ export class ProductEditorComponent implements OnInit {
         this.addonsSwapper.productId = this.productId;
         this.addonsSwapper.ngAfterViewInit();
       }
+
+      // Refresh summary when modal closes
+      modal.addEventListener(
+        'close',
+        () => {
+          if (this.productId) {
+            this.loadAssignedAddOns(this.productId);
+          }
+        },
+        { once: true },
+      );
+
       modal.showModal();
     }
+  }
+
+  protected openProductsManager() {
+    if (!this.productId) {
+      this.error.set('Please save the product first before managing linked products.');
+      this.showError.set(true);
+      return;
+    }
+
+    const modal = document.querySelector('#products-swapper-modal') as HTMLDialogElement;
+
+    if (modal) {
+      if (this.productsSwapper) {
+        this.productsSwapper.addOnId = this.productId;
+        this.productsSwapper.ngAfterViewInit();
+      }
+
+      modal.addEventListener(
+        'close',
+        () => {
+          if (this.productId) {
+            this.loadLinkedProducts(this.productId);
+          }
+        },
+        { once: true },
+      );
+
+      modal.showModal();
+    }
+  }
+
+  protected openPriceHistory() {
+    this.isHistoryOpen.set(true);
+  }
+
+  protected closePriceHistory() {
+    this.isHistoryOpen.set(false);
   }
 }
