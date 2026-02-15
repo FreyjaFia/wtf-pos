@@ -216,6 +216,49 @@ ngOnInit() {
 	- **Why:** Removing dead code reduces maintenance burden and avoids compiler and lint warnings.
 	- **How:** Use your editor's quick-fix actions, `tsc`, or automated tools (e.g., `eslint --fix`) to locate and remove unused symbols.
 
+## Error Checking & Linting
+
+**MANDATORY for every request:**
+
+1. **Build the project** after making changes:
+   ```bash
+   npx ng build --configuration=development
+   ```
+   - Verify exit code is 0 (success)
+   - Resolve ALL TypeScript compilation errors
+   - No partial solutions — builds must be clean
+
+2. **Check for lint errors:**
+   - Run linter to catch style and logic issues
+   - Fix all reported issues before completing work
+   - Use `eslint --fix` for auto-fixable issues when appropriate
+
+3. **Verify template compilation:**
+   - Ensure all Angular template syntax is valid
+   - Check for undefined properties and invalid bindings
+   - Validate event handlers and directives match component code
+
+4. **Test import paths:**
+   - Verify all `import` statements resolve correctly
+   - Check for circular dependencies
+   - Ensure path aliases (`@core/`, `@shared/`, etc.) are valid
+
+5. **Manual code review:**
+   - Scan for unused variables, parameters, or methods
+   - Check for unreachable code paths
+   - Verify error handling is complete
+   - Ensure console.error/log statements are removed (except in services)
+
+**Workflow:**
+- Make code changes
+- Format with `Alt+Shift+F`
+- Organize imports with `Alt+Shift+O`
+- Run `npx ng build --configuration=development`
+- Fix any errors until build succeeds
+- Only then mark task as complete
+
+**Why:** Catching errors early prevents broken builds in commits, ensures consistency, and maintains code quality standards.
+
 ## Additional Resources
 - [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)
 - [Angular Security Best Practices](https://angular.dev/best-practices/security)
@@ -330,5 +373,43 @@ Write a detailed body when:
 - You're introducing a new pattern or approach
 - The reasoning behind the change is important
 - Future developers might ask "why was this done?"
+
+### Commit Strategy: Group by Logical Changes
+
+**NEVER commit all changes at once.** Break large refactorings and features into logical, focused commits:
+
+1. **Group related updates together:**
+   - Commit all updates to a single service together
+   - Commit all usages of a service together
+   - Commit component changes together
+
+2. **Separate concerns:**
+   - Model changes in one commit
+   - Service changes in another
+   - Component implementations in separate commits
+   - Index/export updates in their own commit
+   - Style/UI changes last
+
+3. **Example workflow:**
+   ```
+   Commit 1: Update product.models.ts - Add code field to DTOs
+   Commit 2: Update product.service.ts - Add code field handling
+   Commit 3: Update product-editor.ts - Implement code FormControl
+   Commit 4: Update product-details.ts - Display code field
+   Commit 5: Update shared/components/index.ts - Export new components
+   Commit 6: Refactor alert system - Remove repetitive alerts
+   Commit 7: Update templates - Integrate global alert
+   ```
+
+4. **Use git add with file paths:**
+   - `git add src/app/core/services/product.service.ts` (single file)
+   - `git add src/app/features/products/**` (feature changes only)
+   - Avoid `git add .` (commits everything indiscriminately)
+
+5. **Why this matters:**
+   - Easier to review: reviewers can understand each commit's purpose
+   - Easier to revert: remove one change without affecting others
+   - Git history is cleaner: bisecting for bugs becomes tractable
+   - Follows Git best practices and professional standards
 
 ---
