@@ -1,11 +1,4 @@
 <div class="flex h-full gap-4">
-  <!-- Toast Alert at top center -->
-  @if (showError() && error()) {
-    <div class="fixed top-20 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
-      <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
-    </div>
-  }
-
   <div class="flex flex-1 flex-col overflow-hidden">
     @if (editMode() && isLoadingOrder()) {
       <div class="flex justify-center py-8">
@@ -46,33 +39,41 @@
       }
 
       @if (!isLoading()) {
-        <div class="flex-1 overflow-y-auto">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @for (p of products(); track p.id) {
-              <div
-                class="card bg-base-100 border border-gray-100"
-                [class.cursor-pointer]="!isCompleted()"
-                [class.cursor-default]="isCompleted()"
-                [class.opacity-50]="isCompleted()"
-                role="button"
-                tabindex="0"
-                (click)="!isCompleted() && addToCart(p)"
-                (keydown.enter)="!isCompleted() && addToCart(p)"
-                (keydown.space)="!isCompleted() && addToCart(p)"
-              >
-                <figure>
-                  <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />
-                </figure>
-                <div class="card-body justify-between">
-                  <h2 class="card-title">{{ p.name }}</h2>
-                  <div class="card-actions mt-4 items-center justify-between">
-                    <div>₱{{ p.price | number: '1.2-2' }}</div>
+        @if (products().length === 0) {
+          <div class="flex flex-1 flex-col items-center justify-center text-center opacity-60">
+            <app-icon name="icon-search" [class]="'h-12 w-12 mb-3'" />
+            <div class="text-sm font-medium">No products found</div>
+            <div class="text-xs">Try adjusting your filters or add a new product</div>
+          </div>
+        } @else {
+          <div class="flex-1 overflow-y-auto">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              @for (p of products(); track p.id) {
+                <div
+                  class="card bg-base-100 border border-gray-100"
+                  [class.cursor-pointer]="!isCompleted()"
+                  [class.cursor-default]="isCompleted()"
+                  [class.opacity-50]="isCompleted()"
+                  role="button"
+                  tabindex="0"
+                  (click)="!isCompleted() && addToCart(p)"
+                  (keydown.enter)="!isCompleted() && addToCart(p)"
+                  (keydown.space)="!isCompleted() && addToCart(p)"
+                >
+                  <figure>
+                    <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24" />
+                  </figure>
+                  <div class="card-body justify-between">
+                    <h2 class="card-title">{{ p.name }}</h2>
+                    <div class="card-actions mt-4 items-center justify-between">
+                      <div>₱{{ p.price | number: '1.2-2' }}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
           </div>
-        </div>
+        }
       }
     }
   </div>

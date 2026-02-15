@@ -1,11 +1,4 @@
 <div class="flex h-full flex-col">
-  <!-- Toast Alert at top center -->
-  @if (showError() && error()) {
-    <div class="fixed top-20 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
-      <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
-    </div>
-  }
-
   <!-- Header with Refresh Button (outside scroll container) -->
   <div class="mb-4 flex shrink-0 items-center gap-2">
     <!-- Search Input -->

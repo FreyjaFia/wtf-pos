@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OrderService, ProductService } from '@core/services';
-import { AlertComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
+import { AlertService, OrderService, ProductService } from '@core/services';
+import { FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import {
   CartItemDto,
   CreateOrderCommand,
@@ -19,7 +19,7 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
 
 @Component({
   selector: 'app-order-editor',
-  imports: [CommonModule, ReactiveFormsModule, Icon, CheckoutModal, AlertComponent, FilterDropdown],
+  imports: [CommonModule, ReactiveFormsModule, Icon, CheckoutModal, FilterDropdown],
   templateUrl: './order-editor.html',
 })
 export class OrderEditor implements OnInit {
@@ -28,6 +28,7 @@ export class OrderEditor implements OnInit {
   private readonly orderService = inject(OrderService);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
@@ -38,8 +39,6 @@ export class OrderEditor implements OnInit {
   protected readonly productsCache = signal<ProductDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isLoadingOrder = signal(false);
-  protected readonly error = signal<string | null>(null);
-  protected readonly showError = signal(false);
   protected readonly editMode = signal(false);
   protected readonly currentOrder = signal<OrderDto | null>(null);
 
@@ -88,7 +87,6 @@ export class OrderEditor implements OnInit {
 
   loadOrderForEditing(orderId: string) {
     this.isLoadingOrder.set(true);
-    this.error.set(null);
 
     this.orderService.getOrder(orderId).subscribe({
       next: (order) => {
@@ -98,8 +96,7 @@ export class OrderEditor implements OnInit {
         this.isLoadingOrder.set(false);
       },
       error: (err) => {
-        this.error.set(err.message || 'Failed to load order');
-        this.showError.set(true);
+        this.alertService.error(err.message || 'Failed to load order');
         this.isLoadingOrder.set(false);
       },
     });
@@ -120,7 +117,6 @@ export class OrderEditor implements OnInit {
 
   loadProducts() {
     this.isLoading.set(true);
-    this.error.set(null);
 
     const { searchTerm } = this.filterForm.value;
 
@@ -154,7 +150,7 @@ export class OrderEditor implements OnInit {
           this.isLoading.set(false);
         },
         error: (err) => {
-          this.error.set(err.message || 'Failed to load products');
+          this.alertService.error(err.message || 'Failed to load products');
           this.isLoading.set(false);
         },
       });
@@ -262,8 +258,7 @@ export class OrderEditor implements OnInit {
       },
       error: (err) => {
         console.error('Failed to create order', err);
-        this.error.set(err.message || 'Failed to create order');
-        this.showError.set(true);
+        this.alertService.error(err.message || 'Failed to create order');
       },
     });
   }
@@ -303,14 +298,9 @@ export class OrderEditor implements OnInit {
       },
       error: (err) => {
         console.error('Failed to update order', err);
-        this.error.set(err.message || 'Failed to update order');
-        this.showError.set(true);
+        this.alertService.error(err.message || 'Failed to update order');
       },
     });
-  }
-
-  hideError() {
-    this.showError.set(false);
   }
 
   private applyFiltersToCache() {

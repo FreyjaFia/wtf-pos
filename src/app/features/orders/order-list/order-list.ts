@@ -2,9 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { OrderService } from '@core/services';
+import { AlertService, OrderService } from '@core/services';
 import {
-  AlertComponent,
   BadgeComponent,
   FilterDropdown,
   Icon,
@@ -22,7 +21,6 @@ type SortDirection = 'asc' | 'desc';
     CommonModule,
     ReactiveFormsModule,
     Icon,
-    AlertComponent,
     FilterDropdown,
     BadgeComponent,
   ],
@@ -31,6 +29,7 @@ type SortDirection = 'asc' | 'desc';
 export class OrderList implements OnInit {
   private readonly orderService = inject(OrderService);
   private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
@@ -40,8 +39,6 @@ export class OrderList implements OnInit {
   protected readonly ordersCache = signal<OrderDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isRefreshing = signal(false);
-  protected readonly error = signal<string | null>(null);
-  protected readonly showError = signal(false);
   protected readonly OrderStatusEnum = OrderStatusEnum;
   protected readonly sortColumn = signal<SortColumn | null>(null);
   protected readonly sortDirection = signal<SortDirection>('desc');
@@ -88,8 +85,6 @@ export class OrderList implements OnInit {
 
   loadOrders() {
     this.isLoading.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     this.orderService.getOrders().subscribe({
       next: (result) => {
@@ -99,8 +94,7 @@ export class OrderList implements OnInit {
         this.isRefreshing.set(false);
       },
       error: (err) => {
-        this.error.set(err.message || 'Failed to load orders');
-        this.showError.set(true);
+        this.alertService.error(err.message || 'Failed to load orders');
         this.isLoading.set(false);
         this.isRefreshing.set(false);
       },
@@ -138,10 +132,6 @@ export class OrderList implements OnInit {
     });
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
-  }
-
-  hideError() {
-    this.showError.set(false);
   }
 
   getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' {
