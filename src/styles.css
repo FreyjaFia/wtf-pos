@@ -6,11 +6,3 @@
 .hover\:bg-transition:hover {
   transition: background-color 0.2s ease-in-out;
 }
-
-.input:focus,
-.select:focus,
-.file-input:focus,
-.input:focus-within {
-  outline: none;
-  box-shadow: none;
-}
