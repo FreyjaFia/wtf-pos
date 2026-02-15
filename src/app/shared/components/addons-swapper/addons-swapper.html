@@ -1,6 +1,9 @@
 <dialog id="addons-swapper-modal" class="modal">
   <div class="modal-box w-full max-w-4xl">
-    <h3 class="mb-4 text-lg font-bold">Manage Product Add-ons</h3>
+    <h3 class="text-lg font-bold">Manage Product Add-ons</h3>
+    <p class="text-base-content/60 mb-4 text-sm">
+      Drag and drop add-ons between the lists to assign or remove them.
+    </p>
 
     <!-- Error Alert -->
     @if (showError() && error()) {
@@ -18,33 +21,67 @@
       <!-- Drag and Drop Lists -->
       <div class="mb-6 grid grid-cols-2 gap-4">
         <!-- Available Add-ons -->
-        <div>
-          <h4 class="mb-3 font-semibold text-gray-700">Available Add-ons</h4>
+        <div class="flex flex-col">
+          <h4 class="mb-2 font-semibold text-gray-700">Available Add-ons</h4>
+          <!-- Search Filter -->
+          <div class="relative mb-2">
+            <app-icon
+              name="icon-search"
+              fill="none"
+              [class]="'absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 stroke-current text-gray-400'"
+            />
+            <input
+              type="text"
+              placeholder="Search add-ons..."
+              class="input input-bordered input-sm w-full pl-9"
+              [value]="searchTerm()"
+              (input)="onSearchInput($event)"
+            />
+          </div>
           <ul
             #availableList
             class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4"
           >
-            @for (addon of availableAddOns(); track addon.id) {
+            @for (addon of filteredAvailableAddOns(); track addon.id) {
               <li
                 [attr.data-id]="addon.id"
-                class="inline-flex cursor-grab items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+                class="inline-flex cursor-grab items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 hover:shadow-sm active:cursor-grabbing active:shadow-md"
               >
-                <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-500'" />
-                <span>{{ addon.name }}</span>
-                <span class="ml-auto text-xs text-gray-500">₱{{ addon.price | number: '1.2-2' }}</span>
+                <app-icon name="icon-grip" [class]="'h-4 w-4 shrink-0 text-gray-300'" />
+                <span class="truncate">{{ addon.name }}</span>
+                <span class="ml-auto shrink-0 text-xs text-gray-500">
+                  ₱{{ addon.price | number: '1.2-2' }}
+                </span>
               </li>
             }
-            @if (availableAddOns().length === 0) {
-              <div class="flex items-center justify-center py-8 text-gray-500">
-                <p class="text-sm">No available add-ons</p>
+            @if (filteredAvailableAddOns().length === 0 && searchTerm()) {
+              <div class="flex flex-col items-center justify-center py-8 text-gray-400">
+                <p class="text-sm">No matches for "{{ searchTerm() }}"</p>
+              </div>
+            } @else if (availableAddOns().length === 0) {
+              <div class="flex flex-col items-center justify-center gap-1 py-8 text-gray-400">
+                @if (assignedAddOns().length > 0) {
+                  <p class="text-sm">All add-ons are assigned</p>
+                } @else {
+                  <p class="text-sm">No add-ons available</p>
+                  <p class="text-xs">Create add-on products in Settings first.</p>
+                }
               </div>
             }
           </ul>
         </div>
 
         <!-- Assigned Add-ons -->
-        <div>
-          <h4 class="mb-3 font-semibold text-gray-700">Assigned Add-ons</h4>
+        <div class="flex flex-col">
+          <h4 class="mb-2 font-semibold text-gray-700">
+            Assigned Add-ons
+            @if (assignedAddOns().length > 0) {
+              <span class="text-base-content/50 ml-1 text-xs font-normal">
+                ({{ assignedAddOns().length }})
+              </span>
+            }
+          </h4>
+          <div class="mb-2 h-8"></div>
           <ul
             #assignedList
             class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-blue-50 p-4"
@@ -52,11 +89,13 @@
             @for (addon of assignedAddOns(); track addon.id) {
               <li
                 [attr.data-id]="addon.id"
-                class="inline-flex cursor-grab items-center gap-3 rounded-lg border border-blue-200 bg-blue-100 px-4 py-3 text-sm font-medium text-blue-900 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+                class="inline-flex cursor-grab items-center gap-2 rounded-lg border border-blue-200 bg-blue-100 px-3 py-2.5 text-sm font-medium text-blue-900 hover:shadow-sm active:cursor-grabbing active:shadow-md"
               >
-                <app-icon name="icon-box" [class]="'h-4 w-4 text-blue-600'" />
-                <span>{{ addon.name }}</span>
-                <span class="ml-auto text-xs text-blue-600">₱{{ addon.price | number: '1.2-2' }}</span>
+                <app-icon name="icon-grip" [class]="'h-4 w-4 shrink-0 text-blue-300'" />
+                <span class="truncate">{{ addon.name }}</span>
+                <span class="ml-auto shrink-0 text-xs text-blue-600">
+                  ₱{{ addon.price | number: '1.2-2' }}
+                </span>
               </li>
             }
             @if (assignedAddOns().length === 0) {
@@ -66,14 +105,6 @@
             }
           </ul>
         </div>
-      </div>
-
-      <!-- Info Text -->
-      <div class="mb-6 rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
-        <p>
-          Drag and drop add-ons between the lists to manage which add-ons are available for this
-          product.
-        </p>
       </div>
     }
 

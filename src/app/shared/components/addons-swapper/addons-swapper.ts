@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { ProductService } from '@core/services';
 import { AlertComponent } from '@shared/components/alert/alert';
 import { Icon } from '@shared/components/icons/icon/icon';
@@ -24,6 +32,17 @@ export class AddonsSwapperComponent implements AfterViewInit {
   protected readonly showError = signal(false);
   protected readonly availableAddOns = signal<ProductSimpleDto[]>([]);
   protected readonly assignedAddOns = signal<ProductSimpleDto[]>([]);
+  protected readonly searchTerm = signal('');
+
+  protected readonly filteredAvailableAddOns = computed(() => {
+    const term = this.searchTerm().toLowerCase().trim();
+
+    if (!term) {
+      return this.availableAddOns();
+    }
+
+    return this.availableAddOns().filter((addon) => addon.name.toLowerCase().includes(term));
+  });
 
   productId = '';
 
@@ -153,5 +172,10 @@ export class AddonsSwapperComponent implements AfterViewInit {
 
   protected hideError() {
     this.showError.set(false);
+  }
+
+  protected onSearchInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value);
   }
 }
