@@ -1,0 +1,131 @@
+<dialog id="products-swapper-modal" class="modal">
+  <div class="modal-box w-full max-w-4xl">
+    <h3 class="text-lg font-bold">Manage Linked Products</h3>
+    <p class="text-base-content/60 mb-4 text-sm">
+      Drag and drop products between the lists to link or unlink them from this add-on.
+    </p>
+
+    <!-- Error Alert -->
+    @if (showError() && error()) {
+      <div class="mb-4">
+        <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
+      </div>
+    }
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="flex items-center justify-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    } @else {
+      <!-- Drag and Drop Lists -->
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <!-- Available Products -->
+        <div class="flex flex-col">
+          <h4 class="mb-2 font-semibold text-gray-700">Available Products</h4>
+          <!-- Search Filter -->
+          <div class="relative mb-2">
+            <app-icon
+              name="icon-search"
+              fill="none"
+              [class]="'absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 stroke-current text-gray-400'"
+            />
+            <input
+              type="text"
+              placeholder="Search products..."
+              class="input input-bordered input-sm w-full pl-9"
+              [value]="searchTerm()"
+              (input)="onSearchInput($event)"
+            />
+          </div>
+          <ul
+            #availableList
+            class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4"
+          >
+            @for (product of filteredAvailableProducts(); track product.id) {
+              <li
+                [attr.data-id]="product.id"
+                class="inline-flex cursor-grab items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+              >
+                <app-icon name="icon-grip" [class]="'h-4 w-4 shrink-0 text-gray-300'" />
+                <span class="truncate">{{ product.name }}</span>
+                <span class="ml-auto shrink-0 text-xs text-gray-500">
+                  ₱{{ product.price | number: '1.2-2' }}
+                </span>
+              </li>
+            }
+            @if (filteredAvailableProducts().length === 0 && searchTerm()) {
+              <div class="flex flex-col items-center justify-center py-8 text-gray-400">
+                <p class="text-sm">No matches for "{{ searchTerm() }}"</p>
+              </div>
+            } @else if (availableProducts().length === 0) {
+              <div class="flex flex-col items-center justify-center gap-1 py-8 text-gray-400">
+                @if (linkedProducts().length > 0) {
+                  <p class="text-sm">All products are linked</p>
+                } @else {
+                  <p class="text-sm">No products available</p>
+                  <p class="text-xs">Create non-add-on products first.</p>
+                }
+              </div>
+            }
+          </ul>
+        </div>
+
+        <!-- Linked Products -->
+        <div class="flex flex-col">
+          <h4 class="mb-2 font-semibold text-gray-700">
+            Linked Products
+            @if (linkedProducts().length > 0) {
+              <span class="text-base-content/50 ml-1 text-xs font-normal">
+                ({{ linkedProducts().length }})
+              </span>
+            }
+          </h4>
+          <div class="mb-2 h-8"></div>
+          <ul
+            #assignedList
+            class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-blue-50 p-4"
+          >
+            @for (product of linkedProducts(); track product.id) {
+              <li
+                [attr.data-id]="product.id"
+                class="inline-flex cursor-grab items-center gap-2 rounded-lg border border-blue-200 bg-blue-100 px-3 py-2.5 text-sm font-medium text-blue-900 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+              >
+                <app-icon name="icon-grip" [class]="'h-4 w-4 shrink-0 text-blue-300'" />
+                <span class="truncate">{{ product.name }}</span>
+                <span class="ml-auto shrink-0 text-xs text-blue-600">
+                  ₱{{ product.price | number: '1.2-2' }}
+                </span>
+              </li>
+            }
+            @if (linkedProducts().length === 0) {
+              <div class="flex items-center justify-center py-8 text-gray-400">
+                <p class="text-sm">Drag products here</p>
+              </div>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+
+    <!-- Modal Actions -->
+    <div class="modal-action">
+      <button class="btn btn-outline" (click)="closeModal()" type="button">Cancel</button>
+      <button
+        class="btn btn-neutral"
+        [disabled]="isLoading() || isSaving()"
+        (click)="saveProducts()"
+        type="button"
+      >
+        @if (isSaving()) {
+          <span class="loading loading-spinner loading-sm"></span>
+        }
+        Save Products
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button type="button">close</button>
+  </form>
+</dialog>
