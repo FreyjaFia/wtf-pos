@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { IconsSprite } from '@shared/components';
+import { GlobalAlertComponent, IconsSprite } from '@shared/components';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, IconsSprite],
+  imports: [RouterOutlet, IconsSprite, GlobalAlertComponent],
   templateUrl: './app.html',
 })
 export class App {
