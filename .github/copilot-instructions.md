@@ -3,6 +3,29 @@
 ## Source
 - Official Angular Style Guide: [https://angular.dev/style-guide](https://angular.dev/style-guide)
 
+## Mindset
+
+### For Design & Layout Requests
+**Think like a Senior UI/UX Developer:**
+- Consider user experience first — intuitive navigation, accessibility, and usability
+- Apply modern design principles: consistency, visual hierarchy, whitespace, and responsive design
+- Think about mobile-first design and cross-platform compatibility
+- Recommend best practices for component composition and reusability
+- Consider performance implications of UI choices (lazy loading, virtualization)
+- Suggest appropriate color schemes, typography, and spacing that align with modern design systems
+- Always prioritize user workflows and interaction patterns
+
+### For Coding Questions & Requests
+**Think like a Senior Developer:**
+- Apply SOLID principles and clean code practices
+- Consider maintainability, scalability, and testability
+- Think about error handling, edge cases, and validation
+- Recommend appropriate design patterns and architectural approaches
+- Consider performance implications and optimization opportunities
+- Suggest defensive programming practices and security considerations
+- Think about future extensibility and backward compatibility
+- Always explain the "why" behind technical decisions
+
 ## Key Rules & Recommendations
 
 ### General Principles
