@@ -154,6 +154,23 @@ export class ProductService {
     );
   }
 
+  getLinkedProducts(addOnId: string): Observable<ProductSimpleDto[]> {
+    return this.http.get<ProductSimpleDto[]>(`${this.baseUrl}/addons/${addOnId}/products`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error fetching linked products:', error);
+
+        const errorMessage =
+          error.status === 404
+            ? 'Product not found.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to fetch linked products. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
   assignProductAddOns(productId: string, addOnIds: string[]): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${productId}/addons`, { productId, addOnIds }).pipe(
       catchError((error: HttpErrorResponse) => {
@@ -165,6 +182,26 @@ export class ProductService {
           errorMessage = error.error?.message || 'Invalid request. Please check the selected add-ons.';
         } else if (error.status === 404) {
           errorMessage = 'Product not found.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  assignLinkedProducts(addOnId: string, productIds: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/addons/${addOnId}/products`, { addOnId, productIds }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error assigning linked products:', error);
+
+        let errorMessage = 'Failed to assign products. Please try again later.';
+
+        if (error.status === 400) {
+          errorMessage = error.error?.message || 'Invalid request. Please check the selected products.';
+        } else if (error.status === 404) {
+          errorMessage = 'Add-on not found.';
         } else if (error.status === 0) {
           errorMessage = 'Unable to connect to server. Please check your connection.';
         }
