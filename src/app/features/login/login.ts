@@ -1,21 +1,20 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '@core/services';
-import { AlertComponent, Icon } from '@shared/components';
+import { AlertService, AuthService } from '@core/services';
+import { Icon } from '@shared/components';
 import { finalize, timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, Icon, AlertComponent],
+  imports: [ReactiveFormsModule, Icon],
   templateUrl: './login.html',
 })
 export class Login implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly alertService = inject(AlertService);
   protected loading = false;
-  protected errorMessage = signal('');
-  protected showError = signal(false);
 
   protected readonly loginForm = new FormGroup({
     username: new FormControl('', Validators.required),
@@ -62,8 +61,6 @@ export class Login implements OnInit {
     const { username, password } = this.loginForm.value;
 
     this.loading = true;
-    this.errorMessage.set('');
-    this.showError.set(false);
 
     this.auth
       .login(username!, password!)
@@ -76,22 +73,16 @@ export class Login implements OnInit {
           if (ok) {
             this.router.navigateByUrl('/home');
           } else {
-            this.errorMessage.set('Login failed. Invalid response from server.');
-            this.showError.set(true);
+            this.alertService.error('Login failed. Invalid response from server.');
           }
         },
         error: (err) => {
           if (err.name === 'TimeoutError') {
-            this.errorMessage.set('Login request timed out. Please try again.');
+            this.alertService.error('Login request timed out. Please try again.');
           } else {
-            this.errorMessage.set(err.message || 'Login failed. Please try again.');
+            this.alertService.error(err.message || 'Login failed. Please try again.');
           }
-          this.showError.set(true);
         },
       });
-  }
-
-  hideError() {
-    this.showError.set(false);
   }
 }

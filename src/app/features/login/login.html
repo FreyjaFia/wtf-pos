@@ -11,12 +11,6 @@
 
   <!-- Login Form -->
   <div class="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
-    <!-- Error Alert -->
-    @if (showError()) {
-      <div class="mb-4">
-        <app-alert type="error" [message]="errorMessage()" (dismissed)="hideError()" />
-      </div>
-    }
 
     <form [formGroup]="loginForm" (ngSubmit)="login()">
       <!-- Username -->
