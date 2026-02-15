@@ -5,13 +5,6 @@
       Drag and drop add-ons between the lists to assign or remove them.
     </p>
 
-    <!-- Error Alert -->
-    @if (showError() && error()) {
-      <div class="mb-4">
-        <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
-      </div>
-    }
-
     <!-- Loading State -->
     @if (isLoading()) {
       <div class="flex items-center justify-center py-8">

@@ -8,28 +8,26 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import { ProductService } from '@core/services';
-import { AlertComponent } from '@shared/components/alert/alert';
+import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
 import { ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
   selector: 'app-products-swapper',
-  imports: [CommonModule, AlertComponent, Icon],
+  imports: [CommonModule, Icon],
   templateUrl: './products-swapper.html',
   styleUrls: ['./products-swapper.css'],
 })
 export class ProductsSwapperComponent implements AfterViewInit {
   private readonly productService = inject(ProductService);
+  private readonly alertService = inject(AlertService);
 
   @ViewChild('availableList') availableList!: ElementRef;
   @ViewChild('assignedList') assignedList!: ElementRef;
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
-  protected readonly error = signal<string | null>(null);
-  protected readonly showError = signal(false);
   protected readonly availableProducts = signal<ProductSimpleDto[]>([]);
   protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
   protected readonly searchTerm = signal('');
@@ -54,8 +52,6 @@ export class ProductsSwapperComponent implements AfterViewInit {
 
   private loadProducts() {
     this.isLoading.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     // Load all non-add-on active products
     this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
@@ -76,15 +72,13 @@ export class ProductsSwapperComponent implements AfterViewInit {
             this.initializeSortable();
           },
           error: (err) => {
-            this.error.set(err.message);
-            this.showError.set(true);
+            this.alertService.error(err.message);
             this.isLoading.set(false);
           },
         });
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isLoading.set(false);
       },
     });
@@ -140,8 +134,6 @@ export class ProductsSwapperComponent implements AfterViewInit {
     );
 
     this.isSaving.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     this.productService.assignLinkedProducts(this.addOnId, linkedIds).subscribe({
       next: () => {
@@ -149,8 +141,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
         this.closeModal();
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isSaving.set(false);
       },
     });
@@ -162,10 +153,6 @@ export class ProductsSwapperComponent implements AfterViewInit {
     if (modal) {
       modal.close();
     }
-  }
-
-  protected hideError() {
-    this.showError.set(false);
   }
 
   protected onSearchInput(event: Event) {

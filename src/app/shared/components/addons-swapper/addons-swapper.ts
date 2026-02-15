@@ -8,28 +8,26 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import { ProductService } from '@core/services';
-import { AlertComponent } from '@shared/components/alert/alert';
+import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
 import { ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
   selector: 'app-addons-swapper',
-  imports: [CommonModule, AlertComponent, Icon],
+  imports: [CommonModule, Icon],
   templateUrl: './addons-swapper.html',
   styleUrls: ['./addons-swapper.css'],
 })
 export class AddonsSwapperComponent implements AfterViewInit {
   private readonly productService = inject(ProductService);
+  private readonly alertService = inject(AlertService);
 
   @ViewChild('availableList') availableList!: ElementRef;
   @ViewChild('assignedList') assignedList!: ElementRef;
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
-  protected readonly error = signal<string | null>(null);
-  protected readonly showError = signal(false);
   protected readonly availableAddOns = signal<ProductSimpleDto[]>([]);
   protected readonly assignedAddOns = signal<ProductSimpleDto[]>([]);
   protected readonly searchTerm = signal('');
@@ -54,8 +52,6 @@ export class AddonsSwapperComponent implements AfterViewInit {
 
   private loadAddOns() {
     this.isLoading.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     // Load all available add-ons (products marked as add-ons)
     this.productService.getProducts({ isAddOn: true, isActive: true }).subscribe({
@@ -76,15 +72,13 @@ export class AddonsSwapperComponent implements AfterViewInit {
             this.initializeSortable();
           },
           error: (err) => {
-            this.error.set(err.message);
-            this.showError.set(true);
+            this.alertService.error(err.message);
             this.isLoading.set(false);
           },
         });
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isLoading.set(false);
       },
     });
@@ -145,8 +139,6 @@ export class AddonsSwapperComponent implements AfterViewInit {
     );
 
     this.isSaving.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     this.productService.assignProductAddOns(this.productId, assignedIds).subscribe({
       next: () => {
@@ -154,8 +146,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
         this.closeModal();
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isSaving.set(false);
       },
     });
@@ -168,10 +159,6 @@ export class AddonsSwapperComponent implements AfterViewInit {
     if (modal) {
       modal.close();
     }
-  }
-
-  protected hideError() {
-    this.showError.set(false);
   }
 
   protected onSearchInput(event: Event) {
