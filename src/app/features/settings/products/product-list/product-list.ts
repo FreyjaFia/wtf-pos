@@ -2,8 +2,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ProductService } from '@core/services';
-import { AlertComponent, FilterDropdown, Icon, BadgeComponent, type FilterOption } from '@shared/components';
+import { AlertService, ProductService } from '@core/services';
+import { FilterDropdown, Icon, BadgeComponent, type FilterOption } from '@shared/components';
 import { ProductCategoryEnum, ProductDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
@@ -12,7 +12,7 @@ type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-product-list',
-  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent, AlertComponent],
+  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
   templateUrl: './product-list.html',
   host: {
     class: 'block h-full',
@@ -21,13 +21,12 @@ type SortDirection = 'asc' | 'desc';
 export class ProductListComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
+  private readonly alertService = inject(AlertService);
 
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isRefreshing = signal(false);
-  protected readonly error = signal<string | null>(null);
-  protected readonly showError = signal(false);
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
 
   protected readonly selectedTypes = signal<number[]>([]);
@@ -93,8 +92,6 @@ export class ProductListComponent implements OnInit {
 
   protected loadProducts() {
     this.isLoading.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     this.productService.getProducts().subscribe({
       next: (data) => {
@@ -104,8 +101,7 @@ export class ProductListComponent implements OnInit {
         this.isRefreshing.set(false);
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isLoading.set(false);
         this.isRefreshing.set(false);
       },
@@ -165,14 +161,9 @@ export class ProductListComponent implements OnInit {
         this.loadProducts();
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
       },
     });
-  }
-
-  protected hideError() {
-    this.showError.set(false);
   }
 
   protected getProductCategoryName(category: ProductCategoryEnum): string {

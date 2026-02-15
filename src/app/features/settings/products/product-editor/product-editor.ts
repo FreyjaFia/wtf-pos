@@ -2,9 +2,8 @@ import { CommonModule, Location } from '@angular/common';
 import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '@core/services';
+import { AlertService, ProductService } from '@core/services';
 import {
-  AlertComponent,
   AddonsSwapperComponent,
   Icon,
   PriceHistoryDrawerComponent,
@@ -24,7 +23,6 @@ import {
     CommonModule,
     ReactiveFormsModule,
     Icon,
-    AlertComponent,
     AddonsSwapperComponent,
     ProductsSwapperComponent,
     PriceHistoryDrawerComponent,
@@ -39,6 +37,7 @@ export class ProductEditorComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
+  private readonly alertService = inject(AlertService);
 
   @ViewChild(AddonsSwapperComponent) addonsSwapper!: AddonsSwapperComponent;
   @ViewChild(ProductsSwapperComponent) productsSwapper!: ProductsSwapperComponent;
@@ -47,8 +46,6 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
   protected readonly isUploading = signal(false);
-  protected readonly error = signal<string | null>(null);
-  protected readonly showError = signal(false);
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
@@ -107,8 +104,6 @@ export class ProductEditorComponent implements OnInit {
 
   private loadProduct(id: string) {
     this.isLoading.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     this.productService.getProduct(id).subscribe({
       next: (product) => {
@@ -135,8 +130,7 @@ export class ProductEditorComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isLoading.set(false);
       },
     });
@@ -149,8 +143,6 @@ export class ProductEditorComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     const formValue = this.productForm.getRawValue();
 
@@ -175,8 +167,7 @@ export class ProductEditorComponent implements OnInit {
           }
         },
         error: (err) => {
-          this.error.set(err.message);
-          this.showError.set(true);
+          this.alertService.error(err.message);
           this.isSaving.set(false);
         },
       });
@@ -197,8 +188,7 @@ export class ProductEditorComponent implements OnInit {
           }
         },
         error: (err) => {
-          this.error.set(err.message);
-          this.showError.set(true);
+          this.alertService.error(err.message);
           this.isSaving.set(false);
         },
       });
@@ -215,20 +205,17 @@ export class ProductEditorComponent implements OnInit {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
       if (!allowedTypes.includes(file.type)) {
-        this.error.set('Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.');
-        this.showError.set(true);
+        this.alertService.error('Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.');
         return;
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.error.set('File size exceeds 5MB limit.');
-        this.showError.set(true);
+        this.alertService.error('File size exceeds 5MB limit.');
         return;
       }
 
       this.selectedFile.set(file);
-      this.error.set(null);
 
       // Create preview
       const reader = new FileReader();
@@ -260,8 +247,6 @@ export class ProductEditorComponent implements OnInit {
     }
 
     this.isUploading.set(true);
-    this.error.set(null);
-    this.showError.set(false);
 
     this.productService.uploadProductImage(id, file).subscribe({
       next: (updatedProduct) => {
@@ -280,8 +265,7 @@ export class ProductEditorComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.error.set(err.message);
-        this.showError.set(true);
+        this.alertService.error(err.message);
         this.isUploading.set(false);
         this.isSaving.set(false);
       },
@@ -351,10 +335,6 @@ export class ProductEditorComponent implements OnInit {
     this.productForm.controls.code.setValue(uppercased, { emitEvent: false });
   }
 
-  protected hideError() {
-    this.showError.set(false);
-  }
-
   private loadAssignedAddOns(productId: string) {
     this.productService.getProductAddOns(productId).subscribe({
       next: (addons) => this.assignedAddOns.set(addons),
@@ -371,8 +351,7 @@ export class ProductEditorComponent implements OnInit {
 
   protected openAddOnsManager() {
     if (!this.productId) {
-      this.error.set('Please save the product first before managing add-ons.');
-      this.showError.set(true);
+      this.alertService.error('Please save the product first before managing add-ons.');
       return;
     }
 
@@ -401,8 +380,7 @@ export class ProductEditorComponent implements OnInit {
 
   protected openProductsManager() {
     if (!this.productId) {
-      this.error.set('Please save the product first before managing linked products.');
-      this.showError.set(true);
+      this.alertService.error('Please save the product first before managing linked products.');
       return;
     }
 

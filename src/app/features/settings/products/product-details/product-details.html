@@ -38,18 +38,6 @@
     }
   </div>
 
-  <!-- Toast Alert at top center -->
-  @if (showError() && error()) {
-    <div class="fixed top-20 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
-      <app-alert type="error" [message]="error()!" (dismissed)="hideError()" />
-    </div>
-  }
-  @if (showSuccess() && successMessage()) {
-    <div class="fixed top-20 left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-4">
-      <app-alert type="success" [message]="successMessage()!" (dismissed)="hideSuccess()" />
-    </div>
-  }
-
   <!-- Loading State -->
   @if (isLoading()) {
     <div class="flex justify-center py-12">
