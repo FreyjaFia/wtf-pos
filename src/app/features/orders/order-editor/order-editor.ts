@@ -53,8 +53,10 @@ export class OrderEditor implements OnInit {
   protected readonly categoryCounts = computed(() => {
     const cache = this.productsCache();
     return {
-      [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink).length,
-      [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food).length,
+      [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink)
+        .length,
+      [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food)
+        .length,
     };
   });
 
@@ -124,6 +126,7 @@ export class OrderEditor implements OnInit {
       .getProducts({
         searchTerm: searchTerm || null,
         category: null,
+        isAddOn: false,
         isActive: true,
       })
       .subscribe({

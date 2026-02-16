@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,13 +12,19 @@ import {
 import { OrderDto, OrderStatusEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
-type SortColumn = 'orderNumber' | 'date';
+type SortColumn = 'orderNumber' | 'date' | 'totalAmount';
 type SortDirection = 'asc' | 'desc';
+
+interface OrderGroup {
+  label: string;
+  orders: OrderDto[];
+}
 
 @Component({
   selector: 'app-order-list',
   imports: [
     CommonModule,
+    DatePipe,
     ReactiveFormsModule,
     Icon,
     FilterDropdown,
@@ -42,8 +48,22 @@ export class OrderList implements OnInit {
   protected readonly OrderStatusEnum = OrderStatusEnum;
   protected readonly sortColumn = signal<SortColumn | null>(null);
   protected readonly sortDirection = signal<SortDirection>('desc');
-
   protected readonly selectedStatuses = signal<OrderStatusEnum[]>([]);
+
+  protected readonly groupedOrders = computed<OrderGroup[]>(() => {
+    const items = this.orders();
+    const groups = new Map<string, OrderDto[]>();
+
+    items.forEach((order) => {
+      const dateLabel = this.getDateGroupLabel(order);
+      if (!groups.has(dateLabel)) {
+        groups.set(dateLabel, []);
+      }
+      groups.get(dateLabel)!.push(order);
+    });
+
+    return Array.from(groups, ([label, orders]) => ({ label, orders }));
+  });
 
   protected readonly statusCounts = computed(() => {
     const cache = this.ordersCache();
@@ -169,8 +189,40 @@ export class OrderList implements OnInit {
     return count === 1 ? '1 item' : `${count} items`;
   }
 
+  private getDateGroupLabel(order: OrderDto): string {
+    const orderDate = new Date(order.updatedAt || order.createdAt);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const orderDateStr = orderDate.toDateString();
+    const todayStr = today.toDateString();
+    const yesterdayStr = yesterday.toDateString();
+
+    if (orderDateStr === todayStr) {
+      return 'Today';
+    } else if (orderDateStr === yesterdayStr) {
+      return 'Yesterday';
+    } else {
+      // Format as "Monday, Jan 20"
+      return orderDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+  }
+
   editOrder(order: OrderDto) {
     this.router.navigate(['/orders/editor', order.id]);
+  }
+
+  isSortActive(column: SortColumn): boolean {
+    return this.sortColumn() === column;
+  }
+
+  stopPropagation(event: Event): void {
+    event.stopPropagation();
   }
 
   private applyFiltersToCache() {
@@ -208,6 +260,10 @@ export class OrderList implements OnInit {
         const dateB = new Date(b.updatedAt || b.createdAt).getTime();
         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
       });
+    } else if (sortColumn === 'totalAmount') {
+      items.sort((a, b) =>
+        sortDirection === 'asc' ? a.totalAmount - b.totalAmount : b.totalAmount - a.totalAmount,
+      );
     } else {
       // Default sort by date descending
       items.sort((a, b) => {
