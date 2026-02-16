@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, CustomerService } from '@core/services';
-import { BadgeComponent, Icon } from '@shared/components';
+import { AvatarComponent, BadgeComponent, Icon } from '@shared/components';
 import { CustomerDto } from '@shared/models';
 
 @Component({
   selector: 'app-customer-details',
-  imports: [CommonModule, Icon, BadgeComponent],
+  imports: [CommonModule, Icon, BadgeComponent, AvatarComponent],
   templateUrl: './customer-details.html',
   host: {
     class: 'block h-full',

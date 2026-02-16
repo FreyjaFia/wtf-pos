@@ -160,13 +160,11 @@
                 <!-- Avatar and Name -->
                 <div class="col-span-5 flex items-center gap-4">
                   <div class="w-14 shrink-0">
-                    <div
-                      class="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100"
-                    >
-                      <app-icon
-                        name="icon-people"
-                        [class]="'h-7 w-7 text-gray-400'"
-                        [fill]="'currentColor'"
+                    <div class="flex h-14 w-14 items-center justify-center">
+                      <app-avatar
+                        [letters]="((customer.firstName.charAt(0) || '') + (customer.lastName.charAt(0) || '')).toUpperCase()"
+                        [size]="36"
+                        [label]="customer.firstName + ' ' + customer.lastName"
                       />
                     </div>
                   </div>

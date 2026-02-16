@@ -3,7 +3,13 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService, CustomerService } from '@core/services';
-import { BadgeComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
+import {
+  AvatarComponent,
+  BadgeComponent,
+  FilterDropdown,
+  Icon,
+  type FilterOption,
+} from '@shared/components';
 import { CustomerDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
@@ -12,7 +18,14 @@ type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-customer-list',
-  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    Icon,
+    FilterDropdown,
+    BadgeComponent,
+    AvatarComponent,
+  ],
   templateUrl: './customer-list.html',
   host: { class: 'flex-1 min-h-0' },
 })
