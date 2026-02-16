@@ -5,6 +5,13 @@ export enum ProductCategoryEnum {
   Other = 4,
 }
 
+export enum AddOnTypeEnum {
+  Size = 1,
+  Flavor = 2,
+  Topping = 3,
+  Extra = 4,
+}
+
 export interface ProductPriceHistoryDto {
   id: string;
   productId: string;
@@ -70,4 +77,20 @@ export interface ProductSimpleDto {
   category: ProductCategoryEnum;
   isActive: boolean;
   imageUrl?: string | null;
+}
+
+export interface ProductAddOnAssignmentDto {
+  addOnId: string;
+  addOnType: AddOnTypeEnum;
+}
+
+export interface AddOnProductAssignmentDto {
+  productId: string;
+  addOnType: AddOnTypeEnum;
+}
+
+export interface AddOnGroupDto {
+  type: AddOnTypeEnum;
+  displayName: string;
+  options: ProductSimpleDto[];
 }

@@ -1,7 +1,16 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment.development';
-import { CreateProductDto, ProductCategoryEnum, ProductDto, ProductSimpleDto, UpdateProductDto } from '@shared/models';
+import {
+  AddOnGroupDto,
+  AddOnProductAssignmentDto,
+  CreateProductDto,
+  ProductAddOnAssignmentDto,
+  ProductCategoryEnum,
+  ProductDto,
+  ProductSimpleDto,
+  UpdateProductDto,
+} from '@shared/models';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -137,8 +146,8 @@ export class ProductService {
     );
   }
 
-  getProductAddOns(productId: string): Observable<ProductSimpleDto[]> {
-    return this.http.get<ProductSimpleDto[]>(`${this.baseUrl}/${productId}/addons`).pipe(
+  getProductAddOns(productId: string): Observable<AddOnGroupDto[]> {
+    return this.http.get<AddOnGroupDto[]>(`${this.baseUrl}/${productId}/addons`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching product add-ons:', error);
 
@@ -171,15 +180,16 @@ export class ProductService {
     );
   }
 
-  assignProductAddOns(productId: string, addOnIds: string[]): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/${productId}/addons`, { productId, addOnIds }).pipe(
+  assignProductAddOns(productId: string, addOns: ProductAddOnAssignmentDto[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${productId}/addons`, { productId, addOns }).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error assigning product add-ons:', error);
 
         let errorMessage = 'Failed to assign add-ons. Please try again later.';
 
         if (error.status === 400) {
-          errorMessage = error.error?.message || 'Invalid request. Please check the selected add-ons.';
+          errorMessage =
+            error.error?.message || 'Invalid request. Please check the selected add-ons.';
         } else if (error.status === 404) {
           errorMessage = 'Product not found.';
         } else if (error.status === 0) {
@@ -191,23 +201,26 @@ export class ProductService {
     );
   }
 
-  assignLinkedProducts(addOnId: string, productIds: string[]): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/addons/${addOnId}/products`, { addOnId, productIds }).pipe(
-      catchError((error: HttpErrorResponse) => {
-        console.error('Error assigning linked products:', error);
+  assignLinkedProducts(addOnId: string, products: AddOnProductAssignmentDto[]): Observable<void> {
+    return this.http
+      .post<void>(`${this.baseUrl}/addons/${addOnId}/products`, { addOnId, products })
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Error assigning linked products:', error);
 
-        let errorMessage = 'Failed to assign products. Please try again later.';
+          let errorMessage = 'Failed to assign products. Please try again later.';
 
-        if (error.status === 400) {
-          errorMessage = error.error?.message || 'Invalid request. Please check the selected products.';
-        } else if (error.status === 404) {
-          errorMessage = 'Add-on not found.';
-        } else if (error.status === 0) {
-          errorMessage = 'Unable to connect to server. Please check your connection.';
-        }
+          if (error.status === 400) {
+            errorMessage =
+              error.error?.message || 'Invalid request. Please check the selected products.';
+          } else if (error.status === 404) {
+            errorMessage = 'Add-on not found.';
+          } else if (error.status === 0) {
+            errorMessage = 'Unable to connect to server. Please check your connection.';
+          }
 
-        return throwError(() => new Error(errorMessage));
-      }),
-    );
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
   }
 }
