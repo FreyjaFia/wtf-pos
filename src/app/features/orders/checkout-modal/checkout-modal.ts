@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Icon } from '@shared/components';
-import { CartItemDto, PaymentMethodEnum } from '@shared/models';
+import { CartAddOnDto, CartItemDto, PaymentMethodEnum } from '@shared/models';
 
 @Component({
   selector: 'app-checkout-modal',
@@ -33,6 +33,9 @@ export class CheckoutModal {
   protected readonly PaymentMethodEnum = PaymentMethodEnum;
   protected readonly change = signal<number>(0);
   protected readonly showSummary = signal<boolean>(false);
+
+  // Helper for template add-on price calculation
+  protected readonly addOnPriceReducer = (sum: number, ao: CartAddOnDto) => sum + ao.price;
 
   protected get isConfirmDisabled(): boolean {
     const paymentMethod = this.paymentForm.get('paymentMethod')?.value;

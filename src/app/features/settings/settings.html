@@ -14,6 +14,17 @@
         <app-icon name="icon-cart" [class]="'h-5 w-5'"></app-icon>
         <span class="font-medium">Products</span>
       </a>
+      <a
+        routerLink="customers"
+        routerLinkActive="bg-green-50"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="mr-4 flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition-all hover:bg-gray-50"
+        [class.text-[#047857]]="isActive('customers')"
+        [class.bg-green-50]="isActive('customers')"
+      >
+        <app-icon name="icon-people" [class]="'h-5 w-5'"></app-icon>
+        <span class="font-medium">Customers</span>
+      </a>
     </nav>
   </div>
 

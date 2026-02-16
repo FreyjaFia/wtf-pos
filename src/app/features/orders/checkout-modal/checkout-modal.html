@@ -152,7 +152,7 @@
               <p class="text-sm text-gray-500">No items yet</p>
             </div>
           }
-          @for (item of cartItems(); track item.productId; let last = $last) {
+          @for (item of cartItems(); track $index; let last = $last) {
             <div class="flex gap-3 pb-3" [class.border-b]="!last">
               <img
                 [src]="item.imageUrl"
@@ -162,7 +162,20 @@
               <div class="flex-1">
                 <p class="text-sm font-semibold">{{ item.name }}</p>
                 <p class="text-xs opacity-70">{{ item.qty }} × ₱{{ item.price.toFixed(2) }}</p>
-                <p class="text-sm font-semibold">₱{{ (item.qty * item.price).toFixed(2) }}</p>
+                @if (item.addOns?.length) {
+                  <div class="mt-1 space-y-0.5">
+                    @for (ao of item.addOns; track ao.addOnId) {
+                      <p class="flex items-center gap-1 text-xs text-gray-500">
+                        <span class="inline-block h-1 w-1 rounded-full bg-gray-400"></span>
+                        {{ ao.name }}
+                        <span class="ml-auto">+₱{{ ao.price.toFixed(2) }}</span>
+                      </p>
+                    }
+                  </div>
+                }
+                <p class="mt-0.5 text-sm font-semibold">
+                  ₱{{ (item.qty * (item.price + (item.addOns?.length ? item.addOns!.reduce(addOnPriceReducer, 0) : 0))).toFixed(2) }}
+                </p>
               </div>
             </div>
           }
