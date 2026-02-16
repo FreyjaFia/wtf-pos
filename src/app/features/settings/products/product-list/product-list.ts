@@ -3,20 +3,17 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
-import { FilterDropdown, Icon, BadgeComponent, type FilterOption } from '@shared/components';
+import { BadgeComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import { ProductCategoryEnum, ProductDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
-type SortColumn = 'name';
+type SortColumn = 'name' | 'price';
 type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-product-list',
   imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
   templateUrl: './product-list.html',
-  host: {
-    class: 'block h-full',
-  },
 })
 export class ProductListComponent implements OnInit {
   private readonly productService = inject(ProductService);
@@ -75,6 +72,11 @@ export class ProductListComponent implements OnInit {
     if (this.sortColumn() === 'name') {
       products.sort((a, b) => {
         const comparison = a.name.localeCompare(b.name);
+        return this.sortDirection() === 'asc' ? comparison : -comparison;
+      });
+    } else if (this.sortColumn() === 'price') {
+      products.sort((a, b) => {
+        const comparison = a.price - b.price;
         return this.sortDirection() === 'asc' ? comparison : -comparison;
       });
     }
