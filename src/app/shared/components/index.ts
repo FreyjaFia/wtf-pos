@@ -1,6 +1,7 @@
 export * from './addon-selector/addon-selector';
 export * from './addons-swapper/addons-swapper';
 export * from './alert/alert';
+export * from './avatar/avatar';
 export * from './badge/badge';
 export * from './dock/dock';
 export * from './filter-dropdown/filter-dropdown';
