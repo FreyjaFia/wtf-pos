@@ -1,10 +1,12 @@
 <div class="flex h-full flex-col px-6">
-  <!-- Header: Title on Left, Controls on Right -->
-  <div class="mb-6 flex shrink-0 items-center justify-between py-2">
+  <!-- Sticky Header -->
+  <div
+    class="sticky top-0 z-10 mb-6 flex shrink-0 items-center justify-between bg-white/95 backdrop-blur-sm"
+  >
     <!-- Left: Title and Navigation -->
     <div class="flex min-w-0 items-center gap-4">
       <button
-        class="transition-all p-2 rounded-lg hover:bg-gray-100 active:scale-95 cursor-pointer"
+        class="cursor-pointer rounded-lg p-2 transition-all hover:bg-gray-100 active:scale-95"
         type="button"
         (click)="goBack()"
         aria-label="Go back"
@@ -16,16 +18,16 @@
           {{ isEditMode() ? 'Edit Product' : 'New Product' }}
         </h1>
         @if (isEditMode() && lastUpdatedAt()) {
-          <p class="text-gray-500 mt-2 text-sm">
+          <p class="mt-1 text-sm text-gray-500">
             Updated {{ lastUpdatedAt() | date: 'd MMM y, h:mm a' }}
             @if (productId) {
               ·
               <button
                 type="button"
-                class="text-blue-600 hover:text-blue-700 cursor-pointer font-medium"
+                class="cursor-pointer font-medium text-[#047857] hover:text-[#065f46]"
                 (click)="openPriceHistory()"
               >
-                View Price History
+                Price History
               </button>
             }
           </p>
@@ -35,18 +37,13 @@
 
     <!-- Right: Action Buttons -->
     <div class="flex shrink-0 gap-2">
-      <button
-        type="button"
-        class="btn btn-outline btn-sm"
-        (click)="goBack()"
-        [disabled]="isSaving()"
-      >
+      <button type="button" class="btn btn-ghost btn-sm" (click)="goBack()" [disabled]="isSaving()">
         Cancel
       </button>
       <button
         type="submit"
         form="productForm"
-        class="btn btn-neutral btn-sm gap-2"
+        class="btn btn-sm gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
         [disabled]="productForm.invalid || isSaving()"
       >
         @if (isSaving()) {
@@ -66,13 +63,13 @@
 
   <!-- Form -->
   @if (!isLoading()) {
-    <div class="flex-1 overflow-y-auto pr-2">
+    <div class="flex-1 overflow-y-auto pr-2 pb-4">
       <form id="productForm" [formGroup]="productForm" (ngSubmit)="saveProduct()">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <!-- Left Column: Core Details -->
           <div class="space-y-6 lg:col-span-2">
             <!-- Main Form Card -->
-            <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
+            <div class="card rounded-xl bg-white shadow-lg">
               <div class="card-body space-y-5">
                 <!-- Name -->
                 <div>
@@ -84,7 +81,7 @@
                     type="text"
                     formControlName="name"
                     placeholder="Enter product name"
-                    class="input input-bordered w-full border-gray-300 focus:border-gray-400 bg-white"
+                    class="input w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
                     [class.input-error]="hasError('name')"
                   />
                   @if (getErrorMessage('name')) {
@@ -97,29 +94,82 @@
                   <label class="mb-2 block text-sm font-semibold text-gray-900" for="productCode">
                     Product Code <span class="text-error">*</span>
                   </label>
-                  <input
-                    id="productCode"
-                    type="text"
-                    formControlName="code"
-                    placeholder="Enter code (uppercase only)"
-                    maxlength="10"
-                    class="input input-bordered w-full border-gray-300 focus:border-gray-400 bg-white uppercase"
+                  <label
+                    class="input flex w-full items-center gap-2 border-transparent transition-all"
+                    [class.bg-gray-100]="isEditMode()"
+                    [class.bg-gray-50]="!isEditMode()"
+                    [class.cursor-not-allowed]="isEditMode()"
+                    [class.focus-within:border-[#047857]]="!isEditMode()"
+                    [class.focus-within:bg-white]="!isEditMode()"
+                    [class.focus-within:ring-1]="!isEditMode()"
+                    [class.focus-within:ring-[#047857]/20]="!isEditMode()"
                     [class.input-error]="hasError('code')"
-                    (input)="onCodeInput($event)"
-                  />
-                  <p class="text-gray-600 mt-2 text-xs">Max 10 characters, uppercase letters and numbers only</p>
+                  >
+                    @if (isEditMode()) {
+                      <app-icon name="icon-lock" [class]="'h-4 w-4 text-gray-400'" />
+                    }
+                    <input
+                      id="productCode"
+                      type="text"
+                      formControlName="code"
+                      placeholder="Enter code (uppercase only)"
+                      maxlength="10"
+                      class="grow bg-transparent uppercase outline-none"
+                      [class.cursor-not-allowed]="isEditMode()"
+                      (input)="onCodeInput($event)"
+                    />
+                  </label>
+                  @if (isEditMode()) {
+                    <p class="mt-2 text-xs text-gray-500">Code cannot be changed after creation</p>
+                  } @else {
+                    <p class="mt-2 text-xs text-gray-600">
+                      Max 10 characters, uppercase letters and numbers only
+                    </p>
+                  }
                   @if (getErrorMessage('code')) {
                     <p class="text-error mt-2 text-sm">{{ getErrorMessage('code') }}</p>
+                  }
+                </div>
+
+                <!-- Category -->
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-semibold text-gray-900"
+                    for="productCategory"
+                  >
+                    Category <span class="text-error">*</span>
+                  </label>
+                  <select
+                    id="productCategory"
+                    formControlName="category"
+                    class="select w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
+                    [class.select-error]="hasError('category')"
+                  >
+                    <option [ngValue]="ProductCategoryEnum.Drink">Drink</option>
+                    <option [ngValue]="ProductCategoryEnum.Food">Food</option>
+                    <option [ngValue]="ProductCategoryEnum.Dessert">Dessert</option>
+                    <option [ngValue]="ProductCategoryEnum.Other">Other</option>
+                  </select>
+                  @if (productForm.controls.isAddOn.value) {
+                    <p class="mt-2 text-xs text-gray-600">
+                      Add-on products are always categorized as "Other".
+                    </p>
+                  }
+                  @if (getErrorMessage('category')) {
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('category') }}</p>
                   }
                 </div>
 
                 <!-- Description -->
                 <div>
                   <div class="mb-2 flex items-baseline justify-between">
-                    <label class="block text-sm font-semibold text-gray-900" for="productDescription">
+                    <label
+                      class="block text-sm font-semibold text-gray-900"
+                      for="productDescription"
+                    >
                       Description
                     </label>
-                    <span class="text-gray-500 text-xs">
+                    <span class="text-xs text-gray-500">
                       {{ productForm.controls.description.value.length }}/500
                     </span>
                   </div>
@@ -129,7 +179,7 @@
                     placeholder="Brief product description"
                     rows="3"
                     maxlength="500"
-                    class="textarea textarea-bordered w-full border-gray-300 focus:border-gray-400 bg-white"
+                    class="textarea w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
                   ></textarea>
                 </div>
 
@@ -139,10 +189,10 @@
                     Price <span class="text-error">*</span>
                   </label>
                   <label
-                    class="input input-bordered flex w-full items-center gap-2 border-gray-300 focus-within:border-gray-400 bg-white"
+                    class="input flex w-full items-center gap-2 border-transparent bg-gray-50 transition-all focus-within:border-[#047857] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#047857]/20"
                     [class.input-error]="hasError('price')"
                   >
-                    <span class="text-gray-500 font-medium">₱</span>
+                    <span class="font-medium text-gray-500">₱</span>
                     <input
                       id="productPrice"
                       type="number"
@@ -162,171 +212,58 @@
             </div>
 
             <!-- Settings Card -->
-            <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
+            <div class="card rounded-xl bg-white shadow-lg">
               <div class="card-body space-y-5">
+                <p class="text-xs font-semibold tracking-wider text-gray-400 uppercase">Settings</p>
+
                 <!-- Toggles Row -->
-                <div class="flex flex-wrap gap-x-8 gap-y-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <!-- Is Add-on -->
-                  <label
-                    class="flex w-fit items-center gap-3"
-                    [class.cursor-pointer]="!isEditMode()"
-                    [class.cursor-not-allowed]="isEditMode()"
+                  <div
+                    class="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
                     [class.opacity-50]="isEditMode()"
-                    [class.pointer-events-none]="isEditMode()"
                   >
+                    <div>
+                      <span class="text-sm font-medium text-gray-900">Add-on Item</span>
+                      <p class="text-xs text-gray-500">
+                        @if (isEditMode()) {
+                          Cannot change after setup
+                        } @else {
+                          Mark as an add-on product
+                        }
+                      </p>
+                    </div>
                     <input
                       type="checkbox"
                       formControlName="isAddOn"
-                      class="toggle toggle-sm"
-                      [disabled]="isEditMode()"
+                      class="toggle toggle-neutral toggle-sm"
                     />
-                    <div>
-                      <span class="text-sm font-medium text-gray-900">Is Add-on</span>
-                      <p class="text-gray-600 text-xs">
-                        @if (isEditMode()) {
-                          Cannot change after initial setup
-                        } @else {
-                          Mark this product as an add-on item
-                        }
-                      </p>
-                    </div>
-                  </label>
+                  </div>
 
                   <!-- Is Active -->
-                  <label class="flex w-fit cursor-pointer items-center gap-3">
-                    <input type="checkbox" formControlName="isActive" class="toggle toggle-sm" />
+                  <div class="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
                     <div>
                       <span class="text-sm font-medium text-gray-900">Active</span>
-                      <p class="text-gray-600 text-xs">Only active products are visible</p>
+                      <p class="text-xs text-gray-500">Only active products are visible</p>
                     </div>
-                  </label>
-                </div>
-
-                <!-- Category -->
-                <div>
-                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="productCategory">
-                    Category <span class="text-error">*</span>
-                  </label>
-                  <select
-                    id="productCategory"
-                    formControlName="category"
-                    class="select select-bordered w-full border-gray-300 focus:border-gray-400 bg-white"
-                    [class.select-error]="hasError('category')"
-                  >
-                    <option [ngValue]="ProductCategoryEnum.Drink">Drink</option>
-                    <option [ngValue]="ProductCategoryEnum.Food">Food</option>
-                    <option [ngValue]="ProductCategoryEnum.Dessert">Dessert</option>
-                    <option [ngValue]="ProductCategoryEnum.Other">Other</option>
-                  </select>
-                  @if (productForm.controls.isAddOn.value) {
-                    <p class="text-gray-600 mt-2 text-xs">
-                      Add-on products are always categorized as "Other".
-                    </p>
-                  }
-                  @if (getErrorMessage('category')) {
-                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('category') }}</p>
-                  }
+                    <input
+                      type="checkbox"
+                      formControlName="isActive"
+                      class="toggle toggle-neutral toggle-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-
-            <!-- Customization Card (edit mode, non-add-on products) -->
-            @if (isEditMode() && productId && !productForm.controls.isAddOn.value) {
-              <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
-                <div class="card-body">
-                  <h3 class="text-sm font-semibold text-gray-900">Customization</h3>
-                  <p class="text-gray-600 text-xs mt-1">
-                    Manage which add-ons are available for this product.
-                  </p>
-
-                  <!-- Add-on Summary -->
-                  @if (flattenedAssignedAddOns().length > 0) {
-                    <div class="mt-4 space-y-2">
-                      <p class="text-xs font-medium text-gray-900">
-                        {{ flattenedAssignedAddOns().length }}
-                        {{ flattenedAssignedAddOns().length === 1 ? 'add-on' : 'add-ons' }} assigned:
-                      </p>
-                      <div class="flex flex-wrap gap-2">
-                        @for (addon of flattenedAssignedAddOns(); track addon.id) {
-                          <span
-                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 border border-blue-200"
-                          >
-                            {{ addon.name }}
-                            <span class="text-blue-600 font-semibold">₱{{ addon.price | number: '1.2-2' }}</span>
-                          </span>
-                        }
-                      </div>
-                    </div>
-                  }
-
-                  <div class="mt-4">
-                    <button
-                      type="button"
-                      class="btn btn-neutral btn-sm gap-2"
-                      (click)="openAddOnsManager()"
-                      [disabled]="isSaving()"
-                    >
-                      <app-icon name="icon-sliders" [class]="'h-4 w-4'" />
-                      Manage Add-ons
-                    </button>
-                  </div>
-                </div>
-              </div>
-            }
-
-            <!-- Linked Products Card (edit mode, add-on products) -->
-            @if (isEditMode() && productId && productForm.controls.isAddOn.value) {
-              <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
-                <div class="card-body">
-                  <h3 class="text-sm font-semibold text-gray-900">Linked Products</h3>
-                  <p class="text-gray-600 text-xs mt-1">
-                    Manage which products use this add-on.
-                  </p>
-
-                  <!-- Linked Products Summary -->
-                  @if (linkedProducts().length > 0) {
-                    <div class="mt-4 space-y-2">
-                      <p class="text-xs font-medium text-gray-900">
-                        {{ linkedProducts().length }}
-                        {{ linkedProducts().length === 1 ? 'product' : 'products' }} linked:
-                      </p>
-                      <div class="flex flex-wrap gap-2">
-                        @for (linked of linkedProducts(); track linked.id) {
-                          <span
-                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 border border-blue-200"
-                          >
-                            {{ linked.name }}
-                            <span class="text-blue-600 font-semibold">₱{{ linked.price | number: '1.2-2' }}</span>
-                          </span>
-                        }
-                      </div>
-                    </div>
-                  }
-
-                  <div class="mt-4">
-                    <button
-                      type="button"
-                      class="btn btn-neutral btn-sm gap-2"
-                      (click)="openProductsManager()"
-                      [disabled]="isSaving()"
-                    >
-                      <app-icon name="icon-sliders" [class]="'h-4 w-4'" />
-                      Manage Products
-                    </button>
-                  </div>
-                </div>
-              </div>
-            }
           </div>
 
           <!-- Right Column: Sidebar -->
           <div class="space-y-6">
             <!-- Product Image Card -->
-            <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
+            <div class="card rounded-xl bg-white shadow-lg">
               <div class="card-body">
-                <div class="mb-2 flex items-baseline justify-between">
+                <div class="mb-2">
                   <span class="text-sm font-semibold text-gray-900">Product Image</span>
-                  <span class="text-gray-500 text-xs">Max 5MB</span>
                 </div>
 
                 <!-- Current Image -->
@@ -335,7 +272,7 @@
                     <img
                       [src]="currentImageUrl()"
                       alt="Current product image"
-                      class="border border-gray-200 h-48 w-48 rounded-lg object-cover shadow-sm"
+                      class="h-48 w-48 rounded-xl object-cover shadow-lg"
                     />
                   </div>
                 }
@@ -347,7 +284,7 @@
                       <img
                         [src]="imagePreview()"
                         alt="Image preview"
-                        class="border border-gray-200 h-48 w-48 rounded-lg object-cover shadow-sm"
+                        class="h-48 w-48 rounded-xl object-cover shadow-lg"
                       />
                       <button
                         type="button"
@@ -361,17 +298,35 @@
                   </div>
                 }
 
-                <!-- File Input -->
+                <!-- Dropzone File Input -->
+                <label
+                  for="productImage"
+                  class="group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6 transition-all hover:border-[#047857]/40 hover:bg-[#047857]/5"
+                  [class.pointer-events-none]="isUploading()"
+                  [class.opacity-50]="isUploading()"
+                  [class.border-[#047857]]="isDragging()"
+                  [class.bg-[#047857]/5]="isDragging()"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave($event)"
+                  (drop)="onFileDrop($event)"
+                >
+                  <app-icon
+                    name="icon-upload"
+                    [class]="'h-8 w-8 text-gray-400 transition-colors group-hover:text-[#047857]'"
+                  />
+                  <p class="mt-2 text-sm font-medium text-gray-600 group-hover:text-[#047857]">
+                    Click or drag & drop to upload
+                  </p>
+                  <p class="mt-1 text-xs text-gray-400">JPG, PNG, GIF, or WebP · Max 5 MB</p>
+                </label>
                 <input
                   id="productImage"
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                  class="file-input file-input-bordered w-full border-gray-300 bg-white"
+                  class="hidden"
                   (change)="onFileSelected($event)"
                   [disabled]="isUploading()"
                 />
-
-                <p class="text-gray-600 mt-2 text-xs">JPG, PNG, GIF, or WebP</p>
 
                 @if (isUploading()) {
                   <div class="mt-3 flex items-center gap-2">
@@ -381,6 +336,250 @@
                 }
               </div>
             </div>
+
+            <!-- Customization Card (edit mode, non-add-on products) -->
+            @if (isEditMode() && productId && !productForm.controls.isAddOn.value) {
+              <div class="card rounded-xl bg-white shadow-lg">
+                <div class="card-body">
+                  <div class="mb-1 flex items-baseline justify-between">
+                    <h3 class="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                      Add-ons
+                    </h3>
+                    @if (flattenedAssignedAddOns().length > 0) {
+                      <span class="text-xs text-gray-400">
+                        {{ flattenedAssignedAddOns().length }}
+                        {{ flattenedAssignedAddOns().length === 1 ? 'add-on' : 'add-ons' }}
+                      </span>
+                    }
+                  </div>
+
+                  @if (flattenedAssignedAddOns().length > 0) {
+                    <div
+                      class="overflow-hidden transition-[max-height] duration-300 ease-in-out"
+                      [style.max-height]="
+                        showAllAddOns()
+                          ? flattenedAssignedAddOns().length * 2.75 + 1 + 'rem'
+                          : '14rem'
+                      "
+                    >
+                      @for (
+                        addon of flattenedAssignedAddOns();
+                        track addon.id;
+                        let odd = $odd
+                      ) {
+                        <div
+                          class="group/row flex items-center gap-3 border-b border-gray-50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-gray-50"
+                          [class.bg-gray-50/50]="odd"
+                        >
+                          <!-- Thumbnail -->
+                          <div class="shrink-0">
+                            @if (addon.imageUrl) {
+                              <img
+                                [src]="addon.imageUrl"
+                                [alt]="addon.name"
+                                class="h-8 w-8 rounded-full object-cover"
+                              />
+                            } @else {
+                              <div
+                                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100"
+                              >
+                                <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-400'" />
+                              </div>
+                            }
+                          </div>
+                          <!-- Name + Price -->
+                          <div class="flex flex-1 items-center justify-between gap-2">
+                            <span
+                              class="text-sm font-medium text-gray-800"
+                              [class.line-through]="!addon.isActive"
+                              [class.text-gray-400]="!addon.isActive"
+                            >
+                              {{ addon.name }}
+                            </span>
+                            <span
+                              class="shrink-0 text-sm font-semibold text-gray-700"
+                              [class.text-gray-400]="!addon.isActive"
+                            >
+                              ₱{{ addon.price | number: '1.2-2' }}
+                            </span>
+                          </div>
+                          <!-- Unlink -->
+                          <button
+                            type="button"
+                            class="shrink-0 cursor-pointer rounded-full p-1 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500"
+                            (click)="removeAddOn(addon.id)"
+                            title="Remove add-on"
+                          >
+                            <app-icon name="icon-close" [class]="'h-3.5 w-3.5'" />
+                          </button>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Show All button -->
+                    @if (flattenedAssignedAddOns().length > 5) {
+                      <button
+                        type="button"
+                        class="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-100"
+                        (click)="showAllAddOns.set(!showAllAddOns())"
+                      >
+                        {{
+                          showAllAddOns()
+                            ? 'Show less'
+                            : 'Show all ' + flattenedAssignedAddOns().length + ' items'
+                        }}
+                        <app-icon
+                          name="icon-forward"
+                          [class]="
+                            'h-4 w-4 transition-transform duration-200 ' +
+                            (showAllAddOns() ? '-rotate-90' : 'rotate-90')
+                          "
+                        />
+                      </button>
+                    }
+                  } @else {
+                    <div class="flex flex-col items-center py-6 text-center">
+                      <p class="text-sm font-medium text-gray-400">No add-ons assigned</p>
+                      <p class="mt-1 text-xs text-gray-300">
+                        Add-ons let customers customize this product
+                      </p>
+                    </div>
+                  }
+
+                  <div class="mt-4">
+                    <button
+                      type="button"
+                      class="btn btn-sm gap-2 rounded-lg border border-[#047857] bg-white text-[#047857] transition-all hover:bg-[#047857]/5"
+                      (click)="openAddOnsManager()"
+                      [disabled]="isSaving()"
+                    >
+                      <app-icon name="icon-sliders" [class]="'h-4 w-4'" />
+                      Manage Add-ons
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Linked Products Card (edit mode, add-on products) -->
+            @if (isEditMode() && productId && productForm.controls.isAddOn.value) {
+              <div class="card rounded-xl bg-white shadow-lg">
+                <div class="card-body">
+                  <div class="mb-1 flex items-baseline justify-between">
+                    <h3 class="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                      Linked Products
+                    </h3>
+                    @if (linkedProducts().length > 0) {
+                      <span class="text-xs text-gray-400">
+                        {{ linkedProducts().length }}
+                        {{ linkedProducts().length === 1 ? 'product' : 'products' }}
+                      </span>
+                    }
+                  </div>
+
+                  @if (linkedProducts().length > 0) {
+                    <div
+                      class="overflow-hidden transition-[max-height] duration-300 ease-in-out"
+                      [style.max-height]="
+                        showAllLinked()
+                          ? linkedProducts().length * 2.75 + 1 + 'rem'
+                          : '14rem'
+                      "
+                    >
+                      @for (linked of linkedProducts(); track linked.id; let odd = $odd) {
+                        <div
+                          class="group/row flex items-center gap-3 border-b border-gray-50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-gray-50"
+                          [class.bg-gray-50/50]="odd"
+                        >
+                          <!-- Thumbnail -->
+                          <div class="shrink-0">
+                            @if (linked.imageUrl) {
+                              <img
+                                [src]="linked.imageUrl"
+                                [alt]="linked.name"
+                                class="h-8 w-8 rounded-full object-cover"
+                              />
+                            } @else {
+                              <div
+                                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100"
+                              >
+                                <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-400'" />
+                              </div>
+                            }
+                          </div>
+                          <!-- Name + Price -->
+                          <div class="flex flex-1 items-center justify-between gap-2">
+                            <span
+                              class="text-sm font-medium text-gray-800"
+                              [class.line-through]="!linked.isActive"
+                              [class.text-gray-400]="!linked.isActive"
+                            >
+                              {{ linked.name }}
+                            </span>
+                            <span
+                              class="shrink-0 text-sm font-semibold text-gray-700"
+                              [class.text-gray-400]="!linked.isActive"
+                            >
+                              ₱{{ linked.price | number: '1.2-2' }}
+                            </span>
+                          </div>
+                          <!-- Unlink -->
+                          <button
+                            type="button"
+                            class="shrink-0 cursor-pointer rounded-full p-1 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500"
+                            (click)="removeLinkedProduct(linked.id)"
+                            title="Unlink product"
+                          >
+                            <app-icon name="icon-close" [class]="'h-3.5 w-3.5'" />
+                          </button>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Show All button -->
+                    @if (linkedProducts().length > 5) {
+                      <button
+                        type="button"
+                        class="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-100"
+                        (click)="showAllLinked.set(!showAllLinked())"
+                      >
+                        {{
+                          showAllLinked()
+                            ? 'Show less'
+                            : 'Show all ' + linkedProducts().length + ' items'
+                        }}
+                        <app-icon
+                          name="icon-forward"
+                          [class]="
+                            'h-4 w-4 transition-transform duration-200 ' +
+                            (showAllLinked() ? '-rotate-90' : 'rotate-90')
+                          "
+                        />
+                      </button>
+                    }
+                  } @else {
+                    <div class="flex flex-col items-center py-6 text-center">
+                      <p class="text-sm font-medium text-gray-400">No linked products</p>
+                      <p class="mt-1 text-xs text-gray-300">
+                        Products using this add-on will appear here
+                      </p>
+                    </div>
+                  }
+
+                  <div class="mt-4">
+                    <button
+                      type="button"
+                      class="btn btn-sm gap-2 rounded-lg border border-[#047857] bg-white text-[#047857] transition-all hover:bg-[#047857]/5"
+                      (click)="openProductsManager()"
+                      [disabled]="isSaving()"
+                    >
+                      <app-icon name="icon-sliders" [class]="'h-4 w-4'" />
+                      Manage Products
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
           </div>
         </div>
       </form>
@@ -393,6 +592,59 @@
 
 <!-- Products Swapper Modal -->
 <app-products-swapper></app-products-swapper>
+
+<!-- Discard Changes Modal -->
+@if (showDiscardModal()) {
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="discard-title"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md transition-opacity duration-200"
+    (click)="cancelDiscard()"
+    (keydown.escape)="cancelDiscard()"
+    tabindex="0"
+  >
+    <div
+      role="document"
+      class="mx-4 w-full max-w-sm animate-[modal-pop_0.2s_ease-out] rounded-2xl bg-white p-6 shadow-2xl"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <!-- Double-Ring Warning Icon -->
+      <div class="mx-auto w-fit rounded-full bg-amber-50/60 p-3">
+        <div class="rounded-full bg-amber-50 p-3">
+          <app-icon name="icon-back" [class]="'h-6 w-6 text-amber-600'" />
+        </div>
+      </div>
+
+      <!-- Title & Body -->
+      <h3 id="discard-title" class="mt-4 text-center text-lg font-semibold text-gray-900">
+        Discard Changes?
+      </h3>
+      <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
+        You have unsaved changes that will be lost if you leave this page.
+      </p>
+
+      <!-- Actions -->
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          class="cursor-pointer px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:text-red-700"
+          (click)="confirmDiscard()"
+        >
+          Discard
+        </button>
+        <button
+          type="button"
+          class="cursor-pointer rounded-xl bg-[#047857] px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#065f46] hover:shadow-md active:scale-[0.97]"
+          (click)="cancelDiscard()"
+        >
+          Keep Editing
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Price History Drawer -->
 <app-price-history-drawer

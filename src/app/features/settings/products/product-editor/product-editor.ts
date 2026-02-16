@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,10 @@ import {
 } from '@shared/components';
 import {
   AddOnGroupDto,
+  AddOnProductAssignmentDto,
+  AddOnTypeEnum,
   CreateProductDto,
+  ProductAddOnAssignmentDto,
   ProductCategoryEnum,
   ProductPriceHistoryDto,
   ProductSimpleDto,
@@ -34,10 +37,14 @@ import {
   },
 })
 export class ProductEditorComponent implements OnInit {
+  // Unsaved changes guard
+  protected readonly showDiscardModal = signal(false);
+  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
+  private skipGuard = false;
+
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly location = inject(Location);
   private readonly alertService = inject(AlertService);
 
   @ViewChild(AddonsSwapperComponent) addonsSwapper!: AddonsSwapperComponent;
@@ -47,6 +54,7 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
   protected readonly isUploading = signal(false);
+  protected readonly isDragging = signal(false);
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
@@ -56,6 +64,8 @@ export class ProductEditorComponent implements OnInit {
   protected readonly assignedAddOns = signal<AddOnGroupDto[]>([]);
   protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
   protected readonly lastUpdatedAt = signal<string | null>(null);
+  protected readonly showAllAddOns = signal(false);
+  protected readonly showAllLinked = signal(false);
 
   protected readonly flattenedAssignedAddOns = computed(() => {
     return this.assignedAddOns().flatMap((group) => group.options);
@@ -68,7 +78,11 @@ export class ProductEditorComponent implements OnInit {
     }),
     code: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(10), Validators.pattern(/^[A-Z0-9]+$/)],
+      validators: [
+        Validators.required,
+        Validators.maxLength(10),
+        Validators.pattern(/^[A-Z0-9]+$/),
+      ],
     }),
     description: new FormControl('', {
       nonNullable: true,
@@ -95,6 +109,8 @@ export class ProductEditorComponent implements OnInit {
       this.isEditMode.set(true);
       this.productId = id;
       this.loadProduct(id);
+      this.productForm.controls.isAddOn.disable();
+      this.productForm.controls.code.disable();
     }
 
     this.productForm.controls.isAddOn.valueChanges.subscribe((isAddOn) => {
@@ -168,6 +184,7 @@ export class ProductEditorComponent implements OnInit {
             this.uploadImage();
           } else {
             this.isSaving.set(false);
+            this.skipGuard = true;
             this.navigateToDetails(this.productId!);
           }
         },
@@ -189,6 +206,7 @@ export class ProductEditorComponent implements OnInit {
             this.uploadImage(createdProduct.id);
           } else {
             this.isSaving.set(false);
+            this.skipGuard = true;
             this.navigateToDetails(createdProduct.id);
           }
         },
@@ -210,7 +228,9 @@ export class ProductEditorComponent implements OnInit {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
       if (!allowedTypes.includes(file.type)) {
-        this.alertService.error('Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.');
+        this.alertService.error(
+          'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
+        );
         return;
       }
 
@@ -243,6 +263,52 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
+  protected onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  protected onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+  }
+
+  protected onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+
+    const file = event.dataTransfer?.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+      this.alertService.error(
+        'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.alertService.error('File size exceeds 5MB limit.');
+      return;
+    }
+
+    this.selectedFile.set(file);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.imagePreview.set(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+
   protected uploadImage(productId?: string) {
     const file = this.selectedFile();
     const id = productId || this.productId;
@@ -260,6 +326,7 @@ export class ProductEditorComponent implements OnInit {
         this.imagePreview.set(null);
         this.isUploading.set(false);
         this.isSaving.set(false);
+        this.skipGuard = true;
 
         if (productId) {
           // If we just created the product and uploaded image, navigate to details
@@ -277,8 +344,42 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
+  canDeactivate(): boolean | Promise<boolean> {
+    if (this.skipGuard || !this.productForm.dirty) {
+      return true;
+    }
+
+    this.showDiscardModal.set(true);
+
+    return new Promise<boolean>((resolve) => {
+      this.pendingDeactivateResolve = resolve;
+    });
+  }
+
+  protected confirmDiscard() {
+    this.showDiscardModal.set(false);
+
+    if (this.pendingDeactivateResolve) {
+      this.pendingDeactivateResolve(true);
+      this.pendingDeactivateResolve = null;
+    }
+  }
+
+  protected cancelDiscard() {
+    this.showDiscardModal.set(false);
+
+    if (this.pendingDeactivateResolve) {
+      this.pendingDeactivateResolve(false);
+      this.pendingDeactivateResolve = null;
+    }
+  }
+
   protected goBack() {
-    this.location.back();
+    if (this.isEditMode() && this.productId) {
+      this.router.navigate(['/settings/products/details', this.productId]);
+    } else {
+      this.router.navigate(['/settings/products']);
+    }
   }
 
   private navigateToDetails(productId: string) {
@@ -417,5 +518,59 @@ export class ProductEditorComponent implements OnInit {
 
   protected closePriceHistory() {
     this.isHistoryOpen.set(false);
+  }
+
+  protected removeAddOn(addOnId: string) {
+    if (!this.productId) {
+      return;
+    }
+
+    // Remove from groups and rebuild assignment payload
+    const updatedGroups = this.assignedAddOns()
+      .map((group) => ({
+        ...group,
+        options: group.options.filter((opt) => opt.id !== addOnId),
+      }))
+      .filter((group) => group.options.length > 0);
+
+    const assignments: ProductAddOnAssignmentDto[] = updatedGroups.flatMap((group) =>
+      group.options.map((opt) => ({ addOnId: opt.id, addOnType: group.type })),
+    );
+
+    // Optimistic update
+    this.assignedAddOns.set(updatedGroups);
+
+    this.productService.assignProductAddOns(this.productId, assignments).subscribe({
+      error: () => {
+        this.alertService.error('Failed to remove add-on. Please try again.');
+        if (this.productId) {
+          this.loadAssignedAddOns(this.productId);
+        }
+      },
+    });
+  }
+
+  protected removeLinkedProduct(linkedProductId: string) {
+    if (!this.productId) {
+      return;
+    }
+
+    const remaining = this.linkedProducts().filter((p) => p.id !== linkedProductId);
+    const assignments: AddOnProductAssignmentDto[] = remaining.map((p) => ({
+      productId: p.id,
+      addOnType: AddOnTypeEnum.Size,
+    }));
+
+    // Optimistic update
+    this.linkedProducts.set(remaining);
+
+    this.productService.assignLinkedProducts(this.productId, assignments).subscribe({
+      error: () => {
+        this.alertService.error('Failed to unlink product. Please try again.');
+        if (this.productId) {
+          this.loadLinkedProducts(this.productId);
+        }
+      },
+    });
   }
 }
