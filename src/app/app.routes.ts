@@ -6,6 +6,10 @@ import { Login } from '@features/login/login';
 import { OrderEditor } from '@features/orders/order-editor/order-editor';
 import { OrderList } from '@features/orders/order-list/order-list';
 import { Orders } from '@features/orders/orders';
+import { CustomerDetailsComponent } from '@features/settings/customers/customer-details/customer-details';
+import { CustomerEditorComponent } from '@features/settings/customers/customer-editor/customer-editor';
+import { CustomerListComponent } from '@features/settings/customers/customer-list/customer-list';
+import { CustomersComponent } from '@features/settings/customers/customers';
 import { ProductDetailsComponent } from '@features/settings/products/product-details/product-details';
 import { ProductEditorComponent } from '@features/settings/products/product-editor/product-editor';
 import { ProductListComponent } from '@features/settings/products/product-list/product-list';
@@ -70,6 +74,30 @@ export const routes: Routes = [
               {
                 path: 'edit/:id',
                 component: ProductEditorComponent,
+                canDeactivate: [unsavedChangesGuard],
+              },
+            ],
+          },
+          {
+            path: 'customers',
+            component: CustomersComponent,
+            children: [
+              {
+                path: '',
+                component: CustomerListComponent,
+              },
+              {
+                path: 'new',
+                component: CustomerEditorComponent,
+                canDeactivate: [unsavedChangesGuard],
+              },
+              {
+                path: 'details/:id',
+                component: CustomerDetailsComponent,
+              },
+              {
+                path: 'edit/:id',
+                component: CustomerEditorComponent,
                 canDeactivate: [unsavedChangesGuard],
               },
             ],
