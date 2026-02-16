@@ -43,7 +43,7 @@
       <button
         type="submit"
         form="productForm"
-        class="btn btn-sm gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
+        class="btn btn-sm gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
         [disabled]="productForm.invalid || isSaving()"
       >
         @if (isSaving()) {
@@ -199,7 +199,7 @@
                       formControlName="price"
                       placeholder="0.00"
                       step="0.01"
-                      min="1"
+                      min="0"
                       max="999999.99"
                       class="grow bg-transparent outline-none"
                     />
@@ -387,15 +387,20 @@
                               </div>
                             }
                           </div>
-                          <!-- Name + Price -->
+                          <!-- Name + Type Badge + Price -->
                           <div class="flex flex-1 items-center justify-between gap-2">
-                            <span
-                              class="text-sm font-medium text-gray-800"
-                              [class.line-through]="!addon.isActive"
-                              [class.text-gray-400]="!addon.isActive"
-                            >
-                              {{ addon.name }}
-                            </span>
+                            <div class="flex min-w-0 items-center gap-2">
+                              <span
+                                class="text-sm font-medium text-gray-800"
+                                [class.line-through]="!addon.isActive"
+                                [class.text-gray-400]="!addon.isActive"
+                              >
+                                {{ addon.name }}
+                              </span>
+                              <span class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase">
+                                {{ getAddOnTypeName(addon.addOnType) }}
+                              </span>
+                            </div>
                             <span
                               class="shrink-0 text-sm font-semibold text-gray-700"
                               [class.text-gray-400]="!addon.isActive"

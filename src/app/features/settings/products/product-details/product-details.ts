@@ -5,6 +5,7 @@ import { AlertService, ProductService } from '@core/services';
 import { BadgeComponent, Icon, PriceHistoryDrawerComponent } from '@shared/components';
 import {
   AddOnGroupDto,
+  AddOnTypeEnum,
   ProductCategoryEnum,
   ProductDto,
   ProductPriceHistoryDto,
@@ -36,8 +37,14 @@ export class ProductDetailsComponent implements OnInit {
   protected readonly showDeleteModal = signal(false);
 
   protected readonly flattenedAddOns = computed(() => {
-    return this.addOns().flatMap((group) => group.options);
+    return this.addOns().flatMap((group) =>
+      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
+    );
   });
+
+  protected getAddOnTypeName(type: AddOnTypeEnum): string {
+    return AddOnTypeEnum[type];
+  }
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');

@@ -68,8 +68,14 @@ export class ProductEditorComponent implements OnInit {
   protected readonly showAllLinked = signal(false);
 
   protected readonly flattenedAssignedAddOns = computed(() => {
-    return this.assignedAddOns().flatMap((group) => group.options);
+    return this.assignedAddOns().flatMap((group) =>
+      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
+    );
   });
+
+  protected getAddOnTypeName(type: AddOnTypeEnum): string {
+    return AddOnTypeEnum[type];
+  }
 
   protected readonly productForm = new FormGroup({
     name: new FormControl('', {
@@ -90,7 +96,7 @@ export class ProductEditorComponent implements OnInit {
     }),
     price: new FormControl(0, {
       nonNullable: true,
-      validators: [Validators.required, Validators.min(0.01), Validators.max(999999.99)],
+      validators: [Validators.required, Validators.min(0), Validators.max(999999.99)],
     }),
     category: new FormControl<ProductCategoryEnum>(ProductCategoryEnum.Drink, {
       nonNullable: true,
