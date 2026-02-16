@@ -1,19 +1,24 @@
-<div class="flex h-full overflow-hidden">
+<div class="flex h-full overflow-hidden bg-white rounded-t-2xl shadow-sm">
   <!-- Sidebar Navigation -->
-  <div class="border-base-300 w-auto shrink-0 overflow-y-auto">
-    <h2 class="mb-6 text-2xl font-bold">Settings</h2>
-    <ul class="menu menu-compact w-full p-0">
-      <li>
-        <a routerLink="products" routerLinkActive="btn btn-soft" class="justify-start rounded-lg">
-          <app-icon name="icon-box" [class]="'h-5 w-5'"></app-icon>
-          Products
-        </a>
-      </li>
-    </ul>
+  <div class="flex flex-col w-64 shrink-0 overflow-y-auto border-r border-gray-200 bg-white px-6 py-8">
+    <h2 class="mb-8 text-2xl font-bold text-gray-900">Settings</h2>
+    <nav class="space-y-2">
+      <a
+        routerLink="products"
+        routerLinkActive="bg-green-50"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition-all hover:bg-gray-50"
+        [class.text-[#047857]]="isActive('products')"
+        [class.bg-green-50]="isActive('products')"
+      >
+        <app-icon name="icon-cart" [class]="'h-5 w-5'"></app-icon>
+        <span class="font-medium">Products</span>
+      </a>
+    </nav>
   </div>
-  <div class="divider lg:divider-horizontal"></div>
+
   <!-- Content Area -->
-  <div class="min-h-0 flex-1">
+  <div class="min-h-0 flex-1 flex flex-col h-full overflow-hidden">
     <router-outlet />
   </div>
 </div>

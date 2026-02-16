@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Icon } from '@shared/components';
 
 @Component({
@@ -7,4 +7,10 @@ import { Icon } from '@shared/components';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
   templateUrl: './settings.html',
 })
-export class SettingsComponent {}
+export class SettingsComponent {
+  private readonly router = inject(Router);
+
+  isActive(route: string): boolean {
+    return this.router.url.includes(route);
+  }
+}
