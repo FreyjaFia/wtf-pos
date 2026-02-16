@@ -1,4 +1,4 @@
-<dialog #checkoutDialog id="checkout" class="modal items-center p-4">
+<dialog #checkoutDialog id="checkout" class="modal items-center">
   <div
     class="modal-box relative overflow-hidden shadow-2xl"
     [class.max-w-2xl]="!showSummary()"
@@ -23,62 +23,26 @@
           <h4 class="mb-4 text-lg font-semibold">Payment Method</h4>
           <div class="grid grid-cols-2 gap-3">
             <label
-              class="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 p-4 shadow-md transition-all"
-              [class.border-gray-300]="
-                paymentForm.get('paymentMethod')?.value !== PaymentMethodEnum.Cash
-              "
-              [class.bg-gray-50]="
-                paymentForm.get('paymentMethod')?.value !== PaymentMethodEnum.Cash
-              "
-              [class.border-[#047857]]="
-                paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.Cash
-              "
-              [class.bg-emerald-50]="
-                paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.Cash
-              "
-              [class.shadow-lg]="paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.Cash"
+              class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-gray-300 px-3 py-2 transition-all hover:border-gray-400"
             >
-              <app-icon name="icon-product" [class]="'h-8 w-8'" />
-              <span class="text-base font-semibold">Cash</span>
+              <span class="text-sm font-medium">Cash</span>
               <input
                 type="radio"
                 [value]="PaymentMethodEnum.Cash"
                 formControlName="paymentMethod"
                 class="radio radio-sm"
-                [class.radio-success]="
-                  paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.Cash
-                "
                 (change)="calculateChange()"
               />
             </label>
             <label
-              class="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 p-4 shadow-md transition-all"
-              [class.border-gray-300]="
-                paymentForm.get('paymentMethod')?.value !== PaymentMethodEnum.GCash
-              "
-              [class.bg-gray-50]="
-                paymentForm.get('paymentMethod')?.value !== PaymentMethodEnum.GCash
-              "
-              [class.border-[#047857]]="
-                paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.GCash
-              "
-              [class.bg-emerald-50]="
-                paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.GCash
-              "
-              [class.shadow-lg]="
-                paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.GCash
-              "
+              class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-gray-300 px-3 py-2 transition-all hover:border-gray-400"
             >
-              <app-icon name="icon-product" [class]="'h-8 w-8'" />
-              <span class="text-base font-semibold">GCash</span>
+              <span class="text-sm font-medium">GCash</span>
               <input
                 type="radio"
                 [value]="PaymentMethodEnum.GCash"
                 formControlName="paymentMethod"
                 class="radio radio-sm"
-                [class.radio-success]="
-                  paymentForm.get('paymentMethod')?.value === PaymentMethodEnum.GCash
-                "
                 (change)="calculateChange()"
               />
             </label>
@@ -213,7 +177,7 @@
       </div>
     }
   </div>
-  <form method="dialog" class="modal-backdrop">
+  <form method="dialog" class="modal-backdrop bg-black/30 backdrop-blur-md">
     <button>close</button>
   </form>
 </dialog>

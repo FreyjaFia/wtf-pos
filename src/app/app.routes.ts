@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
+import { unsavedChangesGuard } from '@core/guards/unsaved-changes.guard';
 import { Home } from '@features/home/home';
 import { Login } from '@features/login/login';
 import { OrderEditor } from '@features/orders/order-editor/order-editor';
@@ -35,8 +36,8 @@ export const routes: Routes = [
         path: 'orders',
         component: Orders,
         children: [
-          { path: 'editor', component: OrderEditor },
-          { path: 'editor/:id', component: OrderEditor },
+          { path: 'editor', component: OrderEditor, canDeactivate: [unsavedChangesGuard] },
+          { path: 'editor/:id', component: OrderEditor, canDeactivate: [unsavedChangesGuard] },
           { path: 'list', component: OrderList },
         ],
       },
@@ -60,6 +61,7 @@ export const routes: Routes = [
               {
                 path: 'new',
                 component: ProductEditorComponent,
+                canDeactivate: [unsavedChangesGuard],
               },
               {
                 path: 'details/:id',
@@ -68,6 +70,7 @@ export const routes: Routes = [
               {
                 path: 'edit/:id',
                 component: ProductEditorComponent,
+                canDeactivate: [unsavedChangesGuard],
               },
             ],
           },
