@@ -32,6 +32,15 @@ export class ProductsSwapperComponent implements AfterViewInit {
   protected readonly linkedProducts = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
 
+  protected readonly AddOnTypeEnum = AddOnTypeEnum;
+
+  protected readonly addOnTypeOptions = [
+    { value: AddOnTypeEnum.Size, label: 'Size' },
+    { value: AddOnTypeEnum.Flavor, label: 'Flavor' },
+    { value: AddOnTypeEnum.Topping, label: 'Topping' },
+    { value: AddOnTypeEnum.Extra, label: 'Extra' },
+  ];
+
   protected readonly filteredAvailableProducts = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
 
@@ -170,11 +179,14 @@ export class ProductsSwapperComponent implements AfterViewInit {
 
     const allProducts = [...this.availableProducts(), ...this.linkedProducts()];
 
+    // Build a map of existing type selections to preserve them
+    const existingTypes = new Map(this.linkedProducts().map((p) => [p.id, p.type]));
+
     this.availableProducts.set(allProducts.filter((p) => availableIds.includes(p.id)));
     this.linkedProducts.set(
       allProducts
         .filter((p) => linkedIds.includes(p.id))
-        .map((p) => ({ ...p, type: this.addOnType })),
+        .map((p) => ({ ...p, type: existingTypes.get(p.id) ?? this.addOnType })),
     );
   }
 
@@ -214,5 +226,14 @@ export class ProductsSwapperComponent implements AfterViewInit {
   protected onSearchInput(event: Event) {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+  }
+
+  protected changeProductType(productId: string, event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const newType = Number(select.value) as AddOnTypeEnum;
+
+    this.linkedProducts.set(
+      this.linkedProducts().map((p) => (p.id === productId ? { ...p, type: newType } : p)),
+    );
   }
 }

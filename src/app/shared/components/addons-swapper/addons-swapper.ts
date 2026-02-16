@@ -32,6 +32,15 @@ export class AddonsSwapperComponent implements AfterViewInit {
   protected readonly assignedAddOns = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
 
+  protected readonly AddOnTypeEnum = AddOnTypeEnum;
+
+  protected readonly addOnTypeOptions = [
+    { value: AddOnTypeEnum.Size, label: 'Size' },
+    { value: AddOnTypeEnum.Flavor, label: 'Flavor' },
+    { value: AddOnTypeEnum.Topping, label: 'Topping' },
+    { value: AddOnTypeEnum.Extra, label: 'Extra' },
+  ];
+
   protected readonly filteredAvailableAddOns = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
 
@@ -173,5 +182,14 @@ export class AddonsSwapperComponent implements AfterViewInit {
   protected onSearchInput(event: Event) {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+  }
+
+  protected changeAddOnType(addonId: string, event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const newType = Number(select.value) as AddOnTypeEnum;
+
+    this.assignedAddOns.set(
+      this.assignedAddOns().map((a) => (a.id === addonId ? { ...a, type: newType } : a)),
+    );
   }
 }
