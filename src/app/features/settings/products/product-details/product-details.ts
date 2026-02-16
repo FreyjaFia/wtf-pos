@@ -1,5 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
 import {
@@ -8,6 +8,7 @@ import {
   PriceHistoryDrawerComponent,
 } from '@shared/components';
 import {
+  AddOnGroupDto,
   ProductCategoryEnum,
   ProductDto,
   ProductPriceHistoryDto,
@@ -30,11 +31,15 @@ export class ProductDetailsComponent implements OnInit {
   private readonly alertService = inject(AlertService);
 
   protected readonly product = signal<ProductDto | null>(null);
-  protected readonly addOns = signal<ProductSimpleDto[]>([]);
+  protected readonly addOns = signal<AddOnGroupDto[]>([]);
   protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isHistoryOpen = signal(false);
   protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
+
+  protected readonly flattenedAddOns = computed(() => {
+    return this.addOns().flatMap((group) => group.options);
+  });
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');

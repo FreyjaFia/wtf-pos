@@ -1,23 +1,28 @@
-<div class="flex h-full flex-col">
-  <!-- Header -->
-  <div class="mb-4 flex shrink-0 flex-wrap items-start justify-between gap-3">
+<div class="flex h-full flex-col px-6">
+  <!-- Header: Title on Left, Controls on Right -->
+  <div class="mb-6 flex shrink-0 items-center justify-between py-2">
+    <!-- Left: Title and Navigation -->
     <div class="flex min-w-0 items-center gap-4">
-      <button class="btn btn-ghost btn-sm shrink-0 gap-2" (click)="goBack()">
-        <app-icon name="icon-back" [class]="'h-5 w-5'" />
-        Back
+      <button
+        class="transition-all p-2 rounded-lg hover:bg-gray-100 active:scale-95 cursor-pointer"
+        type="button"
+        (click)="goBack()"
+        aria-label="Go back"
+      >
+        <app-icon name="icon-back" [class]="'h-5 w-5 text-gray-600'" />
       </button>
       <div class="min-w-0">
-        <h1 class="truncate text-2xl font-bold">
+        <h1 class="truncate text-2xl font-bold text-gray-900">
           {{ isEditMode() ? 'Edit Product' : 'New Product' }}
         </h1>
         @if (isEditMode() && lastUpdatedAt()) {
-          <p class="text-base-content/40 mt-1 text-xs">
+          <p class="text-gray-500 mt-2 text-sm">
             Updated {{ lastUpdatedAt() | date: 'd MMM y, h:mm a' }}
             @if (productId) {
               ·
               <button
                 type="button"
-                class="hover:text-base-content/70 cursor-pointer underline"
+                class="text-blue-600 hover:text-blue-700 cursor-pointer font-medium"
                 (click)="openPriceHistory()"
               >
                 View Price History
@@ -27,6 +32,8 @@
         }
       </div>
     </div>
+
+    <!-- Right: Action Buttons -->
     <div class="flex shrink-0 gap-2">
       <button
         type="button"
@@ -39,7 +46,7 @@
       <button
         type="submit"
         form="productForm"
-        class="btn btn-neutral btn-sm"
+        class="btn btn-neutral btn-sm gap-2"
         [disabled]="productForm.invalid || isSaving()"
       >
         @if (isSaving()) {
@@ -52,23 +59,24 @@
 
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="flex justify-center py-12">
+    <div class="flex justify-center py-8">
       <span class="loading loading-spinner loading-lg"></span>
     </div>
   }
 
   <!-- Form -->
   @if (!isLoading()) {
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto pr-2">
       <form id="productForm" [formGroup]="productForm" (ngSubmit)="saveProduct()">
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <!-- Left Column: Core Details -->
           <div class="space-y-6 lg:col-span-2">
-            <div class="card bg-base-100 border border-gray-100">
+            <!-- Main Form Card -->
+            <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
               <div class="card-body space-y-5">
                 <!-- Name -->
                 <div>
-                  <label class="mb-1 block text-sm font-medium" for="productName">
+                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="productName">
                     Product Name <span class="text-error">*</span>
                   </label>
                   <input
@@ -76,17 +84,17 @@
                     type="text"
                     formControlName="name"
                     placeholder="Enter product name"
-                    class="input input-bordered w-full"
+                    class="input input-bordered w-full border-gray-300 focus:border-gray-400 bg-white"
                     [class.input-error]="hasError('name')"
                   />
                   @if (getErrorMessage('name')) {
-                    <p class="text-error mt-1 text-sm">{{ getErrorMessage('name') }}</p>
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('name') }}</p>
                   }
                 </div>
 
                 <!-- Code -->
                 <div>
-                  <label class="mb-1 block text-sm font-medium" for="productCode">
+                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="productCode">
                     Product Code <span class="text-error">*</span>
                   </label>
                   <input
@@ -95,23 +103,23 @@
                     formControlName="code"
                     placeholder="Enter code (uppercase only)"
                     maxlength="10"
-                    class="input input-bordered w-full uppercase"
+                    class="input input-bordered w-full border-gray-300 focus:border-gray-400 bg-white uppercase"
                     [class.input-error]="hasError('code')"
                     (input)="onCodeInput($event)"
                   />
-                  <p class="text-base-content/60 mt-1 text-xs">Max 10 characters, uppercase letters and numbers only</p>
+                  <p class="text-gray-600 mt-2 text-xs">Max 10 characters, uppercase letters and numbers only</p>
                   @if (getErrorMessage('code')) {
-                    <p class="text-error mt-1 text-sm">{{ getErrorMessage('code') }}</p>
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('code') }}</p>
                   }
                 </div>
 
                 <!-- Description -->
                 <div>
-                  <div class="mb-1 flex items-baseline justify-between">
-                    <label class="block text-sm font-medium" for="productDescription">
+                  <div class="mb-2 flex items-baseline justify-between">
+                    <label class="block text-sm font-semibold text-gray-900" for="productDescription">
                       Description
                     </label>
-                    <span class="text-base-content/40 text-xs">
+                    <span class="text-gray-500 text-xs">
                       {{ productForm.controls.description.value.length }}/500
                     </span>
                   </div>
@@ -121,20 +129,20 @@
                     placeholder="Brief product description"
                     rows="3"
                     maxlength="500"
-                    class="textarea textarea-bordered w-full"
+                    class="textarea textarea-bordered w-full border-gray-300 focus:border-gray-400 bg-white"
                   ></textarea>
                 </div>
 
                 <!-- Price -->
                 <div>
-                  <label class="mb-1 block text-sm font-medium" for="productPrice">
+                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="productPrice">
                     Price <span class="text-error">*</span>
                   </label>
                   <label
-                    class="input input-bordered flex w-full items-center gap-2"
+                    class="input input-bordered flex w-full items-center gap-2 border-gray-300 focus-within:border-gray-400 bg-white"
                     [class.input-error]="hasError('price')"
                   >
-                    <span class="text-base-content/50">₱</span>
+                    <span class="text-gray-500 font-medium">₱</span>
                     <input
                       id="productPrice"
                       type="number"
@@ -147,14 +155,14 @@
                     />
                   </label>
                   @if (getErrorMessage('price')) {
-                    <p class="text-error mt-1 text-sm">{{ getErrorMessage('price') }}</p>
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('price') }}</p>
                   }
                 </div>
               </div>
             </div>
 
             <!-- Settings Card -->
-            <div class="card bg-base-100 border border-gray-100">
+            <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
               <div class="card-body space-y-5">
                 <!-- Toggles Row -->
                 <div class="flex flex-wrap gap-x-8 gap-y-4">
@@ -173,8 +181,8 @@
                       [disabled]="isEditMode()"
                     />
                     <div>
-                      <span class="text-sm font-medium">Is Add-on</span>
-                      <p class="text-base-content/60 text-xs">
+                      <span class="text-sm font-medium text-gray-900">Is Add-on</span>
+                      <p class="text-gray-600 text-xs">
                         @if (isEditMode()) {
                           Cannot change after initial setup
                         } @else {
@@ -188,21 +196,21 @@
                   <label class="flex w-fit cursor-pointer items-center gap-3">
                     <input type="checkbox" formControlName="isActive" class="toggle toggle-sm" />
                     <div>
-                      <span class="text-sm font-medium">Active</span>
-                      <p class="text-base-content/60 text-xs">Only active products are visible</p>
+                      <span class="text-sm font-medium text-gray-900">Active</span>
+                      <p class="text-gray-600 text-xs">Only active products are visible</p>
                     </div>
                   </label>
                 </div>
 
                 <!-- Category -->
                 <div>
-                  <label class="mb-1 block text-sm font-medium" for="productCategory">
+                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="productCategory">
                     Category <span class="text-error">*</span>
                   </label>
                   <select
                     id="productCategory"
                     formControlName="category"
-                    class="select select-bordered w-full"
+                    class="select select-bordered w-full border-gray-300 focus:border-gray-400 bg-white"
                     [class.select-error]="hasError('category')"
                   >
                     <option [ngValue]="ProductCategoryEnum.Drink">Drink</option>
@@ -211,12 +219,12 @@
                     <option [ngValue]="ProductCategoryEnum.Other">Other</option>
                   </select>
                   @if (productForm.controls.isAddOn.value) {
-                    <p class="text-base-content/40 mt-1 text-xs">
+                    <p class="text-gray-600 mt-2 text-xs">
                       Add-on products are always categorized as "Other".
                     </p>
                   }
                   @if (getErrorMessage('category')) {
-                    <p class="text-error mt-1 text-sm">{{ getErrorMessage('category') }}</p>
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('category') }}</p>
                   }
                 </div>
               </div>
@@ -224,37 +232,37 @@
 
             <!-- Customization Card (edit mode, non-add-on products) -->
             @if (isEditMode() && productId && !productForm.controls.isAddOn.value) {
-              <div class="card bg-base-100 border border-gray-100">
+              <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
                 <div class="card-body">
-                  <h3 class="text-sm font-medium">Customization</h3>
-                  <p class="text-base-content/60 text-xs">
+                  <h3 class="text-sm font-semibold text-gray-900">Customization</h3>
+                  <p class="text-gray-600 text-xs mt-1">
                     Manage which add-ons are available for this product.
                   </p>
 
                   <!-- Add-on Summary -->
-                  @if (assignedAddOns().length > 0) {
-                    <div class="mt-2 space-y-1">
-                      <p class="text-xs font-medium">
-                        {{ assignedAddOns().length }}
-                        {{ assignedAddOns().length === 1 ? 'add-on' : 'add-ons' }} assigned:
+                  @if (flattenedAssignedAddOns().length > 0) {
+                    <div class="mt-4 space-y-2">
+                      <p class="text-xs font-medium text-gray-900">
+                        {{ flattenedAssignedAddOns().length }}
+                        {{ flattenedAssignedAddOns().length === 1 ? 'add-on' : 'add-ons' }} assigned:
                       </p>
-                      <div class="flex flex-wrap gap-1.5">
-                        @for (addon of assignedAddOns(); track addon.id) {
+                      <div class="flex flex-wrap gap-2">
+                        @for (addon of flattenedAssignedAddOns(); track addon.id) {
                           <span
-                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700"
+                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 border border-blue-200"
                           >
                             {{ addon.name }}
-                            <span class="text-blue-500">₱{{ addon.price | number: '1.2-2' }}</span>
+                            <span class="text-blue-600 font-semibold">₱{{ addon.price | number: '1.2-2' }}</span>
                           </span>
                         }
                       </div>
                     </div>
                   }
 
-                  <div class="mt-3">
+                  <div class="mt-4">
                     <button
                       type="button"
-                      class="btn btn-neutral btn-sm"
+                      class="btn btn-neutral btn-sm gap-2"
                       (click)="openAddOnsManager()"
                       [disabled]="isSaving()"
                     >
@@ -268,37 +276,37 @@
 
             <!-- Linked Products Card (edit mode, add-on products) -->
             @if (isEditMode() && productId && productForm.controls.isAddOn.value) {
-              <div class="card bg-base-100 border border-gray-100">
+              <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
                 <div class="card-body">
-                  <h3 class="text-sm font-medium">Linked Products</h3>
-                  <p class="text-base-content/60 text-xs">
+                  <h3 class="text-sm font-semibold text-gray-900">Linked Products</h3>
+                  <p class="text-gray-600 text-xs mt-1">
                     Manage which products use this add-on.
                   </p>
 
                   <!-- Linked Products Summary -->
                   @if (linkedProducts().length > 0) {
-                    <div class="mt-2 space-y-1">
-                      <p class="text-xs font-medium">
+                    <div class="mt-4 space-y-2">
+                      <p class="text-xs font-medium text-gray-900">
                         {{ linkedProducts().length }}
                         {{ linkedProducts().length === 1 ? 'product' : 'products' }} linked:
                       </p>
-                      <div class="flex flex-wrap gap-1.5">
+                      <div class="flex flex-wrap gap-2">
                         @for (linked of linkedProducts(); track linked.id) {
                           <span
-                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700"
+                            class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 border border-blue-200"
                           >
                             {{ linked.name }}
-                            <span class="text-blue-500">₱{{ linked.price | number: '1.2-2' }}</span>
+                            <span class="text-blue-600 font-semibold">₱{{ linked.price | number: '1.2-2' }}</span>
                           </span>
                         }
                       </div>
                     </div>
                   }
 
-                  <div class="mt-3">
+                  <div class="mt-4">
                     <button
                       type="button"
-                      class="btn btn-neutral btn-sm"
+                      class="btn btn-neutral btn-sm gap-2"
                       (click)="openProductsManager()"
                       [disabled]="isSaving()"
                     >
@@ -314,11 +322,11 @@
           <!-- Right Column: Sidebar -->
           <div class="space-y-6">
             <!-- Product Image Card -->
-            <div class="card bg-base-100 border border-gray-100">
+            <div class="card bg-white shadow-sm border border-gray-200 rounded-lg">
               <div class="card-body">
-                <div class="mb-1 flex items-baseline justify-between">
-                  <span class="text-sm font-medium">Product Image</span>
-                  <span class="text-base-content/60 text-xs">Max 5MB</span>
+                <div class="mb-2 flex items-baseline justify-between">
+                  <span class="text-sm font-semibold text-gray-900">Product Image</span>
+                  <span class="text-gray-500 text-xs">Max 5MB</span>
                 </div>
 
                 <!-- Current Image -->
@@ -327,7 +335,7 @@
                     <img
                       [src]="currentImageUrl()"
                       alt="Current product image"
-                      class="border-base-300 h-48 w-48 rounded-lg border object-cover"
+                      class="border border-gray-200 h-48 w-48 rounded-lg object-cover shadow-sm"
                     />
                   </div>
                 }
@@ -339,7 +347,7 @@
                       <img
                         [src]="imagePreview()"
                         alt="Image preview"
-                        class="border-base-300 h-48 w-48 rounded-lg border object-cover"
+                        class="border border-gray-200 h-48 w-48 rounded-lg object-cover shadow-sm"
                       />
                       <button
                         type="button"
@@ -358,17 +366,17 @@
                   id="productImage"
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                  class="file-input file-input-bordered w-full"
+                  class="file-input file-input-bordered w-full border-gray-300 bg-white"
                   (change)="onFileSelected($event)"
                   [disabled]="isUploading()"
                 />
 
-                <p class="text-base-content/60 mt-1 text-xs">JPG, PNG, GIF, or WebP</p>
+                <p class="text-gray-600 mt-2 text-xs">JPG, PNG, GIF, or WebP</p>
 
                 @if (isUploading()) {
-                  <div class="mt-2 flex items-center gap-2">
+                  <div class="mt-3 flex items-center gap-2">
                     <span class="loading loading-spinner loading-sm"></span>
-                    <span class="text-sm">Uploading image...</span>
+                    <span class="text-sm text-gray-700">Uploading image...</span>
                   </div>
                 }
               </div>

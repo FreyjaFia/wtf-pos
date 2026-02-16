@@ -1,5 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
@@ -10,6 +10,7 @@ import {
   ProductsSwapperComponent,
 } from '@shared/components';
 import {
+  AddOnGroupDto,
   CreateProductDto,
   ProductCategoryEnum,
   ProductPriceHistoryDto,
@@ -52,9 +53,13 @@ export class ProductEditorComponent implements OnInit {
   protected readonly currentImageUrl = signal<string | null>(null);
   protected readonly isHistoryOpen = signal(false);
   protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
-  protected readonly assignedAddOns = signal<ProductSimpleDto[]>([]);
+  protected readonly assignedAddOns = signal<AddOnGroupDto[]>([]);
   protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
   protected readonly lastUpdatedAt = signal<string | null>(null);
+
+  protected readonly flattenedAssignedAddOns = computed(() => {
+    return this.assignedAddOns().flatMap((group) => group.options);
+  });
 
   protected readonly productForm = new FormGroup({
     name: new FormControl('', {
