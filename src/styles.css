@@ -41,3 +41,15 @@ body {
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* Premium modal pop-in animation */
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
