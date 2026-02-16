@@ -1,7 +1,7 @@
 <dialog id="products-swapper-modal" class="modal">
-  <div class="modal-box w-full max-w-4xl">
-    <h3 class="text-lg font-bold">Manage Linked Products</h3>
-    <p class="text-base-content/60 mb-4 text-sm">
+  <div class="modal-box w-full max-w-4xl rounded-2xl shadow-2xl">
+    <h3 class="text-lg font-bold text-gray-900">Manage Linked Products</h3>
+    <p class="mb-5 text-sm text-gray-400">
       Drag and drop products between the lists to link or unlink them from this add-on.
     </p>
 
@@ -12,12 +12,14 @@
       </div>
     } @else {
       <!-- Drag and Drop Lists -->
-      <div class="mb-6 grid grid-cols-2 gap-4">
+      <div class="mb-6 grid grid-cols-2 gap-5">
         <!-- Available Products -->
         <div class="flex flex-col">
-          <h4 class="mb-2 font-semibold text-gray-700">Available Products</h4>
+          <h4 class="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+            Available Products
+          </h4>
           <!-- Search Filter -->
-          <div class="relative mb-2">
+          <div class="relative mb-3">
             <app-icon
               name="icon-search"
               fill="none"
@@ -26,22 +28,39 @@
             <input
               type="text"
               placeholder="Search products..."
-              class="input input-bordered input-sm w-full pl-9"
+              class="input input-sm w-full rounded-xl border-transparent bg-gray-50 pl-9 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
               [value]="searchTerm()"
               (input)="onSearchInput($event)"
             />
           </div>
           <ul
             #availableList
-            class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4"
+            class="flex h-96 flex-col space-y-1 overflow-x-hidden overflow-y-auto rounded-xl border border-gray-200 bg-gray-50/50 p-3"
           >
             @for (product of filteredAvailableProducts(); track product.id) {
               <li
                 [attr.data-id]="product.id"
-                class="inline-flex cursor-grab items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+                class="flex cursor-grab items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 transition-shadow hover:shadow-sm active:cursor-grabbing active:shadow-md"
               >
-                <app-icon name="icon-grip" [class]="'h-4 w-4 shrink-0 text-gray-300'" />
-                <span class="truncate">{{ product.name }}</span>
+                <app-icon
+                  name="icon-grip"
+                  [class]="'h-5 w-5 shrink-0 text-gray-300 hover:text-gray-500'"
+                />
+                <!-- Thumbnail -->
+                <div class="shrink-0">
+                  @if (product.imageUrl) {
+                    <img
+                      [src]="product.imageUrl"
+                      [alt]="product.name"
+                      class="h-8 w-8 rounded-full object-cover"
+                    />
+                  } @else {
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
+                      <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-400'" />
+                    </div>
+                  }
+                </div>
+                <span class="min-w-0 break-words">{{ product.name }}</span>
                 <span class="ml-auto shrink-0 text-xs text-gray-500">
                   ₱{{ product.price | number: '1.2-2' }}
                 </span>
@@ -66,27 +85,47 @@
 
         <!-- Linked Products -->
         <div class="flex flex-col">
-          <h4 class="mb-2 font-semibold text-gray-700">
-            Linked Products
+          <div class="mb-2 flex items-baseline justify-between">
+            <h4 class="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+              Linked Products
+            </h4>
             @if (linkedProducts().length > 0) {
-              <span class="text-base-content/50 ml-1 text-xs font-normal">
-                ({{ linkedProducts().length }})
+              <span class="text-xs text-gray-400">
+                {{ linkedProducts().length }}
+                {{ linkedProducts().length === 1 ? 'product' : 'products' }}
               </span>
             }
-          </h4>
-          <div class="mb-2 h-8"></div>
+          </div>
+          <div class="mb-3 h-8"></div>
           <ul
             #assignedList
-            class="flex h-96 flex-col space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-blue-50 p-4"
+            class="flex h-96 flex-col space-y-1 overflow-x-hidden overflow-y-auto rounded-xl border border-gray-200 bg-gray-50/50 p-3"
           >
             @for (product of linkedProducts(); track product.id) {
               <li
                 [attr.data-id]="product.id"
-                class="inline-flex cursor-grab items-center gap-2 rounded-lg border border-blue-200 bg-blue-100 px-3 py-2.5 text-sm font-medium text-blue-900 hover:shadow-sm active:cursor-grabbing active:shadow-md"
+                class="flex cursor-grab items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 transition-shadow hover:shadow-sm active:cursor-grabbing active:shadow-md"
               >
-                <app-icon name="icon-grip" [class]="'h-4 w-4 shrink-0 text-blue-300'" />
-                <span class="truncate">{{ product.name }}</span>
-                <span class="ml-auto shrink-0 text-xs text-blue-600">
+                <app-icon
+                  name="icon-grip"
+                  [class]="'h-5 w-5 shrink-0 text-gray-300 hover:text-gray-500'"
+                />
+                <!-- Thumbnail -->
+                <div class="shrink-0">
+                  @if (product.imageUrl) {
+                    <img
+                      [src]="product.imageUrl"
+                      [alt]="product.name"
+                      class="h-8 w-8 rounded-full object-cover"
+                    />
+                  } @else {
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
+                      <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-400'" />
+                    </div>
+                  }
+                </div>
+                <span class="min-w-0 break-words">{{ product.name }}</span>
+                <span class="ml-auto shrink-0 text-xs text-gray-500">
                   ₱{{ product.price | number: '1.2-2' }}
                 </span>
               </li>
@@ -103,9 +142,9 @@
 
     <!-- Modal Actions -->
     <div class="modal-action">
-      <button class="btn btn-outline" (click)="closeModal()" type="button">Cancel</button>
+      <button class="btn btn-ghost" (click)="closeModal()" type="button">Cancel</button>
       <button
-        class="btn btn-neutral"
+        class="btn gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
         [disabled]="isLoading() || isSaving()"
         (click)="saveProducts()"
         type="button"
@@ -118,7 +157,7 @@
     </div>
   </div>
 
-  <form method="dialog" class="modal-backdrop">
+  <form method="dialog" class="modal-backdrop bg-black/30 backdrop-blur-md">
     <button type="button">close</button>
   </form>
 </dialog>
