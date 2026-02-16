@@ -2,7 +2,8 @@ export enum OrderStatusEnum {
   All = 0,
   Pending = 1,
   Completed = 2,
-  Cancelled = 3
+  Cancelled = 3,
+  Refunded = 4
 }
 
 export enum PaymentMethodEnum {
@@ -10,11 +11,18 @@ export enum PaymentMethodEnum {
   GCash = 2
 }
 
+export interface OrderItemRequestDto {
+  productId: string;
+  quantity: number;
+  addOns: OrderItemRequestDto[];
+}
+
 export interface OrderItemDto {
   id: string;
   productId: string;
   quantity: number;
   price?: number | null;
+  addOns?: OrderItemDto[];
 }
 
 export interface OrderDto {
@@ -36,7 +44,7 @@ export interface OrderDto {
 
 export interface CreateOrderCommand {
   customerId?: string | null;
-  items: OrderItemDto[];
+  items: OrderItemRequestDto[];
   status: OrderStatusEnum;
   paymentMethod?: PaymentMethodEnum | null;
   amountReceived?: number | null;
@@ -47,6 +55,10 @@ export interface CreateOrderCommand {
 export interface UpdateOrderCommand {
   id: string;
   customerId?: string | null;
-  items: OrderItemDto[];
+  items: OrderItemRequestDto[];
   status: OrderStatusEnum;
+  paymentMethod?: PaymentMethodEnum | null;
+  amountReceived?: number | null;
+  changeAmount?: number | null;
+  tips?: number | null;
 }
