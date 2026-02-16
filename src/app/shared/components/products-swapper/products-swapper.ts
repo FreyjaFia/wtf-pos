@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
-import { ProductSimpleDto } from '@shared/models';
+import { AddOnProductAssignmentDto, AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
@@ -29,7 +29,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
   protected readonly availableProducts = signal<ProductSimpleDto[]>([]);
-  protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
+  protected readonly linkedProducts = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
 
   protected readonly filteredAvailableProducts = computed(() => {
@@ -43,6 +43,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
   });
 
   addOnId = '';
+  addOnType = AddOnTypeEnum.Size; // Default type
 
   ngAfterViewInit() {
     if (this.addOnId) {
@@ -51,6 +52,54 @@ export class ProductsSwapperComponent implements AfterViewInit {
   }
 
   private loadProducts() {
+    this.isLoading.set(true);
+
+    // First, load the add-on to get its type
+    this.productService.getProduct(this.addOnId).subscribe({
+      next: (addOn) => {
+        // Determine the add-on's type (you may need to add a type field to ProductDto)
+        // For now, we'll use a default. This should ideally come from the product or need additional API info
+        this.addOnType = AddOnTypeEnum.Size; // This can be enhanced based on backend data
+
+        // Load all non-add-on active products
+        this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
+          next: (allProducts) => {
+            // Get the currently linked products for this add-on
+            this.productService.getLinkedProducts(this.addOnId).subscribe({
+              next: (linkedProducts) => {
+                const linkedIds = new Set(linkedProducts.map((p) => p.id));
+
+                // Split: available (not linked) on left, linked on right
+                const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
+                const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
+
+                this.availableProducts.set(availableNotLinked);
+                this.linkedProducts.set(linkedWithType);
+                this.isLoading.set(false);
+
+                // Initialize Sortable after data is loaded and DOM is populated
+                this.initializeSortable();
+              },
+              error: (err) => {
+                this.alertService.error(err.message);
+                this.isLoading.set(false);
+              },
+            });
+          },
+          error: (err) => {
+            this.alertService.error(err.message);
+            this.isLoading.set(false);
+          },
+        });
+      },
+      error: (err) => {
+        // If loading add-on fails, still try to load products
+        this.loadProductsWithoutAddOnInfo();
+      },
+    });
+  }
+
+  private loadProductsWithoutAddOnInfo() {
     this.isLoading.set(true);
 
     // Load all non-add-on active products
@@ -63,9 +112,10 @@ export class ProductsSwapperComponent implements AfterViewInit {
 
             // Split: available (not linked) on left, linked on right
             const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
+            const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
 
             this.availableProducts.set(availableNotLinked);
-            this.linkedProducts.set(linkedProducts);
+            this.linkedProducts.set(linkedWithType);
             this.isLoading.set(false);
 
             // Initialize Sortable after data is loaded and DOM is populated
@@ -121,7 +171,11 @@ export class ProductsSwapperComponent implements AfterViewInit {
     const allProducts = [...this.availableProducts(), ...this.linkedProducts()];
 
     this.availableProducts.set(allProducts.filter((p) => availableIds.includes(p.id)));
-    this.linkedProducts.set(allProducts.filter((p) => linkedIds.includes(p.id)));
+    this.linkedProducts.set(
+      allProducts
+        .filter((p) => linkedIds.includes(p.id))
+        .map((p) => ({ ...p, type: this.addOnType })),
+    );
   }
 
   protected saveProducts() {
@@ -129,13 +183,15 @@ export class ProductsSwapperComponent implements AfterViewInit {
       return;
     }
 
-    const linkedIds = Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
-      (el) => (el as HTMLElement).getAttribute('data-id') || '',
-    );
+    // Get the current linked products with their type info
+    const products = this.linkedProducts().map((product) => ({
+      productId: product.id,
+      addOnType: product.type,
+    }));
 
     this.isSaving.set(true);
 
-    this.productService.assignLinkedProducts(this.addOnId, linkedIds).subscribe({
+    this.productService.assignLinkedProducts(this.addOnId, products).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.closeModal();

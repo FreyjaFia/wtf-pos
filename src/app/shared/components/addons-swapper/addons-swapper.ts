@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
-import { ProductSimpleDto } from '@shared/models';
+import { AddOnGroupDto, AddOnTypeEnum, ProductAddOnAssignmentDto, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
@@ -28,8 +28,8 @@ export class AddonsSwapperComponent implements AfterViewInit {
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
-  protected readonly availableAddOns = signal<ProductSimpleDto[]>([]);
-  protected readonly assignedAddOns = signal<ProductSimpleDto[]>([]);
+  protected readonly availableAddOns = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
+  protected readonly assignedAddOns = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
 
   protected readonly filteredAvailableAddOns = computed(() => {
@@ -56,16 +56,23 @@ export class AddonsSwapperComponent implements AfterViewInit {
     // Load all available add-ons (products marked as add-ons)
     this.productService.getProducts({ isAddOn: true, isActive: true }).subscribe({
       next: (allAddOns) => {
-        // Now get the currently assigned add-ons for this product
+        // Now get the currently assigned add-ons for this product (grouped by type)
         this.productService.getProductAddOns(this.productId).subscribe({
-          next: (assignedAddOns) => {
-            const assignedIds = new Set(assignedAddOns.map((addon) => addon.id));
+          next: (addOnGroups) => {
+            // Flatten the groups into a list with type info
+            const assignedFlat = addOnGroups.flatMap((group) =>
+              group.options.map((option) => ({ ...option, type: group.type })),
+            );
+
+            const assignedIds = new Set(assignedFlat.map((addon) => addon.id));
 
             // Split: available (not assigned) on left, assigned on right
-            const availableNotAssigned = allAddOns.filter((addon) => !assignedIds.has(addon.id));
+            const availableNotAssigned = allAddOns
+              .filter((addon) => !assignedIds.has(addon.id))
+              .map((addon) => ({ ...addon, type: AddOnTypeEnum.Size })); // Default type for available
 
             this.availableAddOns.set(availableNotAssigned);
-            this.assignedAddOns.set(assignedAddOns);
+            this.assignedAddOns.set(assignedFlat);
             this.isLoading.set(false);
 
             // Initialize Sortable after data is loaded and DOM is populated
@@ -134,13 +141,15 @@ export class AddonsSwapperComponent implements AfterViewInit {
       return;
     }
 
-    const assignedIds = Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
-      (el) => (el as HTMLElement).getAttribute('data-id') || '',
-    );
+    // Get the current assigned add-ons with their type info
+    const addOns = this.assignedAddOns().map((addon) => ({
+      addOnId: addon.id,
+      addOnType: addon.type,
+    }));
 
     this.isSaving.set(true);
 
-    this.productService.assignProductAddOns(this.productId, assignedIds).subscribe({
+    this.productService.assignProductAddOns(this.productId, addOns).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.closeModal();
