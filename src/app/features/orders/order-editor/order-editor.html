@@ -1,12 +1,12 @@
 <div class="flex h-full gap-4">
   <div class="flex flex-1 flex-col overflow-hidden">
-    @if (editMode() && isLoadingOrder()) {
+    @if (editMode() && isLoading()) {
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     }
 
-    @if (!editMode() || !isLoadingOrder()) {
+    @if (!editMode() || !isLoading()) {
       <!-- Header: Title on Left, Tools on Right -->
       <div class="mb-6 flex shrink-0 items-center justify-between">
         <!-- Left: Title -->
@@ -17,8 +17,8 @@
           <!-- Search Input (Ghost Style, Fixed Width) -->
           <label
             class="flex w-72 items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-gray-200"
-            [class.pointer-events-none]="isCompleted()"
-            [class.opacity-50]="isCompleted()"
+            [class.pointer-events-none]="isReadOnly()"
+            [class.opacity-50]="isReadOnly()"
           >
             <app-icon
               name="icon-search"
@@ -36,8 +36,8 @@
           <!-- Category Filter Dropdown (Right-Aligned) -->
           <div
             class="dropdown dropdown-end"
-            [class.pointer-events-none]="isCompleted()"
-            [class.opacity-50]="isCompleted()"
+            [class.pointer-events-none]="isReadOnly()"
+            [class.opacity-50]="isReadOnly()"
           >
             <app-filter-dropdown
               [title]="'Category'"
@@ -71,19 +71,27 @@
               @for (p of products(); track p.id) {
                 <div
                   class="card flex h-60 flex-col overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-200"
-                  [class.cursor-pointer]="!isCompleted()"
-                  [class.cursor-default]="isCompleted()"
-                  [class.opacity-50]="isCompleted()"
-                  [class.hover:shadow-xl]="!isCompleted()"
-                  [class.hover:-translate-y-0.5]="!isCompleted()"
+                  [class.cursor-pointer]="!isReadOnly()"
+                  [class.cursor-default]="isReadOnly()"
+                  [class.opacity-50]="isReadOnly()"
+                  [class.hover:shadow-xl]="!isReadOnly()"
+                  [class.hover:-translate-y-0.5]="!isReadOnly()"
                   role="button"
                   tabindex="0"
-                  (click)="!isCompleted() && addToCart(p)"
-                  (keydown.enter)="!isCompleted() && addToCart(p)"
-                  (keydown.space)="!isCompleted() && addToCart(p)"
+                  (click)="!isReadOnly() && addToCart(p)"
+                  (keydown.enter)="!isReadOnly() && addToCart(p)"
+                  (keydown.space)="!isReadOnly() && addToCart(p)"
                 >
                   <figure class="flex h-32 shrink-0 items-center justify-center">
-                    <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24 object-contain" />
+                    @if (p.imageUrl) {
+                      <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24 object-contain" />
+                    } @else {
+                      <app-icon
+                        name="icon-box"
+                        [class]="'h-14 w-14 text-gray-200'"
+                        [fill]="'currentColor'"
+                      />
+                    }
                   </figure>
                   <div class="card-body flex flex-1 flex-col justify-between p-4">
                     <h2 class="card-title text-base font-semibold text-gray-800">{{ p.name }}</h2>
@@ -109,9 +117,16 @@
       <div class="flex items-center justify-between">
         <div>
           @if (editMode()) {
-            <h3 class="text-lg font-semibold">Edit Order</h3>
+            <h3 class="text-lg font-semibold">
+              {{ isReadOnly() ? 'Order Details' : 'Edit Order' }}
+            </h3>
             @if (currentOrder()) {
               <div class="text-sm opacity-70">#{{ currentOrder()!.orderNumber }}</div>
+              <div class="text-xs text-gray-400">
+                {{
+                  currentOrder()!.updatedAt || currentOrder()!.createdAt | date: 'd MMM y, h:mm a'
+                }}
+              </div>
             }
           } @else {
             <h3 class="text-lg font-semibold">New Order</h3>
@@ -121,7 +136,7 @@
         <button
           class="btn btn-ghost btn-sm text-error"
           (click)="clearAll()"
-          [class.hidden]="isCompleted()"
+          [class.hidden]="isReadOnly()"
         >
           Clear
         </button>
@@ -129,7 +144,12 @@
     </div>
 
     <div class="flex-1 overflow-y-auto p-4">
-      @if (cart().length === 0) {
+      @if (editMode() && isLoading()) {
+        <div class="flex flex-1 flex-col items-center justify-center py-12">
+          <span class="loading loading-spinner loading-lg text-gray-400"></span>
+          <div class="mt-3 text-sm text-gray-400">Loading order items…</div>
+        </div>
+      } @else if (cart().length === 0) {
         <div class="flex flex-col items-center justify-center py-12 text-center">
           <app-icon name="icon-product" [class]="'mb-4 h-20 w-20 opacity-20'" />
           <div class="text-base font-semibold text-gray-700">Your cart is empty</div>
@@ -137,45 +157,67 @@
         </div>
       }
 
-      @for (c of cart(); track c.productId; let last = $last) {
-        <div class="mb-3 flex items-center gap-3 rounded-lg bg-gray-50 p-4 shadow-sm">
-          <div class="flex h-16 w-16 shrink-0 items-center justify-center">
-            <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 object-contain" />
-          </div>
-          <div class="flex min-w-0 flex-1 flex-col justify-between gap-2">
-            <div class="flex items-start justify-between gap-4 sm:gap-6">
-              <div class="min-w-0 flex-1 text-sm font-semibold text-gray-900">{{ c.name }}</div>
-              <div class="shrink-0 text-sm text-gray-500">
-                <span class="text-xs opacity-60">₱</span>{{ c.price | number: '1.2-2' }}
+      @for (c of cart(); track $index; let last = $last) {
+        <div class="mb-3 rounded-lg bg-gray-50 p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center">
+              <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 object-contain" />
+            </div>
+            <div class="flex min-w-0 flex-1 flex-col justify-between gap-2">
+              <div class="flex items-start justify-between gap-4 sm:gap-6">
+                <div class="min-w-0 flex-1 text-sm font-semibold text-gray-900">{{ c.name }}</div>
+                <div class="shrink-0 text-sm text-gray-500">
+                  <span class="text-xs opacity-60">₱</span>{{ c.price | number: '1.2-2' }}
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  @if (!isReadOnly()) {
+                    <button
+                      class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
+                      (click)="decrement(c.productId, $index)"
+                      aria-label="Decrease quantity"
+                    >
+                      <span class="text-base leading-none font-bold">−</span>
+                    </button>
+                  }
+                  <div class="w-6 text-center text-sm font-medium">{{ c.qty }}</div>
+                  @if (!isReadOnly()) {
+                    <button
+                      class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
+                      (click)="increment(c.productId, $index)"
+                      aria-label="Increase quantity"
+                    >
+                      <span class="text-base leading-none font-bold">+</span>
+                    </button>
+                  }
+                </div>
+                <div class="text-base font-bold text-gray-900">
+                  <span class="text-xs opacity-70">₱</span
+                  >{{
+                    c.qty *
+                      (c.price + (c.addOns?.length ? c.addOns!.reduce(addOnPriceReducer, 0) : 0))
+                      | number: '1.2-2'
+                  }}
+                </div>
               </div>
             </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                @if (!isCompleted()) {
-                  <button
-                    class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
-                    (click)="decrement(c.productId)"
-                    aria-label="Decrease quantity"
-                  >
-                    <span class="text-base leading-none font-bold">−</span>
-                  </button>
-                }
-                <div class="w-6 text-center text-sm font-medium">{{ c.qty }}</div>
-                @if (!isCompleted()) {
-                  <button
-                    class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
-                    (click)="increment(c.productId)"
-                    aria-label="Increase quantity"
-                  >
-                    <span class="text-base leading-none font-bold">+</span>
-                  </button>
-                }
-              </div>
-              <div class="text-base font-bold text-gray-900">
-                <span class="text-xs opacity-70">₱</span>{{ c.qty * c.price | number: '1.2-2' }}
-              </div>
-            </div>
           </div>
+
+          <!-- Add-on line items -->
+          @if (c.addOns?.length) {
+            <div class="mt-2 ml-19 space-y-1 border-t border-gray-200 pt-2">
+              @for (ao of c.addOns; track ao.addOnId) {
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                  <span class="flex items-center gap-1.5">
+                    <span class="inline-block h-1 w-1 rounded-full bg-gray-400"></span>
+                    {{ ao.name }}
+                  </span>
+                  <span>+₱{{ ao.price | number: '1.2-2' }}</span>
+                </div>
+              }
+            </div>
+          }
         </div>
       }
     </div>
@@ -191,15 +233,28 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        @if (isCompleted()) {
-          <button class="btn btn-neutral w-full" (click)="cancel()">
-            <app-icon name="icon-back" [class]="'h-5 w-5'" />
-            Back
-          </button>
+        @if (isReadOnly()) {
+          <div class="flex gap-2">
+            @if (isCancellable()) {
+              <button
+                class="btn btn-error btn-outline flex-1 rounded-lg"
+                (click)="openCancelOrderModal()"
+              >
+                {{ isCompleted() ? 'Refund Order' : 'Cancel Order' }}
+              </button>
+            }
+            <button class="btn btn-neutral flex-1 rounded-lg" (click)="cancel()">
+              <app-icon name="icon-back" [class]="'h-5 w-5'" />
+              Back
+            </button>
+          </div>
         } @else {
           <div class="flex gap-2">
             @if (editMode()) {
-              <button class="btn btn-outline flex-1 rounded-lg" (click)="cancel()">Cancel</button>
+              <button class="btn btn-neutral flex-1 rounded-lg" (click)="cancel()">
+                <app-icon name="icon-back" [class]="'h-5 w-5'" />
+                Back
+              </button>
             }
             <button
               class="btn btn-outline pointer-events-auto flex-1 rounded-lg transition-all disabled:opacity-50"
@@ -210,6 +265,14 @@
               Save
             </button>
           </div>
+          @if (editMode() && isCancellable()) {
+            <button
+              class="btn btn-error btn-outline w-full rounded-lg"
+              (click)="openCancelOrderModal()"
+            >
+              {{ isCompleted() ? 'Refund Order' : 'Cancel Order' }}
+            </button>
+          }
           <button
             class="btn btn-lg pointer-events-auto w-full rounded-lg border-0 bg-[#047857] text-base font-semibold text-white shadow-lg transition-all hover:bg-[#065f46] hover:shadow-xl disabled:bg-gray-200 disabled:text-gray-400 disabled:opacity-100 disabled:shadow-none"
             [style.cursor]="cart().length === 0 ? 'not-allowed' : 'pointer'"
@@ -227,8 +290,65 @@
       [totalPrice]="totalPrice()"
       (orderConfirmed)="onOrderConfirmed($event)"
     />
+
+    <app-addon-selector (addToCart)="onAddonSelected($event)" />
   </aside>
 </div>
+
+<!-- Cancel Order Modal -->
+@if (showCancelOrderModal()) {
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cancel-order-title"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md transition-opacity duration-200"
+    (click)="dismissCancelOrder()"
+    (keydown.escape)="dismissCancelOrder()"
+    tabindex="0"
+  >
+    <div
+      role="document"
+      class="mx-4 w-full max-w-sm animate-[modal-pop_0.2s_ease-out] rounded-2xl bg-white p-6 shadow-2xl"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <!-- Double-Ring Warning Icon -->
+      <div class="mx-auto w-fit rounded-full bg-red-50/60 p-3">
+        <div class="rounded-full bg-red-50 p-3">
+          <app-icon name="icon-cart" [class]="'h-6 w-6 text-red-600'" />
+        </div>
+      </div>
+
+      <!-- Title & Body -->
+      <h3 id="cancel-order-title" class="mt-4 text-center text-lg font-semibold text-gray-900">
+        {{ isCompleted() ? 'Refund Order?' : 'Cancel Order?' }}
+      </h3>
+      <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
+        Are you sure you want to {{ isCompleted() ? 'refund' : 'cancel' }} order
+        <span class="font-medium text-gray-700">#{{ currentOrder()!.orderNumber }}</span
+        >? This action cannot be undone.
+      </p>
+
+      <!-- Actions -->
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
+          (click)="dismissCancelOrder()"
+        >
+          Keep Order
+        </button>
+        <button
+          type="button"
+          class="cursor-pointer rounded-xl bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md active:scale-[0.97]"
+          (click)="confirmCancelOrder()"
+        >
+          {{ isCompleted() ? 'Refund Order' : 'Cancel Order' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Abandon Order Modal -->
 @if (showAbandonModal()) {

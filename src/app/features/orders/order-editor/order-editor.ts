@@ -3,27 +3,42 @@ import { Component, computed, inject, OnInit, signal, viewChild } from '@angular
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, OrderService, ProductService } from '@core/services';
-import { FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import {
+  AddonSelectorComponent,
+  FilterDropdown,
+  Icon,
+  type FilterOption,
+} from '@shared/components';
+import {
+  CartAddOnDto,
   CartItemDto,
   CreateOrderCommand,
   OrderDto,
+  OrderItemRequestDto,
   OrderStatusEnum,
   PaymentMethodEnum,
   ProductCategoryEnum,
   ProductDto,
   UpdateOrderCommand,
 } from '@shared/models';
-import { debounceTime } from 'rxjs';
+import { debounceTime, forkJoin, of, switchMap } from 'rxjs';
 import { CheckoutModal } from '../checkout-modal/checkout-modal';
 
 @Component({
   selector: 'app-order-editor',
-  imports: [CommonModule, ReactiveFormsModule, Icon, CheckoutModal, FilterDropdown],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    Icon,
+    CheckoutModal,
+    FilterDropdown,
+    AddonSelectorComponent,
+  ],
   templateUrl: './order-editor.html',
 })
 export class OrderEditor implements OnInit {
   readonly checkoutModal = viewChild.required(CheckoutModal);
+  readonly addonSelector = viewChild.required(AddonSelectorComponent);
   private readonly productService = inject(ProductService);
   private readonly orderService = inject(OrderService);
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -34,6 +49,10 @@ export class OrderEditor implements OnInit {
   protected readonly showAbandonModal = signal(false);
   private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
   private skipGuard = false;
+  private originalCartSnapshot = '';
+
+  // Cancel order
+  protected readonly showCancelOrderModal = signal(false);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
@@ -43,7 +62,6 @@ export class OrderEditor implements OnInit {
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
   protected readonly isLoading = signal(false);
-  protected readonly isLoadingOrder = signal(false);
   protected readonly editMode = signal(false);
   protected readonly currentOrder = signal<OrderDto | null>(null);
 
@@ -52,8 +70,34 @@ export class OrderEditor implements OnInit {
     return order?.status === OrderStatusEnum.Completed;
   });
 
+  protected readonly isCancelled = computed(() => {
+    const order = this.currentOrder();
+    return order?.status === OrderStatusEnum.Cancelled;
+  });
+
+  protected readonly isRefunded = computed(() => {
+    const order = this.currentOrder();
+    return order?.status === OrderStatusEnum.Refunded;
+  });
+
+  protected readonly isReadOnly = computed(
+    () => this.isCompleted() || this.isCancelled() || this.isRefunded(),
+  );
+
+  protected readonly isCancellable = computed(() => {
+    const order = this.currentOrder();
+    if (!order) {
+      return false;
+    }
+    return order.status === OrderStatusEnum.Pending || order.status === OrderStatusEnum.Completed;
+  });
+
   protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
-  protected totalPrice = () => this.cart().reduce((s, i) => s + i.qty * i.price, 0);
+  protected totalPrice = () =>
+    this.cart().reduce((s, i) => {
+      const addOnTotal = (i.addOns ?? []).reduce((a, ao) => a + ao.price, 0);
+      return s + i.qty * (i.price + addOnTotal);
+    }, 0);
 
   protected readonly categoryCounts = computed(() => {
     const cache = this.productsCache();
@@ -93,32 +137,57 @@ export class OrderEditor implements OnInit {
   }
 
   loadOrderForEditing(orderId: string) {
-    this.isLoadingOrder.set(true);
+    this.isLoading.set(true);
 
-    this.orderService.getOrder(orderId).subscribe({
-      next: (order) => {
-        this.currentOrder.set(order);
-        this.populateCartFromOrder(order);
-        this.loadProducts();
-        this.isLoadingOrder.set(false);
-      },
-      error: (err) => {
-        this.alertService.error(err.message || 'Failed to load order');
-        this.isLoadingOrder.set(false);
-      },
-    });
+    this.orderService
+      .getOrder(orderId)
+      .pipe(
+        switchMap((order) => {
+          this.currentOrder.set(order);
+          this.populateCartFromOrder(order);
+          return this.loadProductsForEdit();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: (err: Error) => {
+          this.alertService.error(err.message || 'Failed to load order');
+          this.isLoading.set(false);
+        },
+      });
   }
 
   private populateCartFromOrder(order: OrderDto) {
-    const isCompleted = order.status === OrderStatusEnum.Completed;
+    const isReadOnly =
+      order.status === OrderStatusEnum.Completed ||
+      order.status === OrderStatusEnum.Cancelled ||
+      order.status === OrderStatusEnum.Refunded;
 
-    const cartItems: CartItemDto[] = order.items.map((item) => ({
-      productId: item.productId,
-      name: '',
-      price: isCompleted ? (item.price ?? 0) : 0,
-      qty: item.quantity,
-      imageUrl: '',
-    }));
+    const cartItems: CartItemDto[] = order.items.map((item) => {
+      // Expand add-ons: each add-on item may have quantity > 1
+      const expandedAddOns: CartAddOnDto[] = [];
+
+      for (const ao of item.addOns ?? []) {
+        for (let i = 0; i < ao.quantity; i++) {
+          expandedAddOns.push({
+            addOnId: ao.productId,
+            name: '',
+            price: 0,
+          });
+        }
+      }
+
+      return {
+        productId: item.productId,
+        name: '',
+        price: isReadOnly ? (item.price ?? 0) : 0,
+        qty: item.quantity,
+        imageUrl: '',
+        addOns: expandedAddOns.length > 0 ? expandedAddOns : undefined,
+      };
+    });
     this.cart.set(cartItems);
   }
 
@@ -138,59 +207,152 @@ export class OrderEditor implements OnInit {
         next: (result) => {
           this.productsCache.set(result);
           this.applyFiltersToCache();
-
-          // If in edit mode, enrich cart items with product data
-          if (this.editMode()) {
-            const enrichedCart = this.cart().map((cartItem) => {
-              const product = result.find((p: ProductDto) => p.id === cartItem.productId);
-              return product
-                ? {
-                    ...cartItem,
-                    name: product.name,
-                    price: this.isCompleted() ? cartItem.price : product.price,
-                    imageUrl: product.imageUrl,
-                  }
-                : cartItem;
-            });
-            this.cart.set(enrichedCart);
-          }
-
           this.isLoading.set(false);
         },
-        error: (err) => {
+        error: (err: Error) => {
           this.alertService.error(err.message || 'Failed to load products');
           this.isLoading.set(false);
         },
       });
   }
 
-  addToCart(p: ProductDto) {
-    const existing = this.cart().find((c) => c.productId === p.id);
-    if (existing) {
-      this.cart.set(this.cart().map((c) => (c.productId === p.id ? { ...c, qty: c.qty + 1 } : c)));
+  /**
+   * Loads products for edit mode — fetches the product grid and (if needed)
+   * all products to resolve add-on names/prices. Returns an observable so
+   * it can be chained after the order fetch.
+   */
+  private loadProductsForEdit() {
+    const products$ = this.productService.getProducts({
+      searchTerm: null,
+      category: null,
+      isAddOn: false,
+      isActive: true,
+    });
+
+    const needsAddOns = this.cart().some((c) => c.addOns?.length);
+
+    if (needsAddOns) {
+      const allProducts$ = this.productService.getProducts({});
+
+      return forkJoin([products$, allProducts$]).pipe(
+        switchMap(([result, allProducts]) => {
+          this.productsCache.set(result);
+          this.applyFiltersToCache();
+          this.enrichCartItems(allProducts);
+          return of(void 0);
+        }),
+      );
     } else {
-      this.cart.set([
-        ...this.cart(),
-        { productId: p.id, name: p.name, price: p.price, qty: 1, imageUrl: p.imageUrl },
-      ]);
+      return products$.pipe(
+        switchMap((result) => {
+          this.productsCache.set(result);
+          this.applyFiltersToCache();
+          this.enrichCartItems(result);
+          return of(void 0);
+        }),
+      );
     }
   }
 
-  increment(productId: string) {
-    this.cart.set(
-      this.cart().map((c) => (c.productId === productId ? { ...c, qty: c.qty + 1 } : c)),
-    );
+  private enrichCartItems(allProducts: ProductDto[]) {
+    const enrichedCart = this.cart().map((cartItem) => {
+      const product = allProducts.find((p) => p.id === cartItem.productId);
+      const enrichedAddOns = cartItem.addOns?.map((ao) => {
+        const addOnProduct = allProducts.find((p) => p.id === ao.addOnId);
+        return addOnProduct ? { ...ao, name: addOnProduct.name, price: addOnProduct.price } : ao;
+      });
+
+      return product
+        ? {
+            ...cartItem,
+            name: product.name,
+            price: this.isReadOnly() ? cartItem.price : product.price,
+            imageUrl: product.imageUrl,
+            addOns: enrichedAddOns,
+          }
+        : { ...cartItem, addOns: enrichedAddOns };
+    });
+
+    this.cart.set(enrichedCart);
+    this.snapshotCart();
   }
 
-  decrement(productId: string) {
-    const item = this.cart().find((c) => c.productId === productId);
-    if (!item) return;
+  private snapshotCart() {
+    const items = this.cart().map((c) => ({
+      productId: c.productId,
+      qty: c.qty,
+      addOns: c.addOns?.map((ao) => ao.addOnId).sort() ?? [],
+    }));
+    this.originalCartSnapshot = JSON.stringify(items);
+  }
+
+  private hasCartChanged(): boolean {
+    if (!this.originalCartSnapshot) {
+      return this.cart().length > 0;
+    }
+
+    const items = this.cart().map((c) => ({
+      productId: c.productId,
+      qty: c.qty,
+      addOns: c.addOns?.map((ao) => ao.addOnId).sort() ?? [],
+    }));
+    return JSON.stringify(items) !== this.originalCartSnapshot;
+  }
+
+  addToCart(p: ProductDto) {
+    // If the product is an add-on-capable product, open the add-on selector
+    this.addonSelector().open(p);
+  }
+
+  onAddonSelected(event: { product: ProductDto; addOns: CartAddOnDto[] }) {
+    const { product, addOns } = event;
+
+    // Only stack items without add-ons (plain products)
+    if (addOns.length === 0) {
+      const existing = this.cart().find((c) => c.productId === product.id && !c.addOns?.length);
+
+      if (existing) {
+        this.cart.set(
+          this.cart().map((c) =>
+            c.productId === product.id && !c.addOns?.length ? { ...c, qty: c.qty + 1 } : c,
+          ),
+        );
+        return;
+      }
+    }
+
+    // Items with add-ons always get their own cart line
+    this.cart.set([
+      ...this.cart(),
+      {
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        qty: 1,
+        imageUrl: product.imageUrl,
+        addOns: addOns.length > 0 ? addOns : undefined,
+      },
+    ]);
+  }
+
+  // Helper for template add-on price calculation
+  protected readonly addOnPriceReducer = (sum: number, ao: CartAddOnDto) => sum + ao.price;
+
+  increment(productId: string, index: number) {
+    this.cart.set(this.cart().map((c, i) => (i === index ? { ...c, qty: c.qty + 1 } : c)));
+  }
+
+  decrement(productId: string, index: number) {
+    const item = this.cart()[index];
+
+    if (!item) {
+      return;
+    }
+
     if (item.qty <= 1) {
-      this.cart.set(this.cart().filter((c) => c.productId !== productId));
+      this.cart.set(this.cart().filter((_, i) => i !== index));
     } else {
-      this.cart.set(
-        this.cart().map((c) => (c.productId === productId ? { ...c, qty: c.qty - 1 } : c)),
-      );
+      this.cart.set(this.cart().map((c, i) => (i === index ? { ...c, qty: c.qty - 1 } : c)));
     }
   }
 
@@ -203,8 +365,8 @@ export class OrderEditor implements OnInit {
   }
 
   canDeactivate(): boolean | Promise<boolean> {
-    // No guard for completed orders, empty carts, or after successful save
-    if (this.skipGuard || this.isCompleted() || this.cart().length === 0) {
+    // No guard for completed/cancelled orders, after successful save, or unchanged cart
+    if (this.skipGuard || this.isReadOnly() || !this.hasCartChanged()) {
       return true;
     }
 
@@ -231,6 +393,40 @@ export class OrderEditor implements OnInit {
       this.pendingDeactivateResolve(false);
       this.pendingDeactivateResolve = null;
     }
+  }
+
+  protected openCancelOrderModal() {
+    this.showCancelOrderModal.set(true);
+  }
+
+  protected confirmCancelOrder() {
+    const order = this.currentOrder();
+    if (!order) {
+      return;
+    }
+
+    this.showCancelOrderModal.set(false);
+
+    this.orderService.voidOrder(order.id).subscribe({
+      next: () => {
+        this.skipGuard = true;
+
+        const message =
+          order.status === OrderStatusEnum.Completed
+            ? 'Order has been refunded'
+            : 'Order has been cancelled';
+
+        this.alertService.success(message);
+        this.router.navigate(['/orders/list']);
+      },
+      error: (err: Error) => {
+        this.alertService.error(err.message || 'Failed to void order');
+      },
+    });
+  }
+
+  protected dismissCancelOrder() {
+    this.showCancelOrderModal.set(false);
   }
 
   checkout() {
@@ -278,9 +474,9 @@ export class OrderEditor implements OnInit {
     const command: CreateOrderCommand = {
       customerId: null,
       items: this.cart().map((c) => ({
-        id: '00000000-0000-0000-0000-000000000000',
         productId: c.productId,
         quantity: c.qty,
+        addOns: this.groupAddOns(c.addOns),
       })),
       status,
       ...(event && {
@@ -319,9 +515,9 @@ export class OrderEditor implements OnInit {
       id: order.id,
       customerId: order.customerId ?? null,
       items: this.cart().map((c) => ({
-        id: '00000000-0000-0000-0000-000000000000',
         productId: c.productId,
         quantity: c.qty,
+        addOns: this.groupAddOns(c.addOns),
       })),
       status,
       ...(event && {
@@ -371,5 +567,23 @@ export class OrderEditor implements OnInit {
   onProductCategoryFilterReset() {
     this.selectedProductCategories.set([]);
     this.applyFiltersToCache();
+  }
+
+  private groupAddOns(addOns?: CartAddOnDto[]): OrderItemRequestDto[] {
+    if (!addOns || addOns.length === 0) {
+      return [];
+    }
+
+    const grouped = new Map<string, number>();
+
+    for (const ao of addOns) {
+      grouped.set(ao.addOnId, (grouped.get(ao.addOnId) ?? 0) + 1);
+    }
+
+    return Array.from(grouped.entries()).map(([productId, quantity]) => ({
+      productId,
+      quantity,
+      addOns: [],
+    }));
   }
 }
