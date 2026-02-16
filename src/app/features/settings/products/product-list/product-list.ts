@@ -14,6 +14,7 @@ type SortDirection = 'asc' | 'desc';
   selector: 'app-product-list',
   imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
   templateUrl: './product-list.html',
+  host: { class: 'flex-1 min-h-0' },
 })
 export class ProductListComponent implements OnInit {
   private readonly productService = inject(ProductService);
@@ -35,6 +36,8 @@ export class ProductListComponent implements OnInit {
 
   protected readonly sortColumn = signal<SortColumn | null>('name');
   protected readonly sortDirection = signal<SortDirection>('asc');
+  protected readonly showDeleteModal = signal(false);
+  protected readonly productToDelete = signal<ProductDto | null>(null);
 
   protected readonly categoryCounts = computed(() => {
     const cache = this.productsCache();
@@ -154,9 +157,24 @@ export class ProductListComponent implements OnInit {
   }
 
   protected deleteProduct(product: ProductDto) {
-    if (!confirm(`Are you sure you want to delete "${product.name}"?`)) {
+    this.productToDelete.set(product);
+    this.showDeleteModal.set(true);
+  }
+
+  protected cancelDelete() {
+    this.showDeleteModal.set(false);
+    this.productToDelete.set(null);
+  }
+
+  protected confirmDelete() {
+    const product = this.productToDelete();
+
+    if (!product) {
       return;
     }
+
+    this.showDeleteModal.set(false);
+    this.productToDelete.set(null);
 
     this.productService.deleteProduct(product.id).subscribe({
       next: () => {
