@@ -1,12 +1,8 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
-import {
-  BadgeComponent,
-  Icon,
-  PriceHistoryDrawerComponent,
-} from '@shared/components';
+import { BadgeComponent, Icon, PriceHistoryDrawerComponent } from '@shared/components';
 import {
   AddOnGroupDto,
   ProductCategoryEnum,
@@ -27,7 +23,6 @@ export class ProductDetailsComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly location = inject(Location);
   private readonly alertService = inject(AlertService);
 
   protected readonly product = signal<ProductDto | null>(null);
@@ -36,6 +31,9 @@ export class ProductDetailsComponent implements OnInit {
   protected readonly isLoading = signal(false);
   protected readonly isHistoryOpen = signal(false);
   protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
+  protected readonly showAllAddOns = signal(false);
+  protected readonly showAllLinked = signal(false);
+  protected readonly showDeleteModal = signal(false);
 
   protected readonly flattenedAddOns = computed(() => {
     return this.addOns().flatMap((group) => group.options);
@@ -95,7 +93,7 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   protected goBack() {
-    this.location.back();
+    this.router.navigate(['/settings/products']);
   }
 
   protected navigateToEdit() {
@@ -109,12 +107,20 @@ export class ProductDetailsComponent implements OnInit {
       return;
     }
 
-    const productId = this.product()!.id;
-    const confirmed = window.confirm('Are you sure you want to delete this product?');
+    this.showDeleteModal.set(true);
+  }
 
-    if (!confirmed) {
+  protected cancelDelete() {
+    this.showDeleteModal.set(false);
+  }
+
+  protected confirmDelete() {
+    if (!this.product()) {
       return;
     }
+
+    const productId = this.product()!.id;
+    this.showDeleteModal.set(false);
 
     this.productService.deleteProduct(productId).subscribe({
       next: () => {
@@ -136,5 +142,13 @@ export class ProductDetailsComponent implements OnInit {
 
   protected closePriceHistory() {
     this.isHistoryOpen.set(false);
+  }
+
+  protected toggleShowAllAddOns() {
+    this.showAllAddOns.update((v) => !v);
+  }
+
+  protected toggleShowAllLinked() {
+    this.showAllLinked.update((v) => !v);
   }
 }
