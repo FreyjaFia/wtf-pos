@@ -18,7 +18,7 @@
         <input
           type="search"
           class="grow bg-transparent text-sm placeholder-gray-500 focus:caret-[#047857] focus:outline-none"
-          placeholder="Order #"
+          placeholder="Search by order #"
           [formControl]="filterForm.controls.searchTerm"
         />
       </label>
@@ -186,7 +186,7 @@
                   </div>
                   <div class="col-span-2">
                     <div class="text-sm text-gray-700">
-                      {{ getOrderDate(order) | date: 'd MMM, HH:mm' }}
+                      {{ getOrderDate(order) | date: 'd MMM y, h:mm a' }}
                     </div>
                   </div>
                   <div class="col-span-2 flex justify-center">
