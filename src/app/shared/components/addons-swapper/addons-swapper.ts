@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
-import { AddOnGroupDto, AddOnTypeEnum, ProductAddOnAssignmentDto, ProductSimpleDto } from '@shared/models';
+import { AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({

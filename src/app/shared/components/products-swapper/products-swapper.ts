@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
-import { AddOnProductAssignmentDto, AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
+import { AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
@@ -89,19 +89,17 @@ export class ProductsSwapperComponent implements AfterViewInit {
                 // Initialize Sortable after data is loaded and DOM is populated
                 this.initializeSortable();
               },
-              error: (err) => {
-                this.alertService.error(err.message);
+              error: () => {
                 this.isLoading.set(false);
               },
             });
           },
-          error: (err) => {
-            this.alertService.error(err.message);
+          error: () => {
             this.isLoading.set(false);
           },
         });
       },
-      error: (err) => {
+      error: () => {
         // If loading add-on fails, still try to load products
         this.loadProductsWithoutAddOnInfo();
       },
