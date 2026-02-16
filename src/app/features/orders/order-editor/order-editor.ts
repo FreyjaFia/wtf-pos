@@ -30,6 +30,11 @@ export class OrderEditor implements OnInit {
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
 
+  // Abandon order guard
+  protected readonly showAbandonModal = signal(false);
+  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
+  private skipGuard = false;
+
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
   });
@@ -197,6 +202,37 @@ export class OrderEditor implements OnInit {
     this.router.navigate(['/orders/list']);
   }
 
+  canDeactivate(): boolean | Promise<boolean> {
+    // No guard for completed orders, empty carts, or after successful save
+    if (this.skipGuard || this.isCompleted() || this.cart().length === 0) {
+      return true;
+    }
+
+    this.showAbandonModal.set(true);
+
+    return new Promise<boolean>((resolve) => {
+      this.pendingDeactivateResolve = resolve;
+    });
+  }
+
+  protected confirmAbandon() {
+    this.showAbandonModal.set(false);
+
+    if (this.pendingDeactivateResolve) {
+      this.pendingDeactivateResolve(true);
+      this.pendingDeactivateResolve = null;
+    }
+  }
+
+  protected cancelAbandon() {
+    this.showAbandonModal.set(false);
+
+    if (this.pendingDeactivateResolve) {
+      this.pendingDeactivateResolve(false);
+      this.pendingDeactivateResolve = null;
+    }
+  }
+
   checkout() {
     if (this.cart().length === 0) {
       return;
@@ -257,6 +293,7 @@ export class OrderEditor implements OnInit {
 
     this.orderService.createOrder(command).subscribe({
       next: () => {
+        this.skipGuard = true;
         this.router.navigate(['/orders/list']);
       },
       error: (err) => {
@@ -297,6 +334,7 @@ export class OrderEditor implements OnInit {
 
     this.orderService.updateOrder(command).subscribe({
       next: () => {
+        this.skipGuard = true;
         this.router.navigate(['/orders/list']);
       },
       error: (err) => {

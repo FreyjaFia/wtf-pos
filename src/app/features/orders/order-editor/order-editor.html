@@ -8,7 +8,7 @@
 
     @if (!editMode() || !isLoadingOrder()) {
       <!-- Header: Title on Left, Tools on Right -->
-      <div class="mb-6 flex shrink-0 items-center justify-between px-0 py-2">
+      <div class="mb-6 flex shrink-0 items-center justify-between">
         <!-- Left: Title -->
         <h2 class="text-2xl font-bold text-gray-900">Products</h2>
 
@@ -229,3 +229,59 @@
     />
   </aside>
 </div>
+
+<!-- Abandon Order Modal -->
+@if (showAbandonModal()) {
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="abandon-title"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md transition-opacity duration-200"
+    (click)="cancelAbandon()"
+    (keydown.escape)="cancelAbandon()"
+    tabindex="0"
+  >
+    <div
+      role="document"
+      class="mx-4 w-full max-w-sm animate-[modal-pop_0.2s_ease-out] rounded-2xl bg-white p-6 shadow-2xl"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <!-- Double-Ring Warning Icon -->
+      <div class="mx-auto w-fit rounded-full bg-amber-50/60 p-3">
+        <div class="rounded-full bg-amber-50 p-3">
+          <app-icon name="icon-cart" [class]="'h-6 w-6 text-amber-600'" />
+        </div>
+      </div>
+
+      <!-- Title & Body -->
+      <h3 id="abandon-title" class="mt-4 text-center text-lg font-semibold text-gray-900">
+        Abandon Order?
+      </h3>
+      <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
+        There are
+        <span class="font-medium text-gray-700">{{ itemCount() }}</span>
+        {{ itemCount() === 1 ? 'item' : 'items' }} in the cart. If you leave now, the current order
+        will be cleared.
+      </p>
+
+      <!-- Actions -->
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
+          (click)="confirmAbandon()"
+        >
+          Clear &amp; Leave
+        </button>
+        <button
+          type="button"
+          class="cursor-pointer rounded-xl bg-[#047857] px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#065f46] hover:shadow-md active:scale-[0.97]"
+          (click)="cancelAbandon()"
+        >
+          Keep Ordering
+        </button>
+      </div>
+    </div>
+  </div>
+}
