@@ -74,6 +74,8 @@ export class OrderList implements OnInit {
         .length,
       [OrderStatusEnum.Cancelled]: cache.filter((o) => o.status === OrderStatusEnum.Cancelled)
         .length,
+      [OrderStatusEnum.Refunded]: cache.filter((o) => o.status === OrderStatusEnum.Refunded)
+        .length,
     };
   });
 
@@ -92,6 +94,11 @@ export class OrderList implements OnInit {
       id: OrderStatusEnum.Cancelled,
       label: 'Cancelled',
       count: this.statusCounts()[OrderStatusEnum.Cancelled],
+    },
+    {
+      id: OrderStatusEnum.Refunded,
+      label: 'Refunded',
+      count: this.statusCounts()[OrderStatusEnum.Refunded],
     },
   ]);
 
@@ -154,13 +161,15 @@ export class OrderList implements OnInit {
     this.applyFiltersToCache();
   }
 
-  getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' {
+  getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' | 'default' {
     switch (status) {
       case OrderStatusEnum.Pending:
         return 'warning';
       case OrderStatusEnum.Completed:
         return 'success';
       case OrderStatusEnum.Cancelled:
+        return 'default';
+      case OrderStatusEnum.Refunded:
         return 'error';
       default:
         return 'info';
@@ -175,6 +184,8 @@ export class OrderList implements OnInit {
         return 'Completed';
       case OrderStatusEnum.Cancelled:
         return 'Cancelled';
+      case OrderStatusEnum.Refunded:
+        return 'Refunded';
       default:
         return 'Unknown';
     }
