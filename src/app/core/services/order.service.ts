@@ -99,4 +99,23 @@ export class OrderService {
       }),
     );
   }
+
+  voidOrder(id: string): Observable<OrderDto> {
+    return this.http.patch<OrderDto>(`${this.baseUrl}/${id}/void`, {}).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error voiding order:', error);
+
+        const errorMessage =
+          error.status === 404
+            ? 'Order not found.'
+            : error.status === 400
+              ? 'This order cannot be voided.'
+              : error.status === 0
+                ? 'Unable to connect to server. Please check your connection.'
+                : 'Failed to void order. Please try again later.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
 }
