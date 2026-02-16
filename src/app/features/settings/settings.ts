@@ -6,6 +6,7 @@ import { Icon } from '@shared/components';
   selector: 'app-settings',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon],
   templateUrl: './settings.html',
+  host: { class: 'flex-1 min-h-0' },
 })
 export class SettingsComponent {
   private readonly router = inject(Router);
