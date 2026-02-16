@@ -1,0 +1,177 @@
+<div class="flex h-full flex-col px-6">
+  <!-- Sticky Header -->
+  <div
+    class="sticky top-0 z-10 mb-6 flex shrink-0 items-center justify-between bg-white/95 backdrop-blur-sm"
+  >
+    <!-- Left: Title and Navigation -->
+    <div class="flex min-w-0 items-center gap-4">
+      <button
+        class="cursor-pointer rounded-lg p-2 transition-all hover:bg-gray-100 active:scale-95"
+        type="button"
+        (click)="goBack()"
+        aria-label="Go back"
+      >
+        <app-icon name="icon-back" [class]="'h-5 w-5 text-gray-600'" />
+      </button>
+      <div class="min-w-0">
+        <h1 class="truncate text-2xl font-bold text-gray-900">
+          {{ isEditMode() ? 'Edit Customer' : 'New Customer' }}
+        </h1>
+      </div>
+    </div>
+
+    <!-- Right: Action Buttons -->
+    <div class="flex shrink-0 gap-2">
+      <button type="button" class="btn btn-ghost btn-sm" (click)="goBack()" [disabled]="isSaving()">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form="customerForm"
+        class="btn btn-sm gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"
+        [disabled]="customerForm.invalid || isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="loading loading-spinner loading-sm"></span>
+        }
+        {{ isEditMode() ? 'Update' : 'Create' }} Customer
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+  }
+
+  <!-- Form -->
+  @if (!isLoading()) {
+    <div class="flex-1 overflow-y-auto pr-2 pb-4">
+      <form id="customerForm" [formGroup]="customerForm" (ngSubmit)="saveCustomer()">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <!-- Left Column: Core Details -->
+          <div class="space-y-6 lg:col-span-2">
+            <!-- Main Form Card -->
+            <div class="card rounded-xl bg-white shadow-lg">
+              <div class="card-body space-y-5">
+                <!-- First Name -->
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="firstName">
+                    First Name <span class="text-error">*</span>
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    formControlName="firstName"
+                    placeholder="Enter first name"
+                    class="input w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
+                    [class.input-error]="hasError('firstName')"
+                  />
+                  @if (getErrorMessage('firstName')) {
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('firstName') }}</p>
+                  }
+                </div>
+
+                <!-- Last Name -->
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-gray-900" for="lastName">
+                    Last Name <span class="text-error">*</span>
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    formControlName="lastName"
+                    placeholder="Enter last name"
+                    class="input w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
+                    [class.input-error]="hasError('lastName')"
+                  />
+                  @if (getErrorMessage('lastName')) {
+                    <p class="text-error mt-2 text-sm">{{ getErrorMessage('lastName') }}</p>
+                  }
+                </div>
+
+                <!-- Address -->
+                <div>
+                  <div class="mb-2 flex items-baseline justify-between">
+                    <label
+                      class="block text-sm font-semibold text-gray-900"
+                      for="customerAddress"
+                    >
+                      Address
+                    </label>
+                    <span class="text-xs text-gray-500">
+                      {{ customerForm.controls.address.value.length }}/500
+                    </span>
+                  </div>
+                  <textarea
+                    id="customerAddress"
+                    formControlName="address"
+                    placeholder="Enter customer address"
+                    rows="3"
+                    maxlength="500"
+                    class="textarea w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  }
+</div>
+
+<!-- Discard Changes Modal -->
+@if (showDiscardModal()) {
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="discard-title"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md transition-opacity duration-200"
+    (click)="cancelDiscard()"
+    (keydown.escape)="cancelDiscard()"
+    tabindex="0"
+  >
+    <div
+      role="document"
+      class="mx-4 w-full max-w-sm animate-[modal-pop_0.2s_ease-out] rounded-2xl bg-white p-6 shadow-2xl"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <!-- Double-Ring Warning Icon -->
+      <div class="mx-auto w-fit rounded-full bg-amber-50/60 p-3">
+        <div class="rounded-full bg-amber-50 p-3">
+          <app-icon name="icon-back" [class]="'h-6 w-6 text-amber-600'" />
+        </div>
+      </div>
+
+      <!-- Title & Body -->
+      <h3 id="discard-title" class="mt-4 text-center text-lg font-semibold text-gray-900">
+        Discard Changes?
+      </h3>
+      <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
+        You have unsaved changes that will be lost if you leave this page.
+      </p>
+
+      <!-- Actions -->
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          class="cursor-pointer px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:text-red-700"
+          (click)="confirmDiscard()"
+        >
+          Discard
+        </button>
+        <button
+          type="button"
+          class="cursor-pointer rounded-xl bg-[#047857] px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#065f46] hover:shadow-md active:scale-[0.97]"
+          (click)="cancelDiscard()"
+        >
+          Keep Editing
+        </button>
+      </div>
+    </div>
+  </div>
+}
