@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
 import { unsavedChangesGuard } from '@core/guards/unsaved-changes.guard';
-import { Home } from '@features/home/home';
 import { Login } from '@features/login/login';
 import { OrderEditor } from '@features/orders/order-editor/order-editor';
 import { OrderList } from '@features/orders/order-list/order-list';
@@ -15,6 +14,10 @@ import { ProductEditorComponent } from '@features/settings/products/product-edit
 import { ProductListComponent } from '@features/settings/products/product-list/product-list';
 import { ProductsComponent } from '@features/settings/products/products';
 import { SettingsComponent } from '@features/settings/settings';
+import { UserDetailsComponent } from '@features/settings/users/user-details/user-details';
+import { UserEditorComponent } from '@features/settings/users/user-editor/user-editor';
+import { UserListComponent } from '@features/settings/users/user-list/user-list';
+import { UsersComponent } from '@features/settings/users/users';
 import { Layout } from '@shared/components';
 
 export const routes: Routes = [
@@ -33,13 +36,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
-        path: 'home',
-        component: Home,
-      },
-      {
         path: 'orders',
         component: Orders,
         children: [
+          { path: '', redirectTo: 'list', pathMatch: 'full' },
           { path: 'editor', component: OrderEditor, canDeactivate: [unsavedChangesGuard] },
           { path: 'editor/:id', component: OrderEditor, canDeactivate: [unsavedChangesGuard] },
           { path: 'list', component: OrderList },
@@ -99,6 +99,28 @@ export const routes: Routes = [
                 path: 'edit/:id',
                 component: CustomerEditorComponent,
                 canDeactivate: [unsavedChangesGuard],
+              },
+            ],
+          },
+          {
+            path: 'users',
+            component: UsersComponent,
+            children: [
+              {
+                path: '',
+                component: UserListComponent,
+              },
+              {
+                path: 'new',
+                component: UserEditorComponent,
+              },
+              {
+                path: 'details/:id',
+                component: UserDetailsComponent,
+              },
+              {
+                path: 'edit/:id',
+                component: UserEditorComponent,
               },
             ],
           },
