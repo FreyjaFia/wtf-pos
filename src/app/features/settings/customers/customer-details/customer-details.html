@@ -63,14 +63,9 @@
               <div class="mb-6 flex justify-center">
                 <div class="flex h-52 w-52 items-center justify-center rounded-full bg-gray-50/60">
                   <app-avatar
-                    [letters]="
-                      (
-                        (customer()!.firstName.charAt(0) || '') +
-                        (customer()!.lastName.charAt(0) || '')
-                      ).toUpperCase()
-                    "
+                    [label]="`${customer()!.firstName || ''} ${customer()!.lastName || ''}`"
                     [size]="208"
-                    [label]="customer()!.firstName + ' ' + customer()!.lastName"
+                    [imageUrl]="customer()!.imageUrl"
                   />
                 </div>
               </div>

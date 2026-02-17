@@ -94,7 +94,7 @@
           <!-- Column Headers (Sticky) -->
           <div class="sticky top-0 z-10 mb-2 grid grid-cols-12 gap-4 rounded-lg bg-white px-4 py-3">
             <button
-              class="col-span-5 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
+              class="col-span-4 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
               [class.text-gray-600]="sortColumn() !== 'name'"
               [class.hover:text-gray-900]="sortColumn() !== 'name'"
               [class.text-[#047857]]="sortColumn() === 'name'"
@@ -122,7 +122,7 @@
             </div>
 
             <button
-              class="col-span-4 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
+              class="col-span-5 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
               [class.text-gray-600]="sortColumn() !== 'address'"
               [class.hover:text-gray-900]="sortColumn() !== 'address'"
               [class.text-[#047857]]="sortColumn() === 'address'"
@@ -155,16 +155,18 @@
                 (keydown.space)="navigateToDetails(customer.id)"
                 tabindex="0"
                 role="button"
-                [attr.aria-label]="'View details for ' + customer.firstName + ' ' + customer.lastName"
+                [attr.aria-label]="
+                  'View details for ' + customer.firstName + ' ' + customer.lastName
+                "
               >
                 <!-- Avatar and Name -->
-                <div class="col-span-5 flex items-center gap-4">
+                <div class="col-span-4 flex items-center gap-4">
                   <div class="w-14 shrink-0">
                     <div class="flex h-14 w-14 items-center justify-center">
                       <app-avatar
-                        [letters]="((customer.firstName.charAt(0) || '') + (customer.lastName.charAt(0) || '')).toUpperCase()"
+                        [label]="`${customer.firstName || ''} ${customer.lastName || ''}`"
                         [size]="36"
-                        [label]="customer.firstName + ' ' + customer.lastName"
+                        [imageUrl]="customer.imageUrl"
                       />
                     </div>
                   </div>
@@ -186,7 +188,7 @@
                 </div>
 
                 <!-- Address -->
-                <div class="col-span-4">
+                <div class="col-span-5">
                   <div class="truncate text-sm text-gray-700">
                     {{ customer.address || '—' }}
                   </div>
@@ -283,8 +285,8 @@
       <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
         This will permanently remove
         <span class="font-medium text-gray-700">
-          {{ customerToDelete()!.firstName }} {{ customerToDelete()!.lastName }}
-        </span>. This action cannot be undone.
+          {{ customerToDelete()!.firstName }} {{ customerToDelete()!.lastName }} </span
+        >. This action cannot be undone.
       </p>
 
       <!-- Actions -->

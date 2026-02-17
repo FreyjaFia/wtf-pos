@@ -3,12 +3,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, CustomerService } from '@core/services';
-import { Icon } from '@shared/components';
+import { Icon, AvatarComponent } from '@shared/components';
 import { CreateCustomerDto, UpdateCustomerDto } from '@shared/models';
 
 @Component({
   selector: 'app-customer-editor',
-  imports: [CommonModule, ReactiveFormsModule, Icon],
+  imports: [CommonModule, ReactiveFormsModule, Icon, AvatarComponent],
   templateUrl: './customer-editor.html',
   host: {
     class: 'block h-full',
@@ -28,6 +28,13 @@ export class CustomerEditorComponent implements OnInit {
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
+
+  // Image upload signals
+  protected readonly isUploading = signal(false);
+  protected readonly isDragging = signal(false);
+  protected readonly selectedFile = signal<File | null>(null);
+  protected readonly imagePreview = signal<string | null>(null);
+  protected readonly currentImageUrl = signal<string | null>(null);
 
   protected readonly customerForm = new FormGroup({
     firstName: new FormControl('', {
@@ -56,6 +63,116 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
+  /**
+   * File input change handler
+   */
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        this.alertService.error('Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.');
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        this.alertService.error('File size exceeds 5MB limit.');
+        return;
+      }
+      this.selectedFile.set(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreview.set(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  /**
+   * Remove selected image
+   */
+  protected removeImage(): void {
+    this.selectedFile.set(null);
+    this.imagePreview.set(null);
+    // Reset file input
+    const fileInput = document.getElementById('customerImage') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  /**
+   * Drag over handler
+   */
+  protected onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(true);
+  }
+
+  /**
+   * Drag leave handler
+   */
+  protected onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+  }
+
+  /**
+   * File drop handler
+   */
+  protected onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+    const file = event.dataTransfer?.files[0];
+    if (!file) {
+      return;
+    }
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      this.alertService.error('Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.');
+      return;
+    }
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      this.alertService.error('File size exceeds 5MB limit.');
+      return;
+    }
+    this.selectedFile.set(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.imagePreview.set(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /**
+   * Upload image to server (placeholder, implement endpoint in CustomerService if needed)
+   */
+  protected uploadImage(customerId?: string): void {
+    const file = this.selectedFile();
+    const id = customerId || this.customerId;
+    if (!file || !id) {
+      return;
+    }
+    this.isUploading.set(true);
+    this.customerService.uploadCustomerImage(id, file).subscribe({
+      next: (updatedCustomer) => {
+        this.currentImageUrl.set(updatedCustomer.imageUrl || null);
+        this.isUploading.set(false);
+        this.selectedFile.set(null);
+        this.imagePreview.set(null);
+        this.alertService.success('Image uploaded successfully');
+      },
+      error: (err) => {
+        this.alertService.error(err.message || 'Failed to upload image');
+        this.isUploading.set(false);
+      },
+    });
+  }
+
   private loadCustomer(id: string) {
     this.isLoading.set(true);
 
@@ -66,6 +183,7 @@ export class CustomerEditorComponent implements OnInit {
           lastName: customer.lastName,
           address: customer.address || '',
         });
+        this.currentImageUrl.set(customer.imageUrl || null);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -95,9 +213,14 @@ export class CustomerEditorComponent implements OnInit {
 
       this.customerService.updateCustomer(updateDto).subscribe({
         next: () => {
-          this.isSaving.set(false);
-          this.skipGuard = true;
-          this.navigateToDetails(this.customerId!);
+          // If there's a file selected, upload it after updating the customer
+          if (this.selectedFile()) {
+            this.uploadImageAndNavigate();
+          } else {
+            this.isSaving.set(false);
+            this.skipGuard = true;
+            this.navigateToDetails(this.customerId!);
+          }
         },
         error: (err) => {
           this.alertService.error(err.message);
@@ -113,9 +236,14 @@ export class CustomerEditorComponent implements OnInit {
 
       this.customerService.createCustomer(createDto).subscribe({
         next: (createdCustomer) => {
-          this.isSaving.set(false);
-          this.skipGuard = true;
-          this.navigateToDetails(createdCustomer.id);
+          // If there's a file selected, upload it after creating the customer
+          if (this.selectedFile()) {
+            this.uploadImageAndNavigate(createdCustomer.id);
+          } else {
+            this.isSaving.set(false);
+            this.skipGuard = true;
+            this.navigateToDetails(createdCustomer.id);
+          }
         },
         error: (err) => {
           this.alertService.error(err.message);
@@ -123,6 +251,36 @@ export class CustomerEditorComponent implements OnInit {
         },
       });
     }
+  }
+
+  /**
+   * Upload image and navigate to details after upload
+   */
+  protected uploadImageAndNavigate(customerId?: string): void {
+    const file = this.selectedFile();
+    const id = customerId || this.customerId;
+    if (!file || !id) {
+      this.isSaving.set(false);
+      return;
+    }
+    this.isUploading.set(true);
+    this.customerService.uploadCustomerImage(id, file).subscribe({
+      next: (updatedCustomer) => {
+        this.currentImageUrl.set(updatedCustomer.imageUrl || null);
+        this.isUploading.set(false);
+        this.selectedFile.set(null);
+        this.imagePreview.set(null);
+        this.isSaving.set(false);
+        this.skipGuard = true;
+        this.navigateToDetails(id);
+        this.alertService.success('Image uploaded successfully');
+      },
+      error: (err) => {
+        this.alertService.error(err.message || 'Failed to upload image');
+        this.isUploading.set(false);
+        this.isSaving.set(false);
+      },
+    });
   }
 
   canDeactivate(): boolean | Promise<boolean> {
