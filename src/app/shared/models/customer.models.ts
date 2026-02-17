@@ -4,6 +4,7 @@ export interface CustomerDto {
   lastName: string;
   address?: string | null;
   isActive: boolean;
+  imageUrl?: string | null;
 }
 
 export interface CreateCustomerDto {

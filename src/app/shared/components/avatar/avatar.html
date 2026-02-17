@@ -1,10 +1,21 @@
-<span
-  class="inline-flex items-center justify-center rounded-full bg-black font-bold text-white uppercase select-none"
-  [style.width.px]="size()"
-  [style.height.px]="size()"
-  [style.fontSize.px]="fontSize"
-  [style.lineHeight.px]="size()"
-  [attr.aria-label]="label()"
->
-  {{ letters() }}
-</span>
+<ng-container *ngIf="imageUrl(); else initialsBlock">
+  <img
+    [src]="imageUrl()"
+    [alt]="label()"
+    class="inline-flex items-center justify-center rounded-full object-cover select-none"
+    [style.width.px]="size()"
+    [style.height.px]="size()"
+    [style.lineHeight.px]="size()"
+  />
+</ng-container>
+<ng-template #initialsBlock>
+  <span
+    class="inline-flex items-center justify-center rounded-full bg-black font-bold text-white uppercase select-none"
+    [style.width.px]="size()"
+    [style.height.px]="size()"
+    [style.fontSize.px]="fontSize"
+    [style.lineHeight.px]="size()"
+  >
+    {{ initials }}
+  </span>
+</ng-template>
