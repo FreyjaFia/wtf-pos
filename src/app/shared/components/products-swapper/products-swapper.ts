@@ -10,12 +10,13 @@ import {
 } from '@angular/core';
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
+import { AvatarComponent } from '@shared/components/avatar/avatar';
 import { AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
   selector: 'app-products-swapper',
-  imports: [CommonModule, Icon],
+  imports: [CommonModule, Icon, AvatarComponent],
   templateUrl: './products-swapper.html',
   styleUrls: ['./products-swapper.css'],
 })
@@ -63,36 +64,30 @@ export class ProductsSwapperComponent implements AfterViewInit {
   private loadProducts() {
     this.isLoading.set(true);
 
-    // First, load the add-on to get its type
-    this.productService.getProduct(this.addOnId).subscribe({
-      next: (addOn) => {
-        // Determine the add-on's type (you may need to add a type field to ProductDto)
-        // For now, we'll use a default. This should ideally come from the product or need additional API info
-        this.addOnType = AddOnTypeEnum.Size; // This can be enhanced based on backend data
+    // Load all non-add-on active products
+    this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
+      next: (allProducts) => {
+        // Get the currently linked products for this add-on
+        this.productService.getLinkedProducts(this.addOnId).subscribe({
+          next: (linkedProductsGroup) => {
+            // Flatten the groups into a list with type info
+            const assignedFlat = linkedProductsGroup.flatMap((group) =>
+              group.options.map((option) => ({ ...option, type: group.type })),
+            );
 
-        // Load all non-add-on active products
-        this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
-          next: (allProducts) => {
-            // Get the currently linked products for this add-on
-            this.productService.getLinkedProducts(this.addOnId).subscribe({
-              next: (linkedProducts) => {
-                const linkedIds = new Set(linkedProducts.map((p) => p.id));
+            const linkedIds = new Set(assignedFlat.map((p) => p.id));
 
-                // Split: available (not linked) on left, linked on right
-                const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
-                const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
+            // Split: available (not linked) on left, linked on right
+            const availableNotLinked = allProducts
+              .filter((addon) => !linkedIds.has(addon.id))
+              .map((addon) => ({ ...addon, type: AddOnTypeEnum.Size })); // Default type for available
 
-                this.availableProducts.set(availableNotLinked);
-                this.linkedProducts.set(linkedWithType);
-                this.isLoading.set(false);
+            this.availableProducts.set(availableNotLinked);
+            this.linkedProducts.set(assignedFlat);
+            this.isLoading.set(false);
 
-                // Initialize Sortable after data is loaded and DOM is populated
-                this.initializeSortable();
-              },
-              error: () => {
-                this.isLoading.set(false);
-              },
-            });
+            // Initialize Sortable after data is loaded and DOM is populated
+            this.initializeSortable();
           },
           error: () => {
             this.isLoading.set(false);
@@ -100,46 +95,45 @@ export class ProductsSwapperComponent implements AfterViewInit {
         });
       },
       error: () => {
-        // If loading add-on fails, still try to load products
-        this.loadProductsWithoutAddOnInfo();
-      },
-    });
-  }
-
-  private loadProductsWithoutAddOnInfo() {
-    this.isLoading.set(true);
-
-    // Load all non-add-on active products
-    this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
-      next: (allProducts) => {
-        // Get the currently linked products for this add-on
-        this.productService.getLinkedProducts(this.addOnId).subscribe({
-          next: (linkedProducts) => {
-            const linkedIds = new Set(linkedProducts.map((p) => p.id));
-
-            // Split: available (not linked) on left, linked on right
-            const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
-            const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
-
-            this.availableProducts.set(availableNotLinked);
-            this.linkedProducts.set(linkedWithType);
-            this.isLoading.set(false);
-
-            // Initialize Sortable after data is loaded and DOM is populated
-            this.initializeSortable();
-          },
-          error: (err) => {
-            this.alertService.error(err.message);
-            this.isLoading.set(false);
-          },
-        });
-      },
-      error: (err) => {
-        this.alertService.error(err.message);
         this.isLoading.set(false);
       },
     });
   }
+
+//   private loadProductsWithoutAddOnInfo() {
+//     this.isLoading.set(true);
+
+//     // Load all non-add-on active products
+//     this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
+//       next: (allProducts) => {
+//         // Get the currently linked products for this add-on
+//         this.productService.getLinkedProducts(this.addOnId).subscribe({
+//           next: (linkedProducts) => {
+//             const linkedIds = new Set(linkedProducts.map((p) => p.id));
+
+//             // Split: available (not linked) on left, linked on right
+//             const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
+//             const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
+
+//             this.availableProducts.set(availableNotLinked);
+//             this.linkedProducts.set(linkedWithType);
+//             this.isLoading.set(false);
+
+//             // Initialize Sortable after data is loaded and DOM is populated
+//             this.initializeSortable();
+//           },
+//           error: (err) => {
+//             this.alertService.error(err.message);
+//             this.isLoading.set(false);
+//           },
+//         });
+//       },
+//       error: (err) => {
+//         this.alertService.error(err.message);
+//         this.isLoading.set(false);
+//       },
+//     });
+//   }
 
   private initializeSortable() {
     setTimeout(() => {
@@ -167,9 +161,9 @@ export class ProductsSwapperComponent implements AfterViewInit {
       return;
     }
 
-    const availableIds = Array.from(this.availableList.nativeElement.querySelectorAll('[data-id]')).map(
-      (el) => (el as HTMLElement).getAttribute('data-id') || '',
-    );
+    const availableIds = Array.from(
+      this.availableList.nativeElement.querySelectorAll('[data-id]'),
+    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
 
     const linkedIds = Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
       (el) => (el as HTMLElement).getAttribute('data-id') || '',

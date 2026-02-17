@@ -10,12 +10,13 @@ import {
 } from '@angular/core';
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
+import { AvatarComponent } from '@shared/components/avatar/avatar';
 import { AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
   selector: 'app-addons-swapper',
-  imports: [CommonModule, Icon],
+  imports: [CommonModule, Icon, AvatarComponent],
   templateUrl: './addons-swapper.html',
   styleUrls: ['./addons-swapper.css'],
 })

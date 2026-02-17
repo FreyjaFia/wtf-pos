@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
+import { AvatarComponent } from '@shared/components/avatar/avatar';
 import {
   AddOnGroupDto,
   AddOnTypeEnum,
@@ -12,7 +13,7 @@ import {
 
 @Component({
   selector: 'app-addon-selector',
-  imports: [CommonModule, Icon],
+  imports: [CommonModule, Icon, AvatarComponent],
   templateUrl: './addon-selector.html',
 })
 export class AddonSelectorComponent {
