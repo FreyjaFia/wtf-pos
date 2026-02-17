@@ -154,11 +154,15 @@
           }
           @for (item of cartItems(); track $index; let last = $last) {
             <div class="flex gap-3 pb-3" [class.border-b]="!last">
-              <img
-                [src]="item.imageUrl"
-                [alt]="item.name"
-                class="h-12 w-12 shrink-0 object-contain"
-              />
+              @if (item.imageUrl) {
+                <img
+                  [src]="item.imageUrl"
+                  [alt]="item.name"
+                  class="h-12 w-12 shrink-0 object-contain"
+                />
+              } @else {
+                <app-avatar [label]="item.name" [size]="32" />
+              }
               <div class="flex-1">
                 <p class="text-sm font-semibold">{{ item.name }}</p>
                 <p class="text-xs opacity-70">{{ item.qty }} × ₱{{ item.price.toFixed(2) }}</p>

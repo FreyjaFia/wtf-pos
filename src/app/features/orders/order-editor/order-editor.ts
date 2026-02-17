@@ -1,14 +1,11 @@
+
+import type { FilterOption } from '@shared/components';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, OrderService, ProductService } from '@core/services';
-import {
-  AddonSelectorComponent,
-  FilterDropdown,
-  Icon,
-  type FilterOption,
-} from '@shared/components';
+import { AddonSelectorComponent, FilterDropdown, Icon, AvatarComponent } from '@shared/components';
 import {
   CartAddOnDto,
   CartItemDto,
@@ -33,6 +30,7 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
     CheckoutModal,
     FilterDropdown,
     AddonSelectorComponent,
+    AvatarComponent,
   ],
   templateUrl: './order-editor.html',
 })

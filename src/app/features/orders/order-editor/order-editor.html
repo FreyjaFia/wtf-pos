@@ -66,7 +66,7 @@
             <div class="text-xs">Try adjusting your filters or add a new product</div>
           </div>
         } @else {
-          <div class="flex-1 overflow-y-auto pb-4">
+          <div class="flex-1 overflow-y-auto pr-2 pb-4">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               @for (p of products(); track p.id) {
                 <div
@@ -86,11 +86,7 @@
                     @if (p.imageUrl) {
                       <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24 object-contain" />
                     } @else {
-                      <app-icon
-                        name="icon-box"
-                        [class]="'h-14 w-14 text-gray-200'"
-                        [fill]="'currentColor'"
-                      />
+                      <app-avatar [label]="p.name" [size]="56" />
                     }
                   </figure>
                   <div class="card-body flex flex-1 flex-col justify-between p-4">
@@ -161,7 +157,11 @@
         <div class="mb-3 rounded-lg bg-gray-50 p-4 shadow-sm">
           <div class="flex items-center gap-3">
             <div class="flex h-16 w-16 shrink-0 items-center justify-center">
-              <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 object-contain" />
+              @if (c.imageUrl) {
+                <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 object-contain" />
+              } @else {
+                <app-avatar [label]="c.name" [size]="56" />
+              }
             </div>
             <div class="flex min-w-0 flex-1 flex-col justify-between gap-2">
               <div class="flex items-start justify-between gap-4 sm:gap-6">
