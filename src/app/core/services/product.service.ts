@@ -126,8 +126,7 @@ export class ProductService {
   uploadProductImage(productId: string, file: File): Observable<ProductDto> {
     const formData = new FormData();
     formData.append('file', file);
-
-    return this.http.post<ProductDto>(`${this.baseUrl}/${productId}/upload-image`, formData).pipe(
+    return this.http.post<ProductDto>(`${this.baseUrl}/${productId}/images`, formData).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error uploading product image:', error);
 
@@ -163,8 +162,8 @@ export class ProductService {
     );
   }
 
-  getLinkedProducts(addOnId: string): Observable<ProductSimpleDto[]> {
-    return this.http.get<ProductSimpleDto[]>(`${this.baseUrl}/addons/${addOnId}/products`).pipe(
+  getLinkedProducts(addOnId: string): Observable<AddOnGroupDto[]> {
+    return this.http.get<AddOnGroupDto[]>(`${this.baseUrl}/addons/${addOnId}/products`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching linked products:', error);
 

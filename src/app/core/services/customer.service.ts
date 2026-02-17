@@ -103,4 +103,22 @@ export class CustomerService {
       }),
     );
   }
+
+  /**
+   * Upload customer image
+   */
+  uploadCustomerImage(id: string, file: File): Observable<CustomerDto> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<CustomerDto>(`${this.baseUrl}/${id}/image`, formData).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error uploading customer image:', error);
+        const errorMessage =
+          error.status === 0
+            ? 'Unable to connect to server. Please check your connection.'
+            : 'Failed to upload image. Please try again later.';
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
 }
