@@ -3,7 +3,8 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
-import { BadgeComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
+import type { FilterOption } from '@shared/components';
+import { AvatarComponent, BadgeComponent, FilterDropdown, Icon } from '@shared/components';
 import { ProductCategoryEnum, ProductDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
@@ -12,7 +13,14 @@ type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-product-list',
-  imports: [CommonModule, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    Icon,
+    FilterDropdown,
+    BadgeComponent,
+    AvatarComponent,
+  ],
   templateUrl: './product-list.html',
   host: { class: 'flex-1 min-h-0' },
 })
@@ -42,10 +50,14 @@ export class ProductListComponent implements OnInit {
   protected readonly categoryCounts = computed(() => {
     const cache = this.productsCache();
     return {
-      [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink).length,
-      [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food).length,
-      [ProductCategoryEnum.Dessert]: cache.filter((p) => p.category === ProductCategoryEnum.Dessert).length,
-      [ProductCategoryEnum.Other]: cache.filter((p) => p.category === ProductCategoryEnum.Other).length,
+      [ProductCategoryEnum.Drink]: cache.filter((p) => p.category === ProductCategoryEnum.Drink)
+        .length,
+      [ProductCategoryEnum.Food]: cache.filter((p) => p.category === ProductCategoryEnum.Food)
+        .length,
+      [ProductCategoryEnum.Dessert]: cache.filter((p) => p.category === ProductCategoryEnum.Dessert)
+        .length,
+      [ProductCategoryEnum.Other]: cache.filter((p) => p.category === ProductCategoryEnum.Other)
+        .length,
     };
   });
 
@@ -58,10 +70,26 @@ export class ProductListComponent implements OnInit {
   });
 
   protected readonly typeOptions = computed<FilterOption[]>(() => [
-    { id: ProductCategoryEnum.Drink, label: 'Drink', count: this.categoryCounts()[ProductCategoryEnum.Drink] },
-    { id: ProductCategoryEnum.Food, label: 'Food', count: this.categoryCounts()[ProductCategoryEnum.Food] },
-    { id: ProductCategoryEnum.Dessert, label: 'Dessert', count: this.categoryCounts()[ProductCategoryEnum.Dessert] },
-    { id: ProductCategoryEnum.Other, label: 'Other', count: this.categoryCounts()[ProductCategoryEnum.Other] },
+    {
+      id: ProductCategoryEnum.Drink,
+      label: 'Drink',
+      count: this.categoryCounts()[ProductCategoryEnum.Drink],
+    },
+    {
+      id: ProductCategoryEnum.Food,
+      label: 'Food',
+      count: this.categoryCounts()[ProductCategoryEnum.Food],
+    },
+    {
+      id: ProductCategoryEnum.Dessert,
+      label: 'Dessert',
+      count: this.categoryCounts()[ProductCategoryEnum.Dessert],
+    },
+    {
+      id: ProductCategoryEnum.Other,
+      label: 'Other',
+      count: this.categoryCounts()[ProductCategoryEnum.Other],
+    },
   ]);
 
   protected readonly statusOptions = computed<FilterOption[]>(() => [

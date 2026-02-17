@@ -267,14 +267,20 @@
                 </div>
 
                 <!-- Current Image -->
-                @if (currentImageUrl() && !imagePreview()) {
-                  <div class="mb-4 flex justify-center">
-                    <img
-                      [src]="currentImageUrl()"
-                      alt="Current product image"
-                      class="h-48 w-48 rounded-xl object-cover shadow-lg"
-                    />
-                  </div>
+                @if (!imagePreview()) {
+                  @if (currentImageUrl()) {
+                    <div class="mb-4 flex justify-center">
+                      <img
+                        [src]="currentImageUrl()"
+                        alt="Current product image"
+                        class="h-48 w-48 rounded-xl object-cover shadow-lg"
+                      />
+                    </div>
+                  } @else {
+                    <div class="mb-4 flex justify-center">
+                      <app-avatar [label]="productName()" [size]="150" />
+                    </div>
+                  }
                 }
 
                 <!-- Image Preview -->
@@ -362,11 +368,7 @@
                           : '14rem'
                       "
                     >
-                      @for (
-                        addon of flattenedAssignedAddOns();
-                        track addon.id;
-                        let odd = $odd
-                      ) {
+                      @for (addon of flattenedAssignedAddOns(); track addon.id; let odd = $odd) {
                         <div
                           class="group/row flex items-center gap-3 border-b border-gray-50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-gray-50"
                           [class.bg-gray-50/50]="odd"
@@ -380,11 +382,7 @@
                                 class="h-8 w-8 rounded-full object-cover"
                               />
                             } @else {
-                              <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100"
-                              >
-                                <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-400'" />
-                              </div>
+                              <app-avatar [label]="addon.name" [size]="32" />
                             }
                           </div>
                           <!-- Name + Type Badge + Price -->
@@ -397,7 +395,9 @@
                               >
                                 {{ addon.name }}
                               </span>
-                              <span class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase">
+                              <span
+                                class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase"
+                              >
                                 {{ getAddOnTypeName(addon.addOnType) }}
                               </span>
                             </div>
@@ -474,24 +474,24 @@
                     <h3 class="text-xs font-semibold tracking-wider text-gray-400 uppercase">
                       Linked Products
                     </h3>
-                    @if (linkedProducts().length > 0) {
+                    @if (flattenedLinkedProducts().length > 0) {
                       <span class="text-xs text-gray-400">
-                        {{ linkedProducts().length }}
-                        {{ linkedProducts().length === 1 ? 'product' : 'products' }}
+                        {{ flattenedLinkedProducts().length }}
+                        {{ flattenedLinkedProducts().length === 1 ? 'product' : 'products' }}
                       </span>
                     }
                   </div>
 
-                  @if (linkedProducts().length > 0) {
+                  @if (flattenedLinkedProducts().length > 0) {
                     <div
                       class="overflow-hidden transition-[max-height] duration-300 ease-in-out"
                       [style.max-height]="
                         showAllLinked()
-                          ? linkedProducts().length * 2.75 + 1 + 'rem'
+                          ? flattenedLinkedProducts().length * 2.75 + 1 + 'rem'
                           : '14rem'
                       "
                     >
-                      @for (linked of linkedProducts(); track linked.id; let odd = $odd) {
+                      @for (linked of flattenedLinkedProducts(); track linked.id; let odd = $odd) {
                         <div
                           class="group/row flex items-center gap-3 border-b border-gray-50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-gray-50"
                           [class.bg-gray-50/50]="odd"
@@ -505,22 +505,25 @@
                                 class="h-8 w-8 rounded-full object-cover"
                               />
                             } @else {
-                              <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100"
-                              >
-                                <app-icon name="icon-box" [class]="'h-4 w-4 text-gray-400'" />
-                              </div>
+                              <app-avatar [label]="linked.name" [size]="32" />
                             }
                           </div>
-                          <!-- Name + Price -->
+                          <!-- Name + Type Badge + Price -->
                           <div class="flex flex-1 items-center justify-between gap-2">
-                            <span
-                              class="text-sm font-medium text-gray-800"
-                              [class.line-through]="!linked.isActive"
-                              [class.text-gray-400]="!linked.isActive"
-                            >
-                              {{ linked.name }}
-                            </span>
+                            <div class="flex min-w-0 items-center gap-2">
+                              <span
+                                class="text-sm font-medium text-gray-800"
+                                [class.line-through]="!linked.isActive"
+                                [class.text-gray-400]="!linked.isActive"
+                              >
+                                {{ linked.name }}
+                              </span>
+                              <span
+                                class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase"
+                              >
+                                {{ getAddOnTypeName(linked.addOnType) }}
+                              </span>
+                            </div>
                             <span
                               class="shrink-0 text-sm font-semibold text-gray-700"
                               [class.text-gray-400]="!linked.isActive"
@@ -542,7 +545,7 @@
                     </div>
 
                     <!-- Show All button -->
-                    @if (linkedProducts().length > 5) {
+                    @if (flattenedLinkedProducts().length > 5) {
                       <button
                         type="button"
                         class="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-100"
@@ -551,7 +554,7 @@
                         {{
                           showAllLinked()
                             ? 'Show less'
-                            : 'Show all ' + linkedProducts().length + ' items'
+                            : 'Show all ' + flattenedLinkedProducts().length + ' items'
                         }}
                         <app-icon
                           name="icon-forward"

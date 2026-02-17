@@ -2,7 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
-import { BadgeComponent, Icon, PriceHistoryDrawerComponent } from '@shared/components';
+import {
+  AvatarComponent,
+  BadgeComponent,
+  Icon,
+  PriceHistoryDrawerComponent,
+} from '@shared/components';
 import {
   AddOnGroupDto,
   AddOnTypeEnum,
@@ -14,7 +19,7 @@ import {
 
 @Component({
   selector: 'app-product-details',
-  imports: [CommonModule, Icon, BadgeComponent, PriceHistoryDrawerComponent],
+  imports: [CommonModule, Icon, BadgeComponent, PriceHistoryDrawerComponent, AvatarComponent],
   templateUrl: './product-details.html',
   host: {
     class: 'block h-full',
@@ -28,7 +33,7 @@ export class ProductDetailsComponent implements OnInit {
 
   protected readonly product = signal<ProductDto | null>(null);
   protected readonly addOns = signal<AddOnGroupDto[]>([]);
-  protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
+  protected readonly linkedProducts = signal<AddOnGroupDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isHistoryOpen = signal(false);
   protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
@@ -38,6 +43,12 @@ export class ProductDetailsComponent implements OnInit {
 
   protected readonly flattenedAddOns = computed(() => {
     return this.addOns().flatMap((group) =>
+      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
+    );
+  });
+
+  protected readonly flattenedLinkedProducts = computed(() => {
+    return this.linkedProducts().flatMap((group) =>
       group.options.map((opt) => ({ ...opt, addOnType: group.type })),
     );
   });

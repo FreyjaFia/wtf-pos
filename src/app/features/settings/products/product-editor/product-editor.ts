@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, ProductService } from '@core/services';
 import {
   AddonsSwapperComponent,
+  AvatarComponent,
   Icon,
   PriceHistoryDrawerComponent,
   ProductsSwapperComponent,
@@ -17,7 +18,6 @@ import {
   ProductAddOnAssignmentDto,
   ProductCategoryEnum,
   ProductPriceHistoryDto,
-  ProductSimpleDto,
   UpdateProductDto,
 } from '@shared/models';
 
@@ -30,6 +30,7 @@ import {
     AddonsSwapperComponent,
     ProductsSwapperComponent,
     PriceHistoryDrawerComponent,
+    AvatarComponent,
   ],
   templateUrl: './product-editor.html',
   host: {
@@ -52,6 +53,9 @@ export class ProductEditorComponent implements OnInit {
 
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
+
+  // For avatar fallback
+  protected readonly productName = computed(() => this.productForm.get('name')?.value ?? '');
   protected readonly isSaving = signal(false);
   protected readonly isUploading = signal(false);
   protected readonly isDragging = signal(false);
@@ -62,13 +66,19 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isHistoryOpen = signal(false);
   protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
   protected readonly assignedAddOns = signal<AddOnGroupDto[]>([]);
-  protected readonly linkedProducts = signal<ProductSimpleDto[]>([]);
+  protected readonly linkedProducts = signal<AddOnGroupDto[]>([]);
   protected readonly lastUpdatedAt = signal<string | null>(null);
   protected readonly showAllAddOns = signal(false);
   protected readonly showAllLinked = signal(false);
 
   protected readonly flattenedAssignedAddOns = computed(() => {
     return this.assignedAddOns().flatMap((group) =>
+      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
+    );
+  });
+
+  protected readonly flattenedLinkedProducts = computed(() => {
+    return this.linkedProducts().flatMap((group) =>
       group.options.map((opt) => ({ ...opt, addOnType: group.type })),
     );
   });
@@ -456,7 +466,9 @@ export class ProductEditorComponent implements OnInit {
 
   private loadLinkedProducts(productId: string) {
     this.productService.getLinkedProducts(productId).subscribe({
-      next: (linked) => this.linkedProducts.set(linked),
+      next: (linked) => {
+        this.linkedProducts.set(linked);
+      },
       error: () => this.linkedProducts.set([]),
     });
   }
@@ -561,14 +573,20 @@ export class ProductEditorComponent implements OnInit {
       return;
     }
 
-    const remaining = this.linkedProducts().filter((p) => p.id !== linkedProductId);
-    const assignments: AddOnProductAssignmentDto[] = remaining.map((p) => ({
-      productId: p.id,
-      addOnType: AddOnTypeEnum.Size,
-    }));
+    // Remove from groups and rebuild assignment payload
+    const updatedGroups = this.linkedProducts()
+      .map((group) => ({
+        ...group,
+        options: group.options.filter((opt) => opt.id !== linkedProductId),
+      }))
+      .filter((group) => group.options.length > 0);
+
+    const assignments: AddOnProductAssignmentDto[] = updatedGroups.flatMap((group) =>
+      group.options.map((opt) => ({ productId: opt.id, addOnType: group.type })),
+    );
 
     // Optimistic update
-    this.linkedProducts.set(remaining);
+    this.linkedProducts.set(updatedGroups);
 
     this.productService.assignLinkedProducts(this.productId, assignments).subscribe({
       error: () => {
