@@ -1,4 +1,4 @@
-<div class="flex h-full gap-4">
+﻿<div class="flex h-full gap-4">
   <div class="flex flex-1 flex-col overflow-hidden">
     @if (editMode() && isLoading()) {
       <div class="flex justify-center py-8">
@@ -57,7 +57,6 @@
           <span class="loading loading-spinner loading-lg"></span>
         </div>
       }
-
       @if (!isLoading()) {
         @if (products().length === 0) {
           <div class="flex flex-1 flex-col items-center justify-center text-center opacity-60">
@@ -65,17 +64,17 @@
             <div class="text-sm font-medium">No products found</div>
             <div class="text-xs">Try adjusting your filters or add a new product</div>
           </div>
-        } @else {
+        }
+        @if (products().length > 0) {
           <div class="flex-1 overflow-y-auto pr-2 pb-4">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               @for (p of products(); track p.id) {
                 <div
-                  class="card flex h-60 flex-col overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-200"
+                  class="card flex h-60 flex-col overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
                   [class.cursor-pointer]="!isReadOnly()"
                   [class.cursor-default]="isReadOnly()"
                   [class.opacity-50]="isReadOnly()"
-                  [class.hover:shadow-xl]="!isReadOnly()"
-                  [class.hover:-translate-y-0.5]="!isReadOnly()"
+                  [class.pointer-events-none]="isReadOnly()"
                   role="button"
                   tabindex="0"
                   (click)="!isReadOnly() && addToCart(p)"
@@ -85,7 +84,8 @@
                   <figure class="flex h-32 shrink-0 items-center justify-center">
                     @if (p.imageUrl) {
                       <img [src]="p.imageUrl" [alt]="p.name" class="h-24 w-24 object-contain" />
-                    } @else {
+                    }
+                    @if (!p.imageUrl) {
                       <app-avatar [label]="p.name" [size]="56" />
                     }
                   </figure>
@@ -218,6 +218,12 @@
               }
             </div>
           }
+          <!-- Special Instructions Note -->
+          @if (c.specialInstructions) {
+            <div class="mt-2 ml-19 text-xs text-gray-500 italic">
+              {{ c.specialInstructions }}
+            </div>
+          }
         </div>
       }
     </div>
@@ -225,6 +231,77 @@
     <div
       class="sticky bottom-0 shrink-0 border-t border-gray-200 bg-white p-5 shadow-[0_-8px_24px_rgba(0,0,0,0.1)]"
     >
+      <!-- Order Note Section -->
+      @if (canEditOrderSpecialInstructions()) {
+        <div class="mb-4">
+          <div
+            class="overflow-hidden transition-all duration-300 ease-out"
+            [class.max-h-0]="showOrderSpecialInstructions()"
+            [class.opacity-0]="showOrderSpecialInstructions()"
+            [class.translate-y-1]="showOrderSpecialInstructions()"
+            [class.max-h-20]="!showOrderSpecialInstructions()"
+            [class.opacity-100]="!showOrderSpecialInstructions()"
+            [class.translate-y-0]="!showOrderSpecialInstructions()"
+            [class.pointer-events-none]="showOrderSpecialInstructions()"
+          >
+            <div
+              class="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors select-none hover:border-[#047857] hover:bg-[#047857]/5 hover:text-[#047857]"
+              tabindex="0"
+              role="button"
+              (click)="showOrderSpecialInstructions.set(true)"
+              (keydown.enter)="showOrderSpecialInstructions.set(true)"
+            >
+              <span>{{
+                orderSpecialInstructions().trim().length ? 'Edit order notes' : '+ Add order notes'
+              }}</span>
+              <span class="text-xs opacity-70">Tap to edit</span>
+            </div>
+          </div>
+
+          <div
+            class="overflow-hidden transition-all duration-300 ease-out"
+            [class.max-h-0]="!showOrderSpecialInstructions()"
+            [class.opacity-0]="!showOrderSpecialInstructions()"
+            [class.-translate-y-1]="!showOrderSpecialInstructions()"
+            [class.max-h-48]="showOrderSpecialInstructions()"
+            [class.opacity-100]="showOrderSpecialInstructions()"
+            [class.translate-y-0]="showOrderSpecialInstructions()"
+            [class.pointer-events-none]="!showOrderSpecialInstructions()"
+          >
+            <div class="flex flex-col gap-1 pt-1">
+              <textarea
+                class="textarea textarea-bordered w-full outline-transparent"
+                placeholder="e.g. Less ice, sauce on the side, etc."
+                maxlength="100"
+                rows="2"
+                [value]="orderSpecialInstructions()"
+                (input)="onOrderSpecialInstructionsInput($event)"
+              ></textarea>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-400 select-none"
+                  >{{ orderSpecialInstructions().length }}/100</span
+                >
+                <button
+                  type="button"
+                  class="btn btn-xs btn-ghost text-gray-500"
+                  (click)="showOrderSpecialInstructions.set(false)"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      } @else if (orderSpecialInstructions().trim()) {
+        <div class="mb-4">
+          <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+            <div class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">
+              Order note
+            </div>
+            <div class="mt-1 text-sm text-gray-700">{{ orderSpecialInstructions() }}</div>
+          </div>
+        </div>
+      }
       <div class="mb-4 flex items-center justify-between">
         <div class="text-sm font-semibold tracking-wide text-gray-500 uppercase">Total</div>
         <div class="text-2xl font-bold text-black">
@@ -288,6 +365,7 @@
     <app-checkout-modal
       [cartItems]="cart()"
       [totalPrice]="totalPrice()"
+      [orderSpecialInstructions]="orderSpecialInstructions()"
       (orderConfirmed)="onOrderConfirmed($event)"
     />
 

@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
+﻿import { CommonModule } from '@angular/common';
+import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AvatarComponent, Icon } from '@shared/components';
 import { CartAddOnDto, CartItemDto, PaymentMethodEnum } from '@shared/models';
@@ -15,6 +15,7 @@ export class CheckoutModal {
 
   readonly cartItems = input<CartItemDto[]>([]);
   readonly totalPrice = input<number>(0);
+  readonly orderSpecialInstructions = input<string>('');
 
   readonly orderConfirmed = output<{
     paymentMethod: PaymentMethodEnum;
@@ -27,12 +28,35 @@ export class CheckoutModal {
     paymentMethod: new FormControl<PaymentMethodEnum>(PaymentMethodEnum.Cash, Validators.required),
     amountReceived: new FormControl<number | null>(null),
     tips: new FormControl<number | null>(null),
-    notes: new FormControl(''),
   });
 
   protected readonly PaymentMethodEnum = PaymentMethodEnum;
   protected readonly change = signal<number>(0);
   protected readonly showSummary = signal<boolean>(false);
+  private readonly selectedPaymentMethod = signal<PaymentMethodEnum>(PaymentMethodEnum.Cash);
+  private readonly amountReceivedValue = signal<number | null>(null);
+  protected readonly hasAmountReceivedInput = computed(() => {
+    const value = this.amountReceivedValue();
+    return value !== null && value !== undefined;
+  });
+  protected readonly hasInsufficientCash = computed(() => {
+    const paymentMethod = this.selectedPaymentMethod();
+    return (
+      paymentMethod === PaymentMethodEnum.Cash && this.hasAmountReceivedInput() && this.change() < 0
+    );
+  });
+  protected readonly paymentStatusLabel = computed(() => {
+    if (!this.hasAmountReceivedInput()) {
+      return 'Amount Due:';
+    }
+    return this.change() < 0 ? 'Amount Owed:' : 'Change Due:';
+  });
+  protected readonly paymentStatusAmount = computed(() => {
+    if (!this.hasAmountReceivedInput()) {
+      return this.totalPrice();
+    }
+    return this.change() < 0 ? -this.change() : this.change();
+  });
 
   // Helper for template add-on price calculation
   protected readonly addOnPriceReducer = (sum: number, ao: CartAddOnDto) => sum + ao.price;
@@ -47,6 +71,9 @@ export class CheckoutModal {
 
     // For Cash payment, disable if change is negative (insufficient payment)
     if (paymentMethod === PaymentMethodEnum.Cash) {
+      if (!this.hasAmountReceivedInput()) {
+        return true;
+      }
       return this.change() < 0;
     }
 
@@ -54,7 +81,13 @@ export class CheckoutModal {
   }
 
   constructor() {
-    this.paymentForm.get('amountReceived')?.valueChanges.subscribe(() => {
+    this.paymentForm.get('paymentMethod')?.valueChanges.subscribe((value) => {
+      this.selectedPaymentMethod.set(value ?? PaymentMethodEnum.Cash);
+      this.calculateChange();
+    });
+
+    this.paymentForm.get('amountReceived')?.valueChanges.subscribe((value) => {
+      this.amountReceivedValue.set(value ?? null);
       this.calculateChange();
     });
 
@@ -75,16 +108,16 @@ export class CheckoutModal {
   }
 
   calculateChange() {
-    const paymentMethod = this.paymentForm.get('paymentMethod')?.value;
-    const amountReceived = this.paymentForm.get('amountReceived')?.value;
+    const paymentMethod = this.selectedPaymentMethod();
+    const amountReceived = this.amountReceivedValue();
 
     if (paymentMethod === PaymentMethodEnum.Cash) {
       if (amountReceived !== null && amountReceived !== undefined) {
         const calculatedChange = amountReceived - this.totalPrice();
         this.change.set(calculatedChange);
       } else {
-        // Show negative total as initial change when no amount entered
-        this.change.set(-this.totalPrice());
+        // Initial neutral state before user enters a cash amount
+        this.change.set(0);
       }
     } else {
       this.change.set(0);
@@ -122,8 +155,9 @@ export class CheckoutModal {
       paymentMethod: PaymentMethodEnum.Cash,
       amountReceived: null,
       tips: null,
-      notes: '',
     });
+    this.selectedPaymentMethod.set(PaymentMethodEnum.Cash);
+    this.amountReceivedValue.set(null);
     this.change.set(0);
     this.showSummary.set(false);
   }

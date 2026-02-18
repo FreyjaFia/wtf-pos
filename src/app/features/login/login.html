@@ -1,4 +1,4 @@
-<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4">
+﻿<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4">
   <!-- Logo -->
   <div class="mb-6 text-center">
     <img src="/assets/images/logo_new.png" alt="WTF Logo" class="mx-auto h-32 w-32" />
@@ -11,7 +11,6 @@
 
   <!-- Login Form -->
   <div class="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
-
     <form [formGroup]="loginForm" (ngSubmit)="login()">
       <!-- Username -->
       <div class="mb-4">
@@ -28,13 +27,23 @@
       <!-- Password -->
       <div class="mb-4">
         <label for="password" class="mb-2 block text-sm font-medium text-gray-700">Password</label>
-        <input
-          id="password"
-          formControlName="password"
-          type="password"
-          placeholder="Enter your password"
-          class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-400 focus:ring-1 focus:ring-gray-400 focus:outline-none"
-        />
+        <div class="relative">
+          <input
+            id="password"
+            formControlName="password"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Enter your password"
+            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 pr-16 text-sm focus:border-gray-400 focus:ring-1 focus:ring-gray-400 focus:outline-none"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-2 my-auto h-8 rounded-md px-2 text-xs font-medium text-gray-600 hover:bg-gray-100"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
       </div>
 
       <!-- Login Button -->
@@ -58,6 +67,8 @@
 
   <!-- Footer -->
   <div class="mt-8 text-center">
-    <p class="text-xs text-gray-500">© {{ currentYear }} Wake.Taste.Focus by Faith All rights reserved.</p>
+    <p class="text-xs text-gray-500">
+      © {{ currentYear }} Wake.Taste.Focus by Faith All rights reserved.
+    </p>
   </div>
 </div>

@@ -1,12 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@environments/environment.development';
-import {
-  CreateOrderCommand,
-  OrderDto,
-  OrderStatusEnum,
-  UpdateOrderCommand,
-} from '@shared/models';
+import { CreateOrderCommand, OrderDto, OrderStatusEnum, UpdateOrderCommand } from '@shared/models';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 

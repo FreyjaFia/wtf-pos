@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+﻿import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService, AuthService } from '@core/services';
@@ -15,6 +15,7 @@ export class Login implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly alertService = inject(AlertService);
   protected loading = false;
+  protected showPassword = false;
 
   protected readonly currentYear = new Date().getFullYear();
   protected readonly loginForm = new FormGroup({
@@ -33,7 +34,7 @@ export class Login implements OnInit {
   private checkExistingSession() {
     // Check if token is already valid
     if (this.auth.isTokenValid()) {
-      this.router.navigateByUrl('/orders/new');
+      this.router.navigateByUrl('/orders');
       return;
     }
 
@@ -72,7 +73,7 @@ export class Login implements OnInit {
       .subscribe({
         next: (ok) => {
           if (ok) {
-            this.router.navigateByUrl('/home');
+            this.router.navigateByUrl('/orders');
           } else {
             this.alertService.error('Login failed. Invalid response from server.');
           }
@@ -85,5 +86,9 @@ export class Login implements OnInit {
           }
         },
       });
+  }
+
+  protected togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

@@ -1,6 +1,6 @@
-
-import type { FilterOption } from '@shared/components';
+﻿import type { FilterOption } from '@shared/components';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,6 +26,7 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     Icon,
     CheckoutModal,
     FilterDropdown,
@@ -35,6 +36,10 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
   templateUrl: './order-editor.html',
 })
 export class OrderEditor implements OnInit {
+  protected onOrderSpecialInstructionsInput(event: Event) {
+    const value = event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+    this.orderSpecialInstructions.set(value);
+  }
   readonly checkoutModal = viewChild.required(CheckoutModal);
   readonly addonSelector = viewChild.required(AddonSelectorComponent);
   private readonly productService = inject(ProductService);
@@ -42,6 +47,10 @@ export class OrderEditor implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+
+  // Order-level special instructions state
+  public readonly orderSpecialInstructions = signal('');
+  public readonly showOrderSpecialInstructions = signal(false);
 
   // Abandon order guard
   protected readonly showAbandonModal = signal(false);
@@ -88,6 +97,15 @@ export class OrderEditor implements OnInit {
       return false;
     }
     return order.status === OrderStatusEnum.Pending || order.status === OrderStatusEnum.Completed;
+  });
+
+  protected readonly canEditOrderSpecialInstructions = computed(() => {
+    if (!this.editMode()) {
+      return true;
+    }
+
+    const order = this.currentOrder();
+    return order?.status === OrderStatusEnum.Pending;
   });
 
   protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
@@ -142,6 +160,7 @@ export class OrderEditor implements OnInit {
       .pipe(
         switchMap((order) => {
           this.currentOrder.set(order);
+          this.orderSpecialInstructions.set(order.specialInstructions ?? '');
           this.populateCartFromOrder(order);
           return this.loadProductsForEdit();
         }),
@@ -184,6 +203,7 @@ export class OrderEditor implements OnInit {
         qty: item.quantity,
         imageUrl: '',
         addOns: expandedAddOns.length > 0 ? expandedAddOns : undefined,
+        specialInstructions: item.specialInstructions,
       };
     });
     this.cart.set(cartItems);
@@ -302,24 +322,32 @@ export class OrderEditor implements OnInit {
     this.addonSelector().open(p);
   }
 
-  onAddonSelected(event: { product: ProductDto; addOns: CartAddOnDto[] }) {
-    const { product, addOns } = event;
+  onAddonSelected(event: {
+    product: ProductDto;
+    addOns: CartAddOnDto[];
+    specialInstructions?: string | null;
+  }) {
+    const { product, addOns, specialInstructions } = event;
 
-    // Only stack items without add-ons (plain products)
-    if (addOns.length === 0) {
-      const existing = this.cart().find((c) => c.productId === product.id && !c.addOns?.length);
+    // Only stack items without add-ons (plain products) and no special instructions
+    if (addOns.length === 0 && !specialInstructions) {
+      const existing = this.cart().find(
+        (c) => c.productId === product.id && !c.addOns?.length && !c.specialInstructions,
+      );
 
       if (existing) {
         this.cart.set(
           this.cart().map((c) =>
-            c.productId === product.id && !c.addOns?.length ? { ...c, qty: c.qty + 1 } : c,
+            c.productId === product.id && !c.addOns?.length && !c.specialInstructions
+              ? { ...c, qty: c.qty + 1 }
+              : c,
           ),
         );
         return;
       }
     }
 
-    // Items with add-ons always get their own cart line
+    // Items with add-ons or special instructions always get their own cart line
     this.cart.set([
       ...this.cart(),
       {
@@ -329,6 +357,7 @@ export class OrderEditor implements OnInit {
         qty: 1,
         imageUrl: product.imageUrl,
         addOns: addOns.length > 0 ? addOns : undefined,
+        specialInstructions: specialInstructions || null,
       },
     ]);
   }
@@ -475,7 +504,9 @@ export class OrderEditor implements OnInit {
         productId: c.productId,
         quantity: c.qty,
         addOns: this.groupAddOns(c.addOns),
+        specialInstructions: c.specialInstructions || null,
       })),
+      specialInstructions: this.orderSpecialInstructions().trim() || null,
       status,
       ...(event && {
         paymentMethod: event.paymentMethod,
@@ -516,7 +547,9 @@ export class OrderEditor implements OnInit {
         productId: c.productId,
         quantity: c.qty,
         addOns: this.groupAddOns(c.addOns),
+        specialInstructions: c.specialInstructions || null,
       })),
+      specialInstructions: this.orderSpecialInstructions().trim() || null,
       status,
       ...(event && {
         paymentMethod: event.paymentMethod,

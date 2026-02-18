@@ -1,12 +1,15 @@
 # Angular Coding Standards (copilot-instructions)
 
 ## Source
+
 - Official Angular Style Guide: [https://angular.dev/style-guide](https://angular.dev/style-guide)
 
 ## Mindset
 
 ### For Design & Layout Requests
+
 **Think like a Senior UI/UX Developer:**
+
 - Consider user experience first — intuitive navigation, accessibility, and usability
 - Apply modern design principles: consistency, visual hierarchy, whitespace, and responsive design
 - Think about mobile-first design and cross-platform compatibility
@@ -16,7 +19,9 @@
 - Always prioritize user workflows and interaction patterns
 
 ### For Coding Questions & Requests
+
 **Think like a Senior Developer:**
+
 - Apply SOLID principles and clean code practices
 - Consider maintainability, scalability, and testability
 - Think about error handling, edge cases, and validation
@@ -29,17 +34,20 @@
 ## Key Rules & Recommendations
 
 ### General Principles
+
 - **Consistency:** When in doubt, prefer consistency within a file over strict adherence to the guide.
 - **All UI code in `src/`:** Keep Angular UI code (TypeScript, HTML, styles) inside the `src` directory. Non-UI code (config, scripts) should be outside.
 - **Bootstrap in `main.ts`:** The app entry point should be `src/main.ts`.
 
 ### Naming
+
 - **Hyphens in file names:** Separate words in file names with hyphens (e.g., `user-profile.ts`).
 - **Test files:** End test file names with `.spec.ts` (e.g., `user-profile.spec.ts`).
 - **Match file names to identifiers:** File names should reflect the main TypeScript class or concept inside.
 - **Component files:** Use the same base name for TypeScript, template, and style files (e.g., `user-profile.ts`, `user-profile.html`, `user-profile.css`).
 
 ### Project Structure
+
 - **Feature-based folders:** Organize by feature area, not by code type (avoid `components/`, `services/` folders).
 - **Group related files:** Keep component files and their tests together in the same directory.
 - **One concept per file:** Prefer one component, directive, or service per file.
@@ -53,7 +61,7 @@ This application follows a **feature-based architecture** with clear separation 
 ```
 src/app/
 ├── core/                      # App-wide singleton services and infrastructure
-│   ├── auth/                  # Authentication module  
+│   ├── auth/                  # Authentication module
 │   │   ├── auth.service.ts    # Authentication service
 │   │   ├── auth.guard.ts      # Route guard
 │   │   └── auth.guard.spec.ts # Guard tests
@@ -83,6 +91,7 @@ src/app/
 ### Module Guidelines
 
 **Core Module (`core/`)**
+
 - Contains singleton services used app-wide
 - Auth-related code (services, guards, interceptors)
 - **API/data services** that are used across multiple features (ProductService, OrderService, etc.)
@@ -92,6 +101,7 @@ src/app/
 - Never import feature-specific code into core
 
 **Shared Module (`shared/`)**
+
 - Reusable UI components, directives, and pipes
 - Shared data models and interfaces (DTOs, enums, types)
 - **No services should be in shared/** (use `core/services/` instead)
@@ -99,6 +109,7 @@ src/app/
 - Can be imported by any feature module
 
 **Features (`features/`)**
+
 - Self-contained feature modules
 - Each feature has its own components, templates, and styles
 - Feature-specific logic stays within the feature
@@ -108,10 +119,12 @@ src/app/
 ### Code Style
 
 **Control Flow Statements**
+
 - **Always use braces:** All `if`, `else`, `for`, `while`, and `do-while` statements must use braces, even for single-line bodies.
 - **Logical grouping:** Add blank lines to separate logical sections within methods for better readability.
 
 **Example:**
+
 ```typescript
 // ✓ Correct
 if (condition) {
@@ -124,12 +137,12 @@ if (condition) doSomething();
 // ✓ Correct - with logical grouping
 login() {
   const credentials = this.getCredentials();
-  
+
   if (!credentials.isValid) {
     this.showError('Invalid credentials');
     return;
   }
-  
+
   this.auth.login(credentials);
   this.router.navigateByUrl('/home');
 }
@@ -138,19 +151,22 @@ login() {
 ### Environment Configuration
 
 **Environment Files**
+
 - Use `src/environments/environment.development.ts` for development configuration
 - Use `src/environments/environment.ts` for production configuration
 - Always import from `environment.development.ts` in services (Angular handles file replacement during builds)
 
 **Configuration Structure:**
+
 ```typescript
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5282/api'
+  apiUrl: 'http://localhost:5282/api',
 };
 ```
 
 **Usage:**
+
 ```typescript
 import { environment } from '../../../environments/environment.development';
 
@@ -161,18 +177,22 @@ export class ProductService {
 ```
 
 **File Replacements:**
+
 - Production builds automatically replace `environment.development.ts` with `environment.ts`
 - Configured in `angular.json` under `configurations.production.fileReplacements`
 
 ### Dependency Injection
+
 - **Prefer `inject()` over constructor injection:** Use the `inject()` function for dependencies for readability and type inference.
 
 ### Forms
+
 - **Always use Reactive Forms:** Use `ReactiveFormsModule` with `FormControl`, `FormGroup`, and `FormBuilder` instead of template-driven forms (`ngModel`).
 - **Form validation:** Apply validators to form controls for client-side validation.
 - **Debounce user input:** Use RxJS operators like `debounceTime()` on `valueChanges` for search/filter inputs.
 
 **Example:**
+
 ```typescript
 protected readonly filterForm = new FormGroup({
   searchTerm: new FormControl(''),
@@ -187,6 +207,7 @@ ngOnInit() {
 ```
 
 ### Components & Directives
+
 - **Selector naming:** Use application-specific prefixes for selectors.
 - **Group Angular properties:** Place injected dependencies, inputs, outputs, and queries at the top of the class.
 - **Presentation focus:** Keep components/directives focused on UI; refactor logic to other files if not UI-related.
@@ -212,18 +233,19 @@ ngOnInit() {
 - **Format documents:** Always format files before committing. In VS Code use the shortcut `Alt+Shift+F` to format the current file.
 - **Organize imports:** Use `Alt+Shift+O` to organize and remove unused imports in the current file.
 - **Remove unused code:** Remove unused declarations, methods, and parameters. Prefer enabling TypeScript checks (`noUnusedLocals`, `noUnusedParameters`) in `tsconfig.json` and fix reported issues before committing.
-
-	- **Why:** Removing dead code reduces maintenance burden and avoids compiler and lint warnings.
-	- **How:** Use your editor's quick-fix actions, `tsc`, or automated tools (e.g., `eslint --fix`) to locate and remove unused symbols.
+  - **Why:** Removing dead code reduces maintenance burden and avoids compiler and lint warnings.
+  - **How:** Use your editor's quick-fix actions, `tsc`, or automated tools (e.g., `eslint --fix`) to locate and remove unused symbols.
 
 ## Error Checking & Linting
 
 **MANDATORY for every request:**
 
 1. **Build the project** after making changes:
+
    ```bash
    npx ng build --configuration=development
    ```
+
    - Verify exit code is 0 (success)
    - Resolve ALL TypeScript compilation errors
    - No partial solutions — builds must be clean
@@ -250,6 +272,7 @@ ngOnInit() {
    - Ensure console.error/log statements are removed (except in services)
 
 **Workflow:**
+
 - Make code changes
 - Format with `Alt+Shift+F`
 - Organize imports with `Alt+Shift+O`
@@ -260,11 +283,13 @@ ngOnInit() {
 **Why:** Catching errors early prevents broken builds in commits, ensures consistency, and maintains code quality standards.
 
 ## Additional Resources
+
 - [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html)
 - [Angular Security Best Practices](https://angular.dev/best-practices/security)
 - [Angular Accessibility Guide](https://angular.dev/best-practices/a11y)
 
 ---
+
 _Last updated: February 6, 2026_
 
 ## Git Commit Guidelines
@@ -307,6 +332,7 @@ Further paragraphs come after blank lines.
 ### Good Examples
 
 **Example 1:**
+
 ```
 Add comprehensive coding standards document
 
@@ -323,6 +349,7 @@ follow established patterns and conventions.
 ```
 
 **Example 2:**
+
 ```
 Adopt primary constructors in handler classes
 
@@ -341,26 +368,31 @@ readability while leveraging modern C# 12 features.
 ### Bad Examples
 
 ? **Too vague:**
+
 ```
 Update files
 ```
 
 ? **Not imperative mood:**
+
 ```
 Fixed the bug in handler
 ```
 
 ? **Subject too long:**
+
 ```
 Add new feature that allows users to create and edit merchants with validation
 ```
 
 ? **No body for complex changes:**
+
 ```
 Refactor handlers
 ```
 
 ? **Subject ends with period:**
+
 ```
 Add new endpoint.
 ```
@@ -368,6 +400,7 @@ Add new endpoint.
 ### When to Write Detailed Commit Bodies
 
 Write a detailed body when:
+
 - The change is not obvious from the subject line
 - The change affects multiple files or areas
 - You're introducing a new pattern or approach
@@ -391,6 +424,7 @@ Write a detailed body when:
    - Style/UI changes last
 
 3. **Example workflow:**
+
    ```
    Commit 1: Update product.models.ts - Add code field to DTOs
    Commit 2: Update product.service.ts - Add code field handling

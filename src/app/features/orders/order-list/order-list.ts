@@ -1,14 +1,9 @@
-import { CommonModule, DatePipe } from '@angular/common';
+﻿import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService, OrderService } from '@core/services';
-import {
-  BadgeComponent,
-  FilterDropdown,
-  Icon,
-  type FilterOption,
-} from '@shared/components';
+import { BadgeComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import { OrderDto, OrderStatusEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
@@ -22,14 +17,7 @@ interface OrderGroup {
 
 @Component({
   selector: 'app-order-list',
-  imports: [
-    CommonModule,
-    DatePipe,
-    ReactiveFormsModule,
-    Icon,
-    FilterDropdown,
-    BadgeComponent,
-  ],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, Icon, FilterDropdown, BadgeComponent],
   templateUrl: './order-list.html',
 })
 export class OrderList implements OnInit {
@@ -74,8 +62,7 @@ export class OrderList implements OnInit {
         .length,
       [OrderStatusEnum.Cancelled]: cache.filter((o) => o.status === OrderStatusEnum.Cancelled)
         .length,
-      [OrderStatusEnum.Refunded]: cache.filter((o) => o.status === OrderStatusEnum.Refunded)
-        .length,
+      [OrderStatusEnum.Refunded]: cache.filter((o) => o.status === OrderStatusEnum.Refunded).length,
     };
   });
 
