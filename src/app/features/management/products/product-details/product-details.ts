@@ -1,7 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService, ProductService } from '@core/services';
+import { AlertService, AuthService, ProductService } from '@core/services';
 import {
   AvatarComponent,
   BadgeComponent,
@@ -14,7 +14,6 @@ import {
   ProductCategoryEnum,
   ProductDto,
   ProductPriceHistoryDto,
-  ProductSimpleDto,
 } from '@shared/models';
 
 @Component({
@@ -30,6 +29,7 @@ export class ProductDetailsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
 
   protected readonly product = signal<ProductDto | null>(null);
   protected readonly addOns = signal<AddOnGroupDto[]>([]);
@@ -65,7 +65,7 @@ export class ProductDetailsComponent implements OnInit {
     }
 
     if (this.route.snapshot.queryParamMap.get('saved')) {
-      this.alertService.success('Product saved successfully.');
+      this.alertService.successSaved('Product');
     }
   }
 
@@ -115,12 +115,22 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   protected navigateToEdit() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (this.product()) {
       this.router.navigate(['/management/products/edit', this.product()!.id]);
     }
   }
 
   protected deleteProduct() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (!this.product()) {
       return;
     }
@@ -133,6 +143,11 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   protected confirmDelete() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (!this.product()) {
       return;
     }
@@ -145,7 +160,7 @@ export class ProductDetailsComponent implements OnInit {
         this.router.navigateByUrl('/management/products');
       },
       error: (err) => {
-        this.alertService.error(err.message || 'Failed to delete product');
+        this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('product'));
       },
     });
   }
@@ -168,5 +183,9 @@ export class ProductDetailsComponent implements OnInit {
 
   protected toggleShowAllLinked() {
     this.showAllLinked.update((v) => !v);
+  }
+
+  protected canWriteManagement(): boolean {
+    return this.authService.canWriteManagement();
   }
 }

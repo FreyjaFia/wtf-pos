@@ -2,7 +2,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertService, ProductService } from '@core/services';
+import { AlertService, AuthService, ProductService } from '@core/services';
 import type { FilterOption } from '@shared/components';
 import { AvatarComponent, BadgeComponent, FilterDropdown, Icon } from '@shared/components';
 import { ProductCategoryEnum, ProductDto } from '@shared/models';
@@ -28,6 +28,7 @@ export class ProductListComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
 
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
@@ -173,6 +174,11 @@ export class ProductListComponent implements OnInit {
   }
 
   protected navigateToEditor(productId?: string) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (productId) {
       this.router.navigate(['/management/products/edit', productId]);
     } else {
@@ -185,6 +191,11 @@ export class ProductListComponent implements OnInit {
   }
 
   protected deleteProduct(product: ProductDto) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     this.productToDelete.set(product);
     this.showDeleteModal.set(true);
   }
@@ -195,6 +206,11 @@ export class ProductListComponent implements OnInit {
   }
 
   protected confirmDelete() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     const product = this.productToDelete();
 
     if (!product) {
@@ -246,4 +262,9 @@ export class ProductListComponent implements OnInit {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
   }
+
+  protected canWriteManagement(): boolean {
+    return this.authService.canWriteManagement();
+  }
 }
+

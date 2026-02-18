@@ -73,13 +73,15 @@
       </button>
 
       <!-- Add Product Button (Forest Green) -->
-      <button
-        class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-        (click)="navigateToEditor()"
-      >
-        <app-icon name="icon-plus" [class]="'h-4 w-4'" />
-        Add Product
-      </button>
+      @if (canWriteManagement()) {
+        <button
+          class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
+          (click)="navigateToEditor()"
+        >
+          <app-icon name="icon-plus" [class]="'h-4 w-4'" />
+          Add Product
+        </button>
+      }
     </div>
   </div>
 
@@ -226,7 +228,8 @@
                   (keydown)="$event.stopPropagation()"
                   role="presentation"
                 >
-                  <div class="dropdown dropdown-end">
+                  @if (canWriteManagement()) {
+                    <div class="dropdown dropdown-end">
                     <button
                       type="button"
                       class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
@@ -268,7 +271,8 @@
                         </button>
                       </li>
                     </ul>
-                  </div>
+                    </div>
+                  }
                 </div>
               </div>
             }
@@ -280,7 +284,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-@if (showDeleteModal() && productToDelete()) {
+@if (showDeleteModal() && productToDelete() && canWriteManagement()) {
   <div
     role="dialog"
     aria-modal="true"

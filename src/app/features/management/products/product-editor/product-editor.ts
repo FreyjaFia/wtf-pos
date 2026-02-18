@@ -244,15 +244,13 @@ export class ProductEditorComponent implements OnInit {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
       if (!allowedTypes.includes(file.type)) {
-        this.alertService.error(
-          'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
-        );
+        this.alertService.errorInvalidImageType();
         return;
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.alertService.error('File size exceeds 5MB limit.');
+        this.alertService.errorFileTooLarge();
         return;
       }
 
@@ -305,14 +303,12 @@ export class ProductEditorComponent implements OnInit {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
     if (!allowedTypes.includes(file.type)) {
-      this.alertService.error(
-        'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
-      );
+      this.alertService.errorInvalidImageType();
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      this.alertService.error('File size exceeds 5MB limit.');
+      this.alertService.errorFileTooLarge();
       return;
     }
 
@@ -560,7 +556,7 @@ export class ProductEditorComponent implements OnInit {
 
     this.productService.assignProductAddOns(this.productId, assignments).subscribe({
       error: () => {
-        this.alertService.error('Failed to remove add-on. Please try again.');
+        this.alertService.error(this.alertService.getUpdateErrorMessage('product add-ons'));
         if (this.productId) {
           this.loadAssignedAddOns(this.productId);
         }
@@ -590,7 +586,7 @@ export class ProductEditorComponent implements OnInit {
 
     this.productService.assignLinkedProducts(this.productId, assignments).subscribe({
       error: () => {
-        this.alertService.error('Failed to unlink product. Please try again.');
+        this.alertService.error(this.alertService.getUpdateErrorMessage('linked products'));
         if (this.productId) {
           this.loadLinkedProducts(this.productId);
         }
@@ -598,3 +594,4 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 }
+
