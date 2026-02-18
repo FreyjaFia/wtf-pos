@@ -10,9 +10,15 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
   private _isLoggedIn = new BehaviorSubject<boolean>(!!localStorage.getItem('token'));
+  private readonly rolesSubject = new BehaviorSubject<string[]>([]);
   private readonly meRefreshSubject = new Subject<void>();
   readonly isLoggedIn$ = this._isLoggedIn.asObservable();
+  readonly roles$ = this.rolesSubject.asObservable();
   readonly meRefresh$ = this.meRefreshSubject.asObservable();
+
+  constructor() {
+    this.syncRolesFromToken();
+  }
 
   login(username: string, password: string): Observable<boolean> {
     if (!username || !password) {
@@ -29,6 +35,7 @@ export class AuthService {
           }
 
           this._isLoggedIn.next(true);
+          this.syncRolesFromToken();
         }
       }),
       map((res) => {
@@ -79,6 +86,49 @@ export class AuthService {
     );
   }
 
+  updateMe(password: string): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/me`, { password }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Update me error:', error);
+
+        let errorMessage = 'Failed to update profile.';
+
+        if (error.status === 401) {
+          errorMessage = 'Unauthorized.';
+        } else if (error.status === 400) {
+          errorMessage = 'Invalid password.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  uploadMeImage(file: File): Observable<{ imageUrl?: string | null }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.put<{ imageUrl?: string | null }>(`${this.baseUrl}/me/image`, formData).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Upload profile image error:', error);
+
+        let errorMessage = 'Failed to upload image. Please try again later.';
+
+        if (error.status === 400) {
+          errorMessage = 'Invalid file. Please check file type and size.';
+        } else if (error.status === 401) {
+          errorMessage = 'Unauthorized.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
   notifyMeUpdated(): void {
     this.meRefreshSubject.next();
   }
@@ -87,6 +137,7 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     this._isLoggedIn.next(false);
+    this.rolesSubject.next([]);
   }
 
   getToken(): string | null {
@@ -180,6 +231,7 @@ export class AuthService {
             }
 
             this._isLoggedIn.next(true);
+            this.syncRolesFromToken();
           }
         }),
         map((res) => !!res?.accessToken),
@@ -216,5 +268,94 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return this._isLoggedIn.value || !!this.getToken();
+  }
+
+  canReadCustomers(): boolean {
+    return this.hasAnyRole(['Admin', 'AdminViewer']);
+  }
+
+  canWriteCustomers(): boolean {
+    return this.hasAnyRole(['Admin']);
+  }
+
+  canAccessManagement(): boolean {
+    return this.hasAnyRole(['Admin', 'AdminViewer']);
+  }
+
+  canWriteManagement(): boolean {
+    return this.hasAnyRole(['Admin']);
+  }
+
+  canCreateCustomerInOrder(isEditMode: boolean): boolean {
+    if (this.hasAnyRole(['Admin'])) {
+      return true;
+    }
+
+    return !isEditMode && this.hasAnyRole(['Cashier']);
+  }
+
+  canManageOrders(): boolean {
+    return this.hasAnyRole(['Admin', 'Cashier']);
+  }
+
+  getCurrentRoleLabel(): string {
+    const roles = this.rolesSubject.value.map((role) => role.toLowerCase());
+
+    if (roles.includes('admin')) {
+      return 'Admin';
+    }
+    if (roles.includes('adminviewer') || roles.includes('admin viewer')) {
+      return 'Admin Viewer';
+    }
+    if (roles.includes('cashier')) {
+      return 'Cashier';
+    }
+
+    return 'Unknown';
+  }
+
+  hasAnyRole(requiredRoles: string[]): boolean {
+    const roleSet = new Set(this.rolesSubject.value.map((role) => role.toLowerCase()));
+    return requiredRoles.some((role) => roleSet.has(role.toLowerCase()));
+  }
+
+  private syncRolesFromToken(): void {
+    const token = this.getToken();
+    if (!token) {
+      this.rolesSubject.next([]);
+      return;
+    }
+
+    const decoded = this.decodeToken(token);
+    const roles = this.extractRoles(decoded);
+    this.rolesSubject.next(roles);
+  }
+
+  private extractRoles(decoded: Record<string, unknown> | null): string[] {
+    if (!decoded) {
+      return [];
+    }
+
+    const rawRoleClaims: unknown[] = [];
+    const roleClaimKeys = [
+      'role',
+      'roles',
+      'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+    ];
+
+    for (const key of roleClaimKeys) {
+      const value = decoded[key];
+      if (Array.isArray(value)) {
+        rawRoleClaims.push(...value);
+      } else if (value !== undefined && value !== null) {
+        rawRoleClaims.push(value);
+      }
+    }
+
+    const normalized = rawRoleClaims
+      .map((role) => (typeof role === 'string' ? role.trim() : ''))
+      .filter((role) => !!role);
+
+    return Array.from(new Set(normalized));
   }
 }
