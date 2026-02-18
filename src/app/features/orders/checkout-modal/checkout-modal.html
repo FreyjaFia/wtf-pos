@@ -133,14 +133,14 @@
         class="absolute inset-y-0 right-0 flex w-72 flex-col border-l border-gray-200 bg-green-50 p-6"
       >
         <h4 class="mb-6 shrink-0 text-2xl font-bold">Order Summary</h4>
+        <div class="mb-4 shrink-0 border-b border-gray-200 pb-3">
+          <p class="text-[10px] font-semibold tracking-[0.08em] text-gray-500 uppercase">
+            Customer
+          </p>
+          <p class="mt-1 text-sm font-medium text-gray-700">{{ selectedCustomerName() }}</p>
+        </div>
 
-        <div class="min-h-0 flex-1 space-y-3 overflow-y-auto">
-          @if (cartItems().length === 0) {
-            <div class="flex flex-col items-center justify-center py-12 text-center opacity-30">
-              <app-icon name="icon-product" [class]="'mb-3 h-16 w-16'" />
-              <p class="text-sm text-gray-500">No items yet</p>
-            </div>
-          }
+        <div class="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
           @for (item of cartItems(); track $index; let last = $last) {
             <div class="flex gap-3 pb-3" [class.border-b]="!last">
               @if (item.imageUrl) {
@@ -167,7 +167,7 @@
                   </div>
                 }
                 @if (item.specialInstructions?.trim()) {
-                  <p class="mt-1 rounded px-2 py-1 text-xs text-gray-700 italic">
+                  <p class="mt-1 rounded px-2 py-1 text-xs break-all text-gray-700 italic">
                     {{ item.specialInstructions }}
                   </p>
                 }

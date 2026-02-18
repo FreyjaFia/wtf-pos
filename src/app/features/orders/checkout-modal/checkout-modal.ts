@@ -15,6 +15,7 @@ export class CheckoutModal {
 
   readonly cartItems = input<CartItemDto[]>([]);
   readonly totalPrice = input<number>(0);
+  readonly selectedCustomerName = input<string>('Walk-in customer');
   readonly orderSpecialInstructions = input<string>('');
 
   readonly orderConfirmed = output<{

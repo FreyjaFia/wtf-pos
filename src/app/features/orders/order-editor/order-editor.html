@@ -1,5 +1,5 @@
 ﻿<div class="flex h-full gap-4">
-  <div class="flex flex-1 flex-col overflow-hidden">
+  <div class="flex flex-1 flex-col">
     @if (editMode() && isLoading()) {
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-lg"></span>
@@ -107,7 +107,7 @@
   </div>
 
   <aside
-    class="flex w-80 shrink-0 flex-col overflow-hidden rounded-lg border-l-2 border-gray-200 bg-white shadow-[-8px_0_24px_rgba(0,0,0,0.1)]"
+    class="flex min-h-0 w-80 shrink-0 flex-col overflow-hidden rounded-lg border-l-2 border-gray-200 bg-white shadow-[-8px_0_24px_rgba(0,0,0,0.1)]"
   >
     <div class="shrink-0 border-b border-gray-100 p-4">
       <div class="flex items-center justify-between">
@@ -127,7 +127,6 @@
           } @else {
             <h3 class="text-lg font-semibold">New Order</h3>
           }
-          <div class="text-sm opacity-70">{{ itemCount() }} items</div>
         </div>
         <button
           class="btn btn-ghost btn-sm text-error"
@@ -137,96 +136,129 @@
           Clear
         </button>
       </div>
-    </div>
 
-    <div class="flex-1 overflow-y-auto p-4">
-      @if (editMode() && isLoading()) {
-        <div class="flex flex-1 flex-col items-center justify-center py-12">
-          <span class="loading loading-spinner loading-lg text-gray-400"></span>
-          <div class="mt-3 text-sm text-gray-400">Loading order items…</div>
-        </div>
-      } @else if (cart().length === 0) {
-        <div class="flex flex-col items-center justify-center py-12 text-center">
-          <app-icon name="icon-product" [class]="'mb-4 h-20 w-20 opacity-20'" />
-          <div class="text-base font-semibold text-gray-700">Your cart is empty</div>
-          <div class="text-sm text-gray-500">Add items to get started</div>
-        </div>
-      }
-
-      @for (c of cart(); track $index; let last = $last) {
-        <div class="mb-3 rounded-lg bg-gray-50 p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center">
-              @if (c.imageUrl) {
-                <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 object-contain" />
-              } @else {
-                <app-avatar [label]="c.name" [size]="56" />
-              }
+      <div class="mt-3">
+        @if (canEditCustomerSelection()) {
+          <div class="flex items-center gap-2">
+            <div class="flex-1">
+              <app-customer-dropdown
+                [options]="customerOptions()"
+                [selectedId]="selectedCustomerId()"
+                [disabled]="isLoadingCustomers()"
+                [walkInLabel]="'Walk-in customer'"
+                [placeholder]="'Search customer...'"
+                (selectedIdChange)="onCustomerSelected($event)"
+              />
             </div>
-            <div class="flex min-w-0 flex-1 flex-col justify-between gap-2">
-              <div class="flex items-start justify-between gap-4 sm:gap-6">
-                <div class="min-w-0 flex-1 text-sm font-semibold text-gray-900">{{ c.name }}</div>
-                <div class="shrink-0 text-sm text-gray-500">
-                  <span class="text-xs opacity-60">₱</span>{{ c.price | number: '1.2-2' }}
-                </div>
-              </div>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  @if (!isReadOnly()) {
-                    <button
-                      class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
-                      (click)="decrement(c.productId, $index)"
-                      aria-label="Decrease quantity"
-                    >
-                      <span class="text-base leading-none font-bold">−</span>
-                    </button>
-                  }
-                  <div class="w-6 text-center text-sm font-medium">{{ c.qty }}</div>
-                  @if (!isReadOnly()) {
-                    <button
-                      class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
-                      (click)="increment(c.productId, $index)"
-                      aria-label="Increase quantity"
-                    >
-                      <span class="text-base leading-none font-bold">+</span>
-                    </button>
-                  }
-                </div>
-                <div class="text-base font-bold text-gray-900">
-                  <span class="text-xs opacity-70">₱</span
-                  >{{
-                    c.qty *
-                      (c.price + (c.addOns?.length ? c.addOns!.reduce(addOnPriceReducer, 0) : 0))
-                      | number: '1.2-2'
-                  }}
-                </div>
-              </div>
-            </div>
+            <button
+              type="button"
+              class="btn btn-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              (click)="openCreateCustomerModal()"
+              title="Create new customer"
+            >
+              + New
+            </button>
           </div>
+        } @else {
+          <div
+            class="h-10 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm leading-10 text-gray-700"
+          >
+            {{ selectedCustomerName() }}
+          </div>
+        }
+      </div>
 
-          <!-- Add-on line items -->
-          @if (c.addOns?.length) {
-            <div class="mt-2 ml-19 space-y-1 border-t border-gray-200 pt-2">
-              @for (ao of c.addOns; track ao.addOnId) {
-                <div class="flex items-center justify-between text-xs text-gray-500">
-                  <span class="flex items-center gap-1.5">
-                    <span class="inline-block h-1 w-1 rounded-full bg-gray-400"></span>
-                    {{ ao.name }}
-                  </span>
-                  <span>+₱{{ ao.price | number: '1.2-2' }}</span>
-                </div>
-              }
-            </div>
-          }
-          <!-- Special Instructions Note -->
-          @if (c.specialInstructions) {
-            <div class="mt-2 ml-19 text-xs text-gray-500 italic">
-              {{ c.specialInstructions }}
-            </div>
-          }
-        </div>
-      }
+      <div class="mt-2 text-sm opacity-70">{{ itemCount() }} items</div>
     </div>
+
+    @if (editMode() && isLoading()) {
+      <div class="flex min-h-0 flex-1 flex-col items-center justify-center p-4">
+        <span class="loading loading-spinner loading-lg text-gray-400"></span>
+        <div class="mt-3 text-sm text-gray-400">Loading order items…</div>
+      </div>
+    } @else if (cart().length === 0) {
+      <div class="flex min-h-0 flex-1 flex-col items-center justify-center p-4 text-center">
+        <app-icon name="icon-cart" [class]="'mb-4 h-20 w-20 opacity-20'" />
+        <div class="text-base font-semibold text-gray-700">Your cart is empty</div>
+        <div class="text-sm text-gray-500">Add items to get started</div>
+      </div>
+    } @else {
+      <div class="min-h-0 flex-1 overflow-y-auto p-4">
+        @for (c of cart(); track $index; let last = $last) {
+          <div class="mb-3 rounded-lg bg-gray-50 p-4 shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="flex h-16 w-16 shrink-0 items-center justify-center">
+                @if (c.imageUrl) {
+                  <img [src]="c.imageUrl" [alt]="c.name" class="h-12 w-12 object-contain" />
+                } @else {
+                  <app-avatar [label]="c.name" [size]="56" />
+                }
+              </div>
+              <div class="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                <div class="flex items-start justify-between gap-4 sm:gap-6">
+                  <div class="min-w-0 flex-1 text-sm font-semibold text-gray-900">{{ c.name }}</div>
+                  <div class="shrink-0 text-sm text-gray-500">
+                    <span class="text-xs opacity-60">₱</span>{{ c.price | number: '1.2-2' }}
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1">
+                    @if (!isReadOnly()) {
+                      <button
+                        class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
+                        (click)="decrement(c.productId, $index)"
+                        aria-label="Decrease quantity"
+                      >
+                        <span class="text-base leading-none font-bold">−</span>
+                      </button>
+                    }
+                    <div class="w-6 text-center text-sm font-medium">{{ c.qty }}</div>
+                    @if (!isReadOnly()) {
+                      <button
+                        class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
+                        (click)="increment(c.productId, $index)"
+                        aria-label="Increase quantity"
+                      >
+                        <span class="text-base leading-none font-bold">+</span>
+                      </button>
+                    }
+                  </div>
+                  <div class="text-base font-bold text-gray-900">
+                    <span class="text-xs opacity-70">₱</span
+                    >{{
+                      c.qty *
+                        (c.price + (c.addOns?.length ? c.addOns!.reduce(addOnPriceReducer, 0) : 0))
+                        | number: '1.2-2'
+                    }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add-on line items -->
+            @if (c.addOns?.length) {
+              <div class="mt-2 ml-19 space-y-1 border-t border-gray-200 pt-2">
+                @for (ao of c.addOns; track ao.addOnId) {
+                  <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span class="flex items-center gap-1.5">
+                      <span class="inline-block h-1 w-1 rounded-full bg-gray-400"></span>
+                      {{ ao.name }}
+                    </span>
+                    <span>+₱{{ ao.price | number: '1.2-2' }}</span>
+                  </div>
+                }
+              </div>
+            }
+            <!-- Special Instructions Note -->
+            @if (c.specialInstructions) {
+              <div class="mt-2 ml-19 text-xs wrap-break-word text-gray-500 italic">
+                {{ c.specialInstructions }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
 
     <div
       class="sticky bottom-0 shrink-0 border-t border-gray-200 bg-white p-5 shadow-[0_-8px_24px_rgba(0,0,0,0.1)]"
@@ -365,6 +397,7 @@
     <app-checkout-modal
       [cartItems]="cart()"
       [totalPrice]="totalPrice()"
+      [selectedCustomerName]="selectedCustomerName()"
       [orderSpecialInstructions]="orderSpecialInstructions()"
       (orderConfirmed)="onOrderConfirmed($event)"
     />
@@ -372,6 +405,91 @@
     <app-addon-selector (addToCart)="onAddonSelected($event)" />
   </aside>
 </div>
+
+<!-- Create Customer Modal -->
+@if (showCreateCustomerModal()) {
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-customer-title"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md transition-opacity duration-200"
+    (click)="closeCreateCustomerModal()"
+    (keydown.escape)="closeCreateCustomerModal()"
+    tabindex="0"
+  >
+    <div
+      role="document"
+      class="mx-4 w-full max-w-sm animate-[modal-pop_0.2s_ease-out] rounded-2xl bg-white p-6 shadow-2xl"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <div class="mx-auto w-fit rounded-full bg-emerald-50/60 p-3">
+        <div class="rounded-full bg-emerald-50 p-3">
+          <app-icon name="icon-people" [class]="'h-6 w-6 text-emerald-600'" />
+        </div>
+      </div>
+
+      <h3 id="create-customer-title" class="mt-4 text-center text-lg font-semibold text-gray-900">
+        New Customer
+      </h3>
+      <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
+        Enter customer details to add and select them for this order.
+      </p>
+
+      <div class="mt-5 space-y-3">
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-gray-700">
+            First Name <span class="text-error">*</span>
+          </span>
+          <input
+            type="text"
+            class="input input-bordered w-full bg-white"
+            [class.input-error]="createCustomerForm.controls.firstName.invalid && createCustomerForm.controls.firstName.touched"
+            [value]="createCustomerForm.controls.firstName.value"
+            (input)="createCustomerForm.controls.firstName.setValue($any($event.target).value)"
+            placeholder="Enter first name"
+          />
+        </label>
+
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-gray-700">
+            Last Name <span class="text-error">*</span>
+          </span>
+          <input
+            type="text"
+            class="input input-bordered w-full bg-white"
+            [class.input-error]="createCustomerForm.controls.lastName.invalid && createCustomerForm.controls.lastName.touched"
+            [value]="createCustomerForm.controls.lastName.value"
+            (input)="createCustomerForm.controls.lastName.setValue($any($event.target).value)"
+            placeholder="Enter last name"
+          />
+        </label>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
+          (click)="closeCreateCustomerModal()"
+          [disabled]="isCreatingCustomer()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-xl bg-[#047857] px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#065f46] hover:shadow-md disabled:cursor-not-allowed disabled:bg-gray-300"
+          (click)="saveCustomerFromModal()"
+          [disabled]="createCustomerForm.invalid || isCreatingCustomer()"
+        >
+          @if (isCreatingCustomer()) {
+            <span class="loading loading-spinner loading-xs mr-2"></span>
+          }
+          Save Customer
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Cancel Order Modal -->
 @if (showCancelOrderModal()) {

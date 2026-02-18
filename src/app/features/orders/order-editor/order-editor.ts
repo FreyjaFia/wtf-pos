@@ -1,15 +1,27 @@
-﻿import type { FilterOption } from '@shared/components';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService, OrderService, ProductService } from '@core/services';
-import { AddonSelectorComponent, FilterDropdown, Icon, AvatarComponent } from '@shared/components';
+import { AlertService, CustomerService, OrderService, ProductService } from '@core/services';
+import type { CustomerDropdownOption, FilterOption } from '@shared/components';
+import {
+  AddonSelectorComponent,
+  AvatarComponent,
+  CustomerDropdown,
+  FilterDropdown,
+  Icon,
+} from '@shared/components';
 import {
   CartAddOnDto,
   CartItemDto,
   CreateOrderCommand,
+  CustomerDto,
   OrderDto,
   OrderItemRequestDto,
   OrderStatusEnum,
@@ -30,6 +42,7 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
     Icon,
     CheckoutModal,
     FilterDropdown,
+    CustomerDropdown,
     AddonSelectorComponent,
     AvatarComponent,
   ],
@@ -44,6 +57,7 @@ export class OrderEditor implements OnInit {
   readonly addonSelector = viewChild.required(AddonSelectorComponent);
   private readonly productService = inject(ProductService);
   private readonly orderService = inject(OrderService);
+  private readonly customerService = inject(CustomerService);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
@@ -60,14 +74,24 @@ export class OrderEditor implements OnInit {
 
   // Cancel order
   protected readonly showCancelOrderModal = signal(false);
+  protected readonly showCreateCustomerModal = signal(false);
+  protected readonly isCreatingCustomer = signal(false);
+
+  protected readonly createCustomerForm = new FormGroup({
+    firstName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  });
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
   });
   protected readonly selectedProductCategories = signal<ProductCategoryEnum[]>([]);
   protected readonly cart = signal<CartItemDto[]>([]);
+  protected readonly customers = signal<CustomerDto[]>([]);
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
+  protected readonly selectedCustomerId = signal<string | null>(null);
+  protected readonly isLoadingCustomers = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly editMode = signal(false);
   protected readonly currentOrder = signal<OrderDto | null>(null);
@@ -107,6 +131,33 @@ export class OrderEditor implements OnInit {
     const order = this.currentOrder();
     return order?.status === OrderStatusEnum.Pending;
   });
+  protected readonly canEditCustomerSelection = computed(() => {
+    if (!this.editMode()) {
+      return true;
+    }
+
+    const order = this.currentOrder();
+    return order?.status === OrderStatusEnum.Pending;
+  });
+  protected readonly selectedCustomerName = computed(() => {
+    const selectedId = this.selectedCustomerId();
+    if (!selectedId) {
+      return 'Walk-in customer';
+    }
+
+    const selected = this.customers().find((customer) => customer.id === selectedId);
+    if (!selected) {
+      return 'Unknown customer';
+    }
+
+    return `${selected.firstName} ${selected.lastName}`.trim();
+  });
+  protected readonly customerOptions = computed<CustomerDropdownOption[]>(() =>
+    this.customers().map((customer) => ({
+      id: customer.id,
+      label: this.getCustomerDisplayName(customer),
+    })),
+  );
 
   protected itemCount = () => this.cart().reduce((s, i) => s + i.qty, 0);
   protected totalPrice = () =>
@@ -139,6 +190,8 @@ export class OrderEditor implements OnInit {
   ]);
 
   ngOnInit() {
+    this.loadCustomers();
+
     const orderId = this.activatedRoute.snapshot.paramMap.get('id');
     if (orderId) {
       this.editMode.set(true);
@@ -160,6 +213,7 @@ export class OrderEditor implements OnInit {
       .pipe(
         switchMap((order) => {
           this.currentOrder.set(order);
+          this.selectedCustomerId.set(order.customerId ?? null);
           this.orderSpecialInstructions.set(order.specialInstructions ?? '');
           this.populateCartFromOrder(order);
           return this.loadProductsForEdit();
@@ -234,6 +288,21 @@ export class OrderEditor implements OnInit {
       });
   }
 
+  private loadCustomers() {
+    this.isLoadingCustomers.set(true);
+
+    this.customerService.getCustomers().subscribe({
+      next: (result) => {
+        this.customers.set(result);
+        this.isLoadingCustomers.set(false);
+      },
+      error: (err: Error) => {
+        this.alertService.error(err.message || 'Failed to load customers');
+        this.isLoadingCustomers.set(false);
+      },
+    });
+  }
+
   /**
    * Loads products for edit mode — fetches the product grid and (if needed)
    * all products to resolve add-on names/prices. Returns an observable so
@@ -296,12 +365,7 @@ export class OrderEditor implements OnInit {
   }
 
   private snapshotCart() {
-    const items = this.cart().map((c) => ({
-      productId: c.productId,
-      qty: c.qty,
-      addOns: c.addOns?.map((ao) => ao.addOnId).sort() ?? [],
-    }));
-    this.originalCartSnapshot = JSON.stringify(items);
+    this.originalCartSnapshot = JSON.stringify(this.getOrderSnapshotPayload());
   }
 
   private hasCartChanged(): boolean {
@@ -309,12 +373,19 @@ export class OrderEditor implements OnInit {
       return this.cart().length > 0;
     }
 
-    const items = this.cart().map((c) => ({
-      productId: c.productId,
-      qty: c.qty,
-      addOns: c.addOns?.map((ao) => ao.addOnId).sort() ?? [],
-    }));
-    return JSON.stringify(items) !== this.originalCartSnapshot;
+    return JSON.stringify(this.getOrderSnapshotPayload()) !== this.originalCartSnapshot;
+  }
+
+  private getOrderSnapshotPayload() {
+    return {
+      customerId: this.selectedCustomerId(),
+      specialInstructions: this.orderSpecialInstructions().trim(),
+      items: this.cart().map((c) => ({
+        productId: c.productId,
+        qty: c.qty,
+        addOns: c.addOns?.map((ao) => ao.addOnId).sort() ?? [],
+      })),
+    };
   }
 
   addToCart(p: ProductDto) {
@@ -385,6 +456,62 @@ export class OrderEditor implements OnInit {
 
   clearAll() {
     this.cart.set([]);
+  }
+
+  protected onCustomerSelected(customerId: string | null) {
+    this.selectedCustomerId.set(customerId);
+  }
+
+  protected getCustomerDisplayName(customer: CustomerDto) {
+    return `${customer.firstName} ${customer.lastName}`.trim();
+  }
+
+  protected openCreateCustomerModal() {
+    this.createCustomerForm.reset({
+      firstName: '',
+      lastName: '',
+    });
+    this.createCustomerForm.markAsPristine();
+    this.createCustomerForm.markAsUntouched();
+    this.showCreateCustomerModal.set(true);
+  }
+
+  protected closeCreateCustomerModal() {
+    if (this.isCreatingCustomer()) {
+      return;
+    }
+    this.showCreateCustomerModal.set(false);
+  }
+
+  protected saveCustomerFromModal() {
+    if (this.createCustomerForm.invalid || this.isCreatingCustomer()) {
+      this.createCustomerForm.markAllAsTouched();
+      return;
+    }
+
+    const firstName = this.createCustomerForm.controls.firstName.value.trim();
+    const lastName = this.createCustomerForm.controls.lastName.value.trim();
+
+    this.isCreatingCustomer.set(true);
+
+    this.customerService
+      .createCustomer({
+        firstName,
+        lastName,
+      })
+      .subscribe({
+        next: (createdCustomer) => {
+          this.customers.set([...this.customers(), createdCustomer]);
+          this.selectedCustomerId.set(createdCustomer.id);
+          this.showCreateCustomerModal.set(false);
+          this.isCreatingCustomer.set(false);
+          this.alertService.success('Customer added successfully.');
+        },
+        error: (err: Error) => {
+          this.isCreatingCustomer.set(false);
+          this.alertService.error(err.message || 'Failed to create customer');
+        },
+      });
   }
 
   cancel() {
@@ -499,7 +626,7 @@ export class OrderEditor implements OnInit {
     },
   ) {
     const command: CreateOrderCommand = {
-      customerId: null,
+      customerId: this.selectedCustomerId(),
       items: this.cart().map((c) => ({
         productId: c.productId,
         quantity: c.qty,
@@ -542,7 +669,7 @@ export class OrderEditor implements OnInit {
 
     const command: UpdateOrderCommand = {
       id: order.id,
-      customerId: order.customerId ?? null,
+      customerId: this.selectedCustomerId(),
       items: this.cart().map((c) => ({
         productId: c.productId,
         quantity: c.qty,
