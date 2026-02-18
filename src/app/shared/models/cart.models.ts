@@ -1,4 +1,4 @@
-import { AddOnTypeEnum } from './product.models';
+﻿import { AddOnTypeEnum } from './product.models';
 
 export interface CartAddOnDto {
   addOnId: string;
@@ -14,4 +14,5 @@ export interface CartItemDto {
   qty: number;
   imageUrl?: string | null;
   addOns?: CartAddOnDto[];
+  specialInstructions?: string | null;
 }

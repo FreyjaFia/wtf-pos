@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { Icon } from '../icons/icon/icon';
 

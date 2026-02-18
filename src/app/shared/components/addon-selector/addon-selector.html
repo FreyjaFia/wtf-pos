@@ -1,4 +1,4 @@
-@if (isOpen()) {
+﻿@if (isOpen()) {
   <div
     role="dialog"
     aria-modal="true"
@@ -25,28 +25,25 @@
               class="h-16 w-16 shrink-0 rounded-xl object-cover shadow-md"
             />
           } @else {
-            <div
-              class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gray-100"
-            >
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gray-100">
               <app-avatar [label]="product()!.name" [size]="64" />
             </div>
           }
           <div class="min-w-0 flex-1">
-            <h3
-              id="addon-selector-title"
-              class="text-lg font-bold text-gray-900"
-            >
+            <h3 id="addon-selector-title" class="text-lg font-bold text-gray-900">
               {{ product()!.name }}
             </h3>
             <p class="mt-0.5 text-sm text-gray-500">Customize your order</p>
           </div>
           <div class="shrink-0 text-right">
             <p class="text-lg font-bold text-[#047857]">
-              ₱{{ (product()!.price + addOnTotal()) | number: '1.2-2' }}
+              ₱{{ product()!.price + addOnTotal() | number: '1.2-2' }}
             </p>
             @if (addOnTotal() > 0) {
               <p class="text-xs text-gray-400">
-                Base ₱{{ product()!.price | number: '1.2-2' }} + ₱{{ addOnTotal() | number: '1.2-2' }}
+                Base ₱{{ product()!.price | number: '1.2-2' }} + ₱{{
+                  addOnTotal() | number: '1.2-2'
+                }}
               </p>
             }
           </div>
@@ -64,7 +61,12 @@
       @if (!isLoading()) {
         <div class="max-h-[60vh] flex-1 overflow-y-auto px-6 py-4">
           @for (group of addOnGroups(); track group.type; let last = $last) {
-            <div [class.mb-5]="!last" [class.pb-5]="!last" [class.border-b]="!last" class="border-gray-100">
+            <div
+              [class.mb-5]="!last"
+              [class.pb-5]="!last"
+              [class.border-b]="!last"
+              class="border-gray-100"
+            >
               <!-- Group Header -->
               <div class="mb-3 flex items-baseline justify-between">
                 <h4 class="text-xs font-semibold tracking-wider text-gray-400 uppercase">
@@ -84,7 +86,9 @@
                     [class.border-[#047857]]="isSelected(group.type, option.id)"
                     [class.bg-[#047857]/5]="isSelected(group.type, option.id)"
                     [class.border-gray-200]="!isSelected(group.type, option.id)"
-                    [class.hover:border-gray-300]="!isSelected(group.type, option.id) && option.isActive"
+                    [class.hover:border-gray-300]="
+                      !isSelected(group.type, option.id) && option.isActive
+                    "
                     [class.hover:bg-gray-50]="!isSelected(group.type, option.id) && option.isActive"
                     [class.opacity-40]="!option.isActive"
                     [class.cursor-not-allowed]="!option.isActive"
@@ -114,8 +118,18 @@
                           [class.border-gray-300]="!isSelected(group.type, option.id)"
                         >
                           @if (isSelected(group.type, option.id)) {
-                            <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            <svg
+                              class="h-3 w-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              stroke-width="3"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           }
                         </div>
@@ -153,7 +167,12 @@
 
                     <!-- Quantity stepper for Topping/Extra -->
                     @if (!isRadioGroup(group.type) && isSelected(group.type, option.id)) {
-                      <div class="flex shrink-0 items-center gap-1.5" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" tabindex="0">
+                      <div
+                        class="flex shrink-0 items-center gap-1.5"
+                        (click)="$event.stopPropagation()"
+                        (keydown.enter)="$event.stopPropagation()"
+                        tabindex="0"
+                      >
                         <button
                           type="button"
                           class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-200 text-xs font-bold transition-colors hover:bg-gray-300"
@@ -190,6 +209,30 @@
             </div>
           }
 
+          <!-- Special Instructions (Optional) -->
+          <div class="mt-6">
+            <label
+              for="specialInstructions"
+              class="mb-2 block text-xs font-semibold tracking-wider text-gray-400 uppercase"
+              >SPECIAL INSTRUCTIONS (Optional)</label
+            >
+            <div class="relative">
+              <textarea
+                id="specialInstructions"
+                class="textarea textarea-bordered w-full pr-16 outline-transparent"
+                placeholder="e.g. Less ice, sauce on the side, etc."
+                maxlength="100"
+                rows="2"
+                [value]="specialInstructions()"
+                (input)="onSpecialInstructionsInput($event)"
+                (keydown.enter)="$event.preventDefault()"
+              ></textarea>
+              <span class="absolute right-3 bottom-2 text-xs text-gray-400 select-none">
+                {{ specialInstructions().length }}/100
+              </span>
+            </div>
+          </div>
+
           @if (addOnGroups().length === 0) {
             <div class="flex flex-col items-center py-8 text-center">
               <p class="text-sm text-gray-400">No add-ons available for this product</p>
@@ -209,13 +252,7 @@
       <!-- Footer -->
       <div class="shrink-0 border-t border-gray-100 px-6 py-4">
         <div class="flex items-center gap-3">
-          <button
-            type="button"
-            class="btn btn-ghost flex-1"
-            (click)="close()"
-          >
-            Cancel
-          </button>
+          <button type="button" class="btn btn-ghost flex-1" (click)="close()">Cancel</button>
           <button
             type="button"
             class="btn flex-1 gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none"

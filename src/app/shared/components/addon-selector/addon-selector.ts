@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
@@ -17,11 +17,20 @@ import {
   templateUrl: './addon-selector.html',
 })
 export class AddonSelectorComponent {
+  // Handler for textarea input
+  protected onSpecialInstructionsInput(event: Event) {
+    const value = event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+    this.specialInstructions.set(value);
+  }
   private readonly productService = inject(ProductService);
+
+  // Special instructions for this item
+  protected readonly specialInstructions = signal<string>('');
 
   readonly addToCart = output<{
     product: ProductDto;
     addOns: CartAddOnDto[];
+    specialInstructions?: string | null;
   }>();
 
   protected readonly isOpen = signal(false);
@@ -96,23 +105,19 @@ export class AddonSelectorComponent {
   open(product: ProductDto) {
     this.product.set(product);
     this.selections.set({});
+    this.specialInstructions.set('');
     this.isOpen.set(true);
     this.loadAddOns(product.id);
   }
-
   private loadAddOns(productId: string) {
     this.isLoading.set(true);
-
     this.productService.getProductAddOns(productId).subscribe({
       next: (groups) => {
         // Deduplicate options within each group (display only)
         const deduped = groups.map((g) => ({
           ...g,
-          options: g.options.filter(
-            (opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i,
-          ),
+          options: g.options.filter((opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i),
         }));
-
         this.addOnGroups.set(deduped);
         this.isLoading.set(false);
       },
@@ -121,10 +126,6 @@ export class AddonSelectorComponent {
         this.isLoading.set(false);
       },
     });
-  }
-
-  protected getGroupTypeName(type: AddOnTypeEnum): string {
-    return AddOnTypeEnum[type];
   }
 
   protected getSelectionRule(type: AddOnTypeEnum): string {
@@ -137,6 +138,8 @@ export class AddonSelectorComponent {
         return 'Optional · Pick many';
       case AddOnTypeEnum.Extra:
         return 'Optional · Pick many';
+      default:
+        return '';
     }
   }
 
@@ -240,6 +243,7 @@ export class AddonSelectorComponent {
     this.addToCart.emit({
       product: prod,
       addOns: this.selectedAddOns(),
+      specialInstructions: this.specialInstructions().trim() || null,
     });
 
     this.close();
@@ -250,5 +254,6 @@ export class AddonSelectorComponent {
     this.product.set(null);
     this.addOnGroups.set([]);
     this.selections.set({});
+    this.specialInstructions.set('');
   }
 }

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -100,40 +100,40 @@ export class ProductsSwapperComponent implements AfterViewInit {
     });
   }
 
-//   private loadProductsWithoutAddOnInfo() {
-//     this.isLoading.set(true);
+  //   private loadProductsWithoutAddOnInfo() {
+  //     this.isLoading.set(true);
 
-//     // Load all non-add-on active products
-//     this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
-//       next: (allProducts) => {
-//         // Get the currently linked products for this add-on
-//         this.productService.getLinkedProducts(this.addOnId).subscribe({
-//           next: (linkedProducts) => {
-//             const linkedIds = new Set(linkedProducts.map((p) => p.id));
+  //     // Load all non-add-on active products
+  //     this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
+  //       next: (allProducts) => {
+  //         // Get the currently linked products for this add-on
+  //         this.productService.getLinkedProducts(this.addOnId).subscribe({
+  //           next: (linkedProducts) => {
+  //             const linkedIds = new Set(linkedProducts.map((p) => p.id));
 
-//             // Split: available (not linked) on left, linked on right
-//             const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
-//             const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
+  //             // Split: available (not linked) on left, linked on right
+  //             const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
+  //             const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
 
-//             this.availableProducts.set(availableNotLinked);
-//             this.linkedProducts.set(linkedWithType);
-//             this.isLoading.set(false);
+  //             this.availableProducts.set(availableNotLinked);
+  //             this.linkedProducts.set(linkedWithType);
+  //             this.isLoading.set(false);
 
-//             // Initialize Sortable after data is loaded and DOM is populated
-//             this.initializeSortable();
-//           },
-//           error: (err) => {
-//             this.alertService.error(err.message);
-//             this.isLoading.set(false);
-//           },
-//         });
-//       },
-//       error: (err) => {
-//         this.alertService.error(err.message);
-//         this.isLoading.set(false);
-//       },
-//     });
-//   }
+  //             // Initialize Sortable after data is loaded and DOM is populated
+  //             this.initializeSortable();
+  //           },
+  //           error: (err) => {
+  //             this.alertService.error(err.message);
+  //             this.isLoading.set(false);
+  //           },
+  //         });
+  //       },
+  //       error: (err) => {
+  //         this.alertService.error(err.message);
+  //         this.isLoading.set(false);
+  //       },
+  //     });
+  //   }
 
   private initializeSortable() {
     setTimeout(() => {

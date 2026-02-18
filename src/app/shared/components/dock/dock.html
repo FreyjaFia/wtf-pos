@@ -1,4 +1,4 @@
-@if (auth.isLoggedIn$ | async) {
+﻿@if (auth.isLoggedIn$ | async) {
   <div class="dock dock-md relative z-0 shrink-0 justify-center border-t border-gray-100">
     <a [routerLink]="['orders/editor']" [routerLinkActive]="'dock-active'">
       <app-icon name="icon-plus" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
@@ -10,9 +10,9 @@
       <span class="dock-label">Orders</span>
     </a>
 
-    <a [routerLink]="['settings']" [routerLinkActive]="'dock-active'">
-      <app-icon name="icon-settings" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
-      <span class="dock-label">Settings</span>
+    <a [routerLink]="['management']" [routerLinkActive]="'dock-active'">
+      <app-icon name="icon-management" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
+      <span class="dock-label">Management</span>
     </a>
   </div>
 }

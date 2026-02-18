@@ -1,8 +1,8 @@
-<div class="flex h-full w-full flex-col ps-6">
+﻿<div class="flex h-full w-full flex-col ps-6">
   <!-- Header: Title on Left, Tools on Right -->
   <div class="mb-6 flex shrink-0 items-center justify-between">
     <!-- Left: Title -->
-    <h1 class="text-2xl font-bold text-gray-900">Users</h1>
+    <h1 class="text-2xl font-bold text-gray-900">Customers</h1>
 
     <!-- Right: Search, Filters, Refresh, and Add Button -->
     <div class="flex items-center gap-3">
@@ -18,7 +18,7 @@
         <input
           type="search"
           class="grow bg-transparent text-sm placeholder-gray-500 focus:caret-[#047857] focus:outline-none"
-          placeholder="Search by name or username"
+          placeholder="Search by customer name"
           [formControl]="filterForm.controls.searchTerm"
         />
       </label>
@@ -42,7 +42,7 @@
         type="button"
         (click)="refresh()"
         [disabled]="isRefreshing()"
-        aria-label="Refresh users"
+        aria-label="Refresh customers"
         data-tip="Refresh"
       >
         @if (isRefreshing()) {
@@ -60,13 +60,13 @@
         }
       </button>
 
-      <!-- Add User Button -->
+      <!-- Add Customer Button -->
       <button
         class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
         (click)="navigateToEditor()"
       >
         <app-icon name="icon-plus" [class]="'h-4 w-4'" />
-        Add User
+        Add Customer
       </button>
     </div>
   </div>
@@ -78,15 +78,15 @@
     </div>
   }
 
-  <!-- Users Table -->
+  <!-- Customers Table -->
   @if (!isLoading()) {
-    @if (users().length === 0) {
+    @if (customers().length === 0) {
       <div class="rounded-lg bg-white p-8 text-center shadow-lg">
         <div class="mb-3 flex justify-center">
-          <app-icon name="icon-user" [class]="'h-12 w-12 opacity-60'" />
+          <app-icon name="icon-people" [class]="'h-12 w-12 opacity-60'" />
         </div>
-        <p class="text-lg font-semibold text-gray-700">No users found</p>
-        <p class="text-sm text-gray-500">Try adjusting your filters or add a new user</p>
+        <p class="text-lg font-semibold text-gray-700">No customers found</p>
+        <p class="text-sm text-gray-500">Try adjusting your filters or add a new customer</p>
       </div>
     } @else {
       <div class="min-h-0 flex-1 overflow-y-auto pr-2 pb-4">
@@ -103,7 +103,7 @@
               (click)="toggleSort('name')"
               (keydown.enter)="toggleSort('name')"
               (keydown.space)="toggleSort('name')"
-              aria-label="Sort by user name"
+              aria-label="Sort by customer name"
             >
               Name
               <span
@@ -123,21 +123,21 @@
 
             <button
               class="col-span-5 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
-              [class.text-gray-600]="sortColumn() !== 'username'"
-              [class.hover:text-gray-900]="sortColumn() !== 'username'"
-              [class.text-[#047857]]="sortColumn() === 'username'"
+              [class.text-gray-600]="sortColumn() !== 'address'"
+              [class.hover:text-gray-900]="sortColumn() !== 'address'"
+              [class.text-[#047857]]="sortColumn() === 'address'"
               role="button"
               tabindex="0"
-              (click)="toggleSort('username')"
-              (keydown.enter)="toggleSort('username')"
-              (keydown.space)="toggleSort('username')"
-              aria-label="Sort by username"
+              (click)="toggleSort('address')"
+              (keydown.enter)="toggleSort('address')"
+              (keydown.space)="toggleSort('address')"
+              aria-label="Sort by address"
             >
-              Username
+              Address
               <span
                 class="text-xs transition-opacity"
-                [class.opacity-0]="sortColumn() !== 'username'"
-                [class.opacity-100]="sortColumn() === 'username'"
+                [class.opacity-0]="sortColumn() !== 'address'"
+                [class.opacity-100]="sortColumn() === 'address'"
               >
                 {{ sortDirection() === 'asc' ? '↑' : '↓' }}
               </span>
@@ -146,56 +146,51 @@
             <div class="col-span-1"></div>
           </div>
 
-          @if (sortedUsers().length > 0) {
-            @for (user of sortedUsers(); track user.id) {
+          @if (sortedCustomers().length > 0) {
+            @for (customer of sortedCustomers(); track customer.id) {
               <div
                 class="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
-                (click)="navigateToDetails(user.id)"
-                (keydown.enter)="navigateToDetails(user.id)"
-                (keydown.space)="navigateToDetails(user.id)"
+                (click)="navigateToDetails(customer.id)"
+                (keydown.enter)="navigateToDetails(customer.id)"
+                (keydown.space)="navigateToDetails(customer.id)"
                 tabindex="0"
                 role="button"
-                [attr.aria-label]="'View details for ' + user.firstName + ' ' + user.lastName"
+                [attr.aria-label]="
+                  'View details for ' + customer.firstName + ' ' + customer.lastName
+                "
               >
                 <!-- Avatar and Name -->
                 <div class="col-span-4 flex items-center gap-4">
                   <div class="w-14 shrink-0">
                     <div class="flex h-14 w-14 items-center justify-center">
-                      @if (user.imageUrl) {
-                        <img
-                          [src]="user.imageUrl"
-                          alt="User image"
-                          class="h-14 w-14 object-cover rounded-full"
-                        />
-                      } @else {
-                        <app-avatar
-                          [label]="`${user.firstName || ''} ${user.lastName || ''}`"
-                          [size]="36"
-                        />
-                      }
+                      <app-avatar
+                        [label]="`${customer.firstName || ''} ${customer.lastName || ''}`"
+                        [size]="36"
+                        [imageUrl]="customer.imageUrl"
+                      />
                     </div>
                   </div>
 
                   <div class="min-w-0">
                     <h3 class="font-semibold text-gray-900">
-                      {{ user.firstName }} {{ user.lastName }}
+                      {{ customer.firstName }} {{ customer.lastName }}
                     </h3>
                   </div>
                 </div>
 
                 <!-- Status -->
                 <div class="col-span-2 flex justify-center">
-                  @if (user.isActive) {
+                  @if (customer.isActive) {
                     <app-badge variant="success">Active</app-badge>
                   } @else {
                     <app-badge variant="error">Inactive</app-badge>
                   }
                 </div>
 
-                <!-- Username -->
+                <!-- Address -->
                 <div class="col-span-5">
                   <div class="truncate text-sm text-gray-700">
-                    {{ user.username }}
+                    {{ customer.address || '—' }}
                   </div>
                 </div>
 
@@ -211,7 +206,7 @@
                       type="button"
                       class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
                       tabindex="0"
-                      aria-label="User actions"
+                      aria-label="Customer actions"
                     >
                       <app-icon
                         name="icon-ellipsis-vertical"
@@ -226,9 +221,9 @@
                       <li>
                         <button
                           type="button"
-                          (click)="navigateToEditor(user.id); $event.stopPropagation()"
-                          (keydown.enter)="navigateToEditor(user.id); $event.stopPropagation()"
-                          (keydown.space)="navigateToEditor(user.id); $event.stopPropagation()"
+                          (click)="navigateToEditor(customer.id); $event.stopPropagation()"
+                          (keydown.enter)="navigateToEditor(customer.id); $event.stopPropagation()"
+                          (keydown.space)="navigateToEditor(customer.id); $event.stopPropagation()"
                           class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
                         >
                           <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
@@ -238,9 +233,9 @@
                       <li>
                         <button
                           type="button"
-                          (click)="deleteUser(user); $event.stopPropagation()"
-                          (keydown.enter)="deleteUser(user); $event.stopPropagation()"
-                          (keydown.space)="deleteUser(user); $event.stopPropagation()"
+                          (click)="deleteCustomer(customer); $event.stopPropagation()"
+                          (keydown.enter)="deleteCustomer(customer); $event.stopPropagation()"
+                          (keydown.space)="deleteCustomer(customer); $event.stopPropagation()"
                           class="flex items-center gap-2 text-red-600 hover:bg-red-50"
                         >
                           <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />
@@ -260,7 +255,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-@if (showDeleteModal() && userToDelete()) {
+@if (showDeleteModal() && customerToDelete()) {
   <div
     role="dialog"
     aria-modal="true"
@@ -285,12 +280,12 @@
 
       <!-- Title & Body -->
       <h3 id="delete-title" class="mt-4 text-center text-lg font-semibold text-gray-900">
-        Delete User?
+        Delete Customer?
       </h3>
       <p class="mt-2 text-center text-sm leading-relaxed text-gray-500">
         This will permanently remove
         <span class="font-medium text-gray-700">
-          {{ userToDelete()!.firstName }} {{ userToDelete()!.lastName }} </span
+          {{ customerToDelete()!.firstName }} {{ customerToDelete()!.lastName }} </span
         >. This action cannot be undone.
       </p>
 
@@ -308,7 +303,7 @@
           class="cursor-pointer rounded-xl bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md active:scale-[0.97]"
           (click)="confirmDelete()"
         >
-          Delete User
+          Delete Customer
         </button>
       </div>
     </div>

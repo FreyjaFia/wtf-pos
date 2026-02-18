@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, effect, input, output, signal } from '@angular/core';
 import { Icon } from '@shared/components';
 import { ProductPriceHistoryDto } from '@shared/models';

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -129,14 +129,14 @@ export class AddonsSwapperComponent implements AfterViewInit {
     }
 
     // Get all item IDs from available list
-    const availableIds = Array.from(this.availableList.nativeElement.querySelectorAll('[data-id]')).map(
-      (el) => (el as HTMLElement).getAttribute('data-id') || '',
-    );
+    const availableIds = Array.from(
+      this.availableList.nativeElement.querySelectorAll('[data-id]'),
+    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
 
     // Get all item IDs from assigned list
-    const assignedIds = Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
-      (el) => (el as HTMLElement).getAttribute('data-id') || '',
-    );
+    const assignedIds = Array.from(
+      this.assignedList.nativeElement.querySelectorAll('[data-id]'),
+    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
 
     // Get all add-ons from both current lists
     const allAddOns = [...this.availableAddOns(), ...this.assignedAddOns()];

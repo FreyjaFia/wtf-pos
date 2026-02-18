@@ -1,28 +1,30 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService, UserService } from '@app/core/services';
-import { AvatarComponent, Icon } from '@app/shared/components';
-import { CreateUserDto, UpdateUserDto } from '@app/shared/models';
+import { AlertService, CustomerService } from '@core/services';
+import { Icon, AvatarComponent } from '@shared/components';
+import { CreateCustomerDto, UpdateCustomerDto } from '@shared/models';
 
 @Component({
-  selector: 'app-user-editor',
-  standalone: true,
+  selector: 'app-customer-editor',
   imports: [CommonModule, ReactiveFormsModule, Icon, AvatarComponent],
-  templateUrl: './user-editor.html',
+  templateUrl: './customer-editor.html',
   host: {
     class: 'block h-full',
   },
 })
-export class UserEditorComponent implements OnInit {
-  // Angular-injected dependencies
-  protected readonly userService = inject(UserService);
-  protected readonly router = inject(Router);
-  protected readonly route = inject(ActivatedRoute);
-  protected readonly alertService = inject(AlertService);
+export class CustomerEditorComponent implements OnInit {
+  // Unsaved changes guard
+  protected readonly showDiscardModal = signal(false);
+  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
+  private skipGuard = false;
 
-  // UI state signals
+  private readonly customerService = inject(CustomerService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly alertService = inject(AlertService);
+
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
@@ -34,8 +36,7 @@ export class UserEditorComponent implements OnInit {
   protected readonly imagePreview = signal<string | null>(null);
   protected readonly currentImageUrl = signal<string | null>(null);
 
-  // Form group
-  protected readonly userForm = new FormGroup({
+  protected readonly customerForm = new FormGroup({
     firstName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(100)],
@@ -44,33 +45,21 @@ export class UserEditorComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(100)],
     }),
-    username: new FormControl('', {
+    address: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
-    }),
-    password: new FormControl('', {
-      nonNullable: false,
-      validators: [Validators.maxLength(100)],
+      validators: [Validators.maxLength(500)],
     }),
   });
 
-  // Unsaved changes guard
-  protected readonly showDiscardModal = signal(false);
-  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
-  private skipGuard = false;
+  protected customerId: string | null = null;
 
-  protected userId: string | null = null;
-
-  /**
-   * OnInit lifecycle hook
-   */
-  ngOnInit(): void {
+  ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
       this.isEditMode.set(true);
-      this.userId = id;
-      this.loadUser(id);
+      this.customerId = id;
+      this.loadCustomer(id);
     }
   }
 
@@ -110,7 +99,7 @@ export class UserEditorComponent implements OnInit {
     this.selectedFile.set(null);
     this.imagePreview.set(null);
     // Reset file input
-    const fileInput = document.getElementById('userImage') as HTMLInputElement;
+    const fileInput = document.getElementById('customerImage') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
     }
@@ -164,45 +153,41 @@ export class UserEditorComponent implements OnInit {
   }
 
   /**
-   * Upload image to server (placeholder, implement endpoint in UserService if needed)
+   * Upload image to server (placeholder, implement endpoint in CustomerService if needed)
    */
-  protected uploadImage(userId?: string): void {
+  protected uploadImage(customerId?: string): void {
     const file = this.selectedFile();
-    const id = userId || this.userId;
+    const id = customerId || this.customerId;
     if (!file || !id) {
       return;
     }
     this.isUploading.set(true);
-    this.userService.uploadUserImage(id, file).subscribe({
-      next: (user) => {
-        this.currentImageUrl.set(user.imageUrl || null);
+    this.customerService.uploadCustomerImage(id, file).subscribe({
+      next: (updatedCustomer) => {
+        this.currentImageUrl.set(updatedCustomer.imageUrl || null);
         this.isUploading.set(false);
         this.selectedFile.set(null);
         this.imagePreview.set(null);
         this.alertService.success('Image uploaded successfully');
       },
       error: (err) => {
-        this.alertService.error(err.message);
+        this.alertService.error(err.message || 'Failed to upload image');
         this.isUploading.set(false);
       },
     });
   }
 
-  /**
-   * Loads user data for editing
-   */
-  private loadUser(id: string): void {
+  private loadCustomer(id: string) {
     this.isLoading.set(true);
 
-    this.userService.getUserById(id).subscribe({
-      next: (user) => {
-        this.userForm.patchValue({
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username,
+    this.customerService.getCustomer(id).subscribe({
+      next: (customer) => {
+        this.customerForm.patchValue({
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          address: customer.address || '',
         });
-        // Set current image URL for preview, matching product-editor behavior
-        this.currentImageUrl.set(user.imageUrl || null);
+        this.currentImageUrl.set(customer.imageUrl || null);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -212,35 +197,33 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Handles user form submission for create/update
-   */
-  protected saveUser(): void {
-    if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched();
+  protected saveCustomer() {
+    if (this.customerForm.invalid) {
+      this.customerForm.markAllAsTouched();
       return;
     }
 
     this.isSaving.set(true);
 
-    if (this.isEditMode()) {
-      const dto: UpdateUserDto = {
-        id: this.userId!,
-        firstName: this.userForm.controls.firstName.value!,
-        lastName: this.userForm.controls.lastName.value!,
-        username: this.userForm.controls.username.value!,
-        password: this.userForm.controls.password.value || undefined,
+    const formValue = this.customerForm.getRawValue();
+
+    if (this.isEditMode() && this.customerId) {
+      const updateDto: UpdateCustomerDto = {
+        id: this.customerId,
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
+        address: formValue.address || null,
       };
 
-      this.userService.updateUser(dto).subscribe({
+      this.customerService.updateCustomer(updateDto).subscribe({
         next: () => {
-          // If there's a file selected, upload it after updating the user
+          // If there's a file selected, upload it after updating the customer
           if (this.selectedFile()) {
             this.uploadImageAndNavigate();
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
-            this.goBack();
+            this.navigateToDetails(this.customerId!);
           }
         },
         error: (err) => {
@@ -249,22 +232,21 @@ export class UserEditorComponent implements OnInit {
         },
       });
     } else {
-      const dto: CreateUserDto = {
-        firstName: this.userForm.controls.firstName.value!,
-        lastName: this.userForm.controls.lastName.value!,
-        username: this.userForm.controls.username.value!,
-        password: this.userForm.controls.password.value!,
+      const createDto: CreateCustomerDto = {
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
+        address: formValue.address || null,
       };
 
-      this.userService.createUser(dto).subscribe({
-        next: (createdUser) => {
-          // If there's a file selected, upload it after creating the user
+      this.customerService.createCustomer(createDto).subscribe({
+        next: (createdCustomer) => {
+          // If there's a file selected, upload it after creating the customer
           if (this.selectedFile()) {
-            this.uploadImageAndNavigate(createdUser.id);
+            this.uploadImageAndNavigate(createdCustomer.id);
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
-            this.goBack();
+            this.navigateToDetails(createdCustomer.id);
           }
         },
         error: (err) => {
@@ -278,23 +260,23 @@ export class UserEditorComponent implements OnInit {
   /**
    * Upload image and navigate to details after upload
    */
-  protected uploadImageAndNavigate(userId?: string): void {
+  protected uploadImageAndNavigate(customerId?: string): void {
     const file = this.selectedFile();
-    const id = userId || this.userId;
+    const id = customerId || this.customerId;
     if (!file || !id) {
       this.isSaving.set(false);
       return;
     }
     this.isUploading.set(true);
-    this.userService.uploadUserImage(id, file).subscribe({
-      next: (updatedUser) => {
-        this.currentImageUrl.set(updatedUser.imageUrl || null);
+    this.customerService.uploadCustomerImage(id, file).subscribe({
+      next: (updatedCustomer) => {
+        this.currentImageUrl.set(updatedCustomer.imageUrl || null);
         this.isUploading.set(false);
         this.selectedFile.set(null);
         this.imagePreview.set(null);
         this.isSaving.set(false);
         this.skipGuard = true;
-        this.goBack();
+        this.navigateToDetails(id);
         this.alertService.success('Image uploaded successfully');
       },
       error: (err) => {
@@ -305,82 +287,79 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Navigates back to the user list
-   */
-  protected goBack(): void {
-    this.skipGuard = true;
-    this.router.navigate(['/settings/users']);
-  }
-
-  /**
-   * Returns true if the control is invalid and touched/dirty
-   */
-  protected hasError(control: string): boolean {
-    const ctrl = this.userForm.get(control);
-    return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
-  }
-
-  /**
-   * Returns the error message for a control
-   */
-  protected getErrorMessage(control: string): string | null {
-    const ctrl = this.userForm.get(control);
-    if (!ctrl || !ctrl.errors) {
-      return null;
-    }
-    if (ctrl.errors['required']) {
-      return 'This field is required.';
-    }
-    if (ctrl.errors['maxlength']) {
-      return `Maximum length is ${ctrl.errors['maxlength'].requiredLength}.`;
-    }
-    return null;
-  }
-
-  /**
-   * Unsaved changes guard logic for navigation
-   */
-  canDeactivate(): Promise<boolean> {
-    if (this.skipGuard || !this.userForm.dirty) {
-      return Promise.resolve(true);
+  canDeactivate(): boolean | Promise<boolean> {
+    if (this.skipGuard || !this.customerForm.dirty) {
+      return true;
     }
 
     this.showDiscardModal.set(true);
-    return new Promise((resolve) => {
+
+    return new Promise<boolean>((resolve) => {
       this.pendingDeactivateResolve = resolve;
     });
   }
 
-  /**
-   * Cancels the discard action in the modal
-   */
-  protected cancelDiscard(): void {
+  protected confirmDiscard() {
     this.showDiscardModal.set(false);
+
+    if (this.pendingDeactivateResolve) {
+      this.pendingDeactivateResolve(true);
+      this.pendingDeactivateResolve = null;
+    }
+  }
+
+  protected cancelDiscard() {
+    this.showDiscardModal.set(false);
+
     if (this.pendingDeactivateResolve) {
       this.pendingDeactivateResolve(false);
       this.pendingDeactivateResolve = null;
     }
   }
 
-  /**
-   * Confirms the discard action in the modal
-   */
-  protected confirmDiscard(): void {
-    this.showDiscardModal.set(false);
-    if (this.pendingDeactivateResolve) {
-      this.pendingDeactivateResolve(true);
-      this.pendingDeactivateResolve = null;
+  protected goBack() {
+    if (this.isEditMode() && this.customerId) {
+      this.router.navigate(['/management/customers/details', this.customerId]);
+    } else {
+      this.router.navigate(['/management/customers']);
     }
-    this.goBack();
   }
 
-  /**
-   * Returns the full name from the form controls
-   */
-  protected userFullName(): string {
-    const first = this.userForm.controls.firstName.value || '';
-    const last = this.userForm.controls.lastName.value || '';
-    return `${first} ${last}`.trim();
+  private navigateToDetails(customerId: string) {
+    this.router.navigate(['/management/customers/details', customerId], {
+      queryParams: { saved: true },
+    });
+  }
+
+  protected getErrorMessage(controlName: string): string | null {
+    const control = this.customerForm.get(controlName);
+
+    if (!control || !control.errors || !control.touched) {
+      return null;
+    }
+
+    if (control.errors['required']) {
+      return `${this.getFieldLabel(controlName)} is required`;
+    }
+
+    if (control.errors['maxlength']) {
+      return `${this.getFieldLabel(controlName)} cannot exceed ${control.errors['maxlength'].requiredLength} characters`;
+    }
+
+    return null;
+  }
+
+  private getFieldLabel(controlName: string): string {
+    const labels: Record<string, string> = {
+      firstName: 'First name',
+      lastName: 'Last name',
+      address: 'Address',
+    };
+    return labels[controlName] || controlName;
+  }
+
+  protected hasError(controlName: string): boolean {
+    const control = this.customerForm.get(controlName);
+    return !!control && control.invalid && control.touched;
   }
 }
