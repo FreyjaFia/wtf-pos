@@ -108,7 +108,7 @@ export class OrderList implements OnInit {
         this.isRefreshing.set(false);
       },
       error: (err) => {
-        this.alertService.error(err.message || 'Failed to load orders');
+        this.alertService.error(err.message || this.alertService.getLoadErrorMessage('orders'));
         this.isLoading.set(false);
         this.isRefreshing.set(false);
       },
@@ -274,3 +274,4 @@ export class OrderList implements OnInit {
     this.orders.set(items);
   }
 }
+

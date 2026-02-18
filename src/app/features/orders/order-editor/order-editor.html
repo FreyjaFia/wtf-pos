@@ -17,8 +17,8 @@
           <!-- Search Input (Ghost Style, Fixed Width) -->
           <label
             class="flex w-72 items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-gray-200"
-            [class.pointer-events-none]="isReadOnly()"
-            [class.opacity-50]="isReadOnly()"
+            [class.pointer-events-none]="isReadOnly() || !canManageOrderActions()"
+            [class.opacity-50]="isReadOnly() || !canManageOrderActions()"
           >
             <app-icon
               name="icon-search"
@@ -36,8 +36,8 @@
           <!-- Category Filter Dropdown (Right-Aligned) -->
           <div
             class="dropdown dropdown-end"
-            [class.pointer-events-none]="isReadOnly()"
-            [class.opacity-50]="isReadOnly()"
+            [class.pointer-events-none]="isReadOnly() || !canManageOrderActions()"
+            [class.opacity-50]="isReadOnly() || !canManageOrderActions()"
           >
             <app-filter-dropdown
               [title]="'Category'"
@@ -72,14 +72,14 @@
                 <div
                   class="card flex h-60 flex-col overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
                   [class.cursor-pointer]="!isReadOnly()"
-                  [class.cursor-default]="isReadOnly()"
-                  [class.opacity-50]="isReadOnly()"
-                  [class.pointer-events-none]="isReadOnly()"
+                  [class.cursor-default]="isReadOnly() || !canManageOrderActions()"
+                  [class.opacity-50]="isReadOnly() || !canManageOrderActions()"
+                  [class.pointer-events-none]="isReadOnly() || !canManageOrderActions()"
                   role="button"
                   tabindex="0"
-                  (click)="!isReadOnly() && addToCart(p)"
-                  (keydown.enter)="!isReadOnly() && addToCart(p)"
-                  (keydown.space)="!isReadOnly() && addToCart(p)"
+                  (click)="!isReadOnly() && canManageOrderActions() && addToCart(p)"
+                  (keydown.enter)="!isReadOnly() && canManageOrderActions() && addToCart(p)"
+                  (keydown.space)="!isReadOnly() && canManageOrderActions() && addToCart(p)"
                 >
                   <figure class="flex h-32 shrink-0 items-center justify-center">
                     @if (p.imageUrl) {
@@ -131,7 +131,7 @@
         <button
           class="btn btn-ghost btn-sm text-error"
           (click)="clearAll()"
-          [class.hidden]="isReadOnly()"
+          [class.hidden]="isReadOnly() || !canManageOrderActions()"
         >
           Clear
         </button>
@@ -150,14 +150,16 @@
                 (selectedIdChange)="onCustomerSelected($event)"
               />
             </div>
-            <button
-              type="button"
-              class="btn btn-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-              (click)="openCreateCustomerModal()"
-              title="Create new customer"
-            >
-              + New
-            </button>
+            @if (canCreateCustomerInOrder()) {
+              <button
+                type="button"
+                class="btn btn-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                (click)="openCreateCustomerModal()"
+                title="Create new customer"
+              >
+                + New
+              </button>
+            }
           </div>
         } @else {
           <div
@@ -203,7 +205,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-1">
-                    @if (!isReadOnly()) {
+                    @if (!isReadOnly() && canManageOrderActions()) {
                       <button
                         class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
                         (click)="decrement(c.productId, $index)"
@@ -213,7 +215,7 @@
                       </button>
                     }
                     <div class="w-6 text-center text-sm font-medium">{{ c.qty }}</div>
-                    @if (!isReadOnly()) {
+                    @if (!isReadOnly() && canManageOrderActions()) {
                       <button
                         class="btn btn-circle btn-sm bg-gray-200 transition-colors hover:bg-gray-300"
                         (click)="increment(c.productId, $index)"
@@ -344,7 +346,7 @@
       <div class="flex flex-col gap-2">
         @if (isReadOnly()) {
           <div class="flex gap-2">
-            @if (isCancellable()) {
+            @if (isCancellable() && canManageOrderActions()) {
               <button
                 class="btn btn-error btn-outline flex-1 rounded-lg"
                 (click)="openCancelOrderModal()"
@@ -367,14 +369,14 @@
             }
             <button
               class="btn btn-outline pointer-events-auto flex-1 rounded-lg transition-all disabled:opacity-50"
-              [style.cursor]="cart().length === 0 ? 'not-allowed' : 'pointer'"
+              [style.cursor]="cart().length === 0 || !canManageOrderActions() ? 'not-allowed' : 'pointer'"
               (click)="onOrderSaved()"
-              [disabled]="cart().length === 0"
+              [disabled]="cart().length === 0 || !canManageOrderActions()"
             >
               Save
             </button>
           </div>
-          @if (editMode() && isCancellable()) {
+          @if (editMode() && isCancellable() && canManageOrderActions()) {
             <button
               class="btn btn-error btn-outline w-full rounded-lg"
               (click)="openCancelOrderModal()"
@@ -384,9 +386,9 @@
           }
           <button
             class="btn btn-lg pointer-events-auto w-full rounded-lg border-0 bg-[#047857] text-base font-semibold text-white shadow-lg transition-all hover:bg-[#065f46] hover:shadow-xl disabled:bg-gray-200 disabled:text-gray-400 disabled:opacity-100 disabled:shadow-none"
-            [style.cursor]="cart().length === 0 ? 'not-allowed' : 'pointer'"
+            [style.cursor]="cart().length === 0 || !canManageOrderActions() ? 'not-allowed' : 'pointer'"
             (click)="checkout()"
-            [disabled]="cart().length === 0"
+            [disabled]="cart().length === 0 || !canManageOrderActions()"
           >
             Checkout
           </button>
@@ -407,7 +409,7 @@
 </div>
 
 <!-- Create Customer Modal -->
-@if (showCreateCustomerModal()) {
+@if (showCreateCustomerModal() && canCreateCustomerInOrder()) {
   <div
     role="dialog"
     aria-modal="true"

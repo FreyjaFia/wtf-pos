@@ -1,5 +1,6 @@
 ﻿import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
+import { roleGuard } from '@core/guards/role.guard';
 import { unsavedChangesGuard } from '@core/guards/unsaved-changes.guard';
 import { Login } from '@features/login/login';
 import { CustomerDetailsComponent } from '@features/management/customers/customer-details/customer-details';
@@ -54,6 +55,8 @@ export const routes: Routes = [
       {
         path: 'management',
         component: ManagementComponent,
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'AdminViewer'] },
         children: [
           {
             path: '',
@@ -72,6 +75,8 @@ export const routes: Routes = [
                 path: 'new',
                 component: ProductEditorComponent,
                 canDeactivate: [unsavedChangesGuard],
+                canActivate: [roleGuard],
+                data: { roles: ['Admin'] },
               },
               {
                 path: 'details/:id',
@@ -81,12 +86,16 @@ export const routes: Routes = [
                 path: 'edit/:id',
                 component: ProductEditorComponent,
                 canDeactivate: [unsavedChangesGuard],
+                canActivate: [roleGuard],
+                data: { roles: ['Admin'] },
               },
             ],
           },
           {
             path: 'customers',
             component: CustomersComponent,
+            canActivate: [roleGuard],
+            data: { roles: ['Admin', 'AdminViewer'] },
             children: [
               {
                 path: '',
@@ -96,6 +105,8 @@ export const routes: Routes = [
                 path: 'new',
                 component: CustomerEditorComponent,
                 canDeactivate: [unsavedChangesGuard],
+                canActivate: [roleGuard],
+                data: { roles: ['Admin'] },
               },
               {
                 path: 'details/:id',
@@ -105,6 +116,8 @@ export const routes: Routes = [
                 path: 'edit/:id',
                 component: CustomerEditorComponent,
                 canDeactivate: [unsavedChangesGuard],
+                canActivate: [roleGuard],
+                data: { roles: ['Admin'] },
               },
             ],
           },
@@ -119,6 +132,8 @@ export const routes: Routes = [
               {
                 path: 'new',
                 component: UserEditorComponent,
+                canActivate: [roleGuard],
+                data: { roles: ['Admin'] },
               },
               {
                 path: 'details/:id',
@@ -127,6 +142,8 @@ export const routes: Routes = [
               {
                 path: 'edit/:id',
                 component: UserEditorComponent,
+                canActivate: [roleGuard],
+                data: { roles: ['Admin'] },
               },
             ],
           },
@@ -135,3 +152,4 @@ export const routes: Routes = [
     ],
   },
 ];
+

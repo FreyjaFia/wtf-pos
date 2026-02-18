@@ -15,6 +15,7 @@ export class Header implements OnInit, OnDestroy {
 
   protected imageUrl: string | null = null;
   protected userFullName = 'User';
+  protected userRoleLabel = 'Unknown';
   protected readonly isLoadingMe = signal(true);
   protected readonly now = signal(new Date());
   protected readonly isOnline = signal(typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -70,11 +71,13 @@ export class Header implements OnInit, OnDestroy {
       next: (me) => {
         this.imageUrl = me.imageUrl ?? null;
         this.userFullName = `${me.firstName ?? ''} ${me.lastName ?? ''}`.trim() || 'User';
+        this.userRoleLabel = this.authService.getCurrentRoleLabel();
         this.isLoadingMe.set(false);
       },
       error: () => {
         this.imageUrl = null;
         this.userFullName = 'User';
+        this.userRoleLabel = this.authService.getCurrentRoleLabel();
         this.isLoadingMe.set(false);
       },
     });

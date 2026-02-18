@@ -1,5 +1,6 @@
 ﻿import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '@core/services';
 import { Icon } from '@shared/components';
 
 @Component({
@@ -10,8 +11,14 @@ import { Icon } from '@shared/components';
 })
 export class ManagementComponent {
   private readonly router = inject(Router);
+  protected readonly authService = inject(AuthService);
 
   isActive(route: string): boolean {
     return this.router.url.includes(route);
   }
+
+  canReadCustomers(): boolean {
+    return this.authService.canReadCustomers();
+  }
 }
+

@@ -10,9 +10,11 @@
       <span class="dock-label">Orders</span>
     </a>
 
-    <a [routerLink]="['management']" [routerLinkActive]="'dock-active'">
-      <app-icon name="icon-management" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
-      <span class="dock-label">Management</span>
-    </a>
+    @if (auth.canAccessManagement()) {
+      <a [routerLink]="['management']" [routerLinkActive]="'dock-active'">
+        <app-icon name="icon-management" [class]="'size-[1.2em]'" [fill]="'#000000'"></app-icon>
+        <span class="dock-label">Management</span>
+      </a>
+    }
   </div>
 }
