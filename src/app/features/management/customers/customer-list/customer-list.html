@@ -61,13 +61,15 @@
       </button>
 
       <!-- Add Customer Button -->
-      <button
-        class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-        (click)="navigateToEditor()"
-      >
-        <app-icon name="icon-plus" [class]="'h-4 w-4'" />
-        Add Customer
-      </button>
+      @if (canWriteCustomers()) {
+        <button
+          class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
+          (click)="navigateToEditor()"
+        >
+          <app-icon name="icon-plus" [class]="'h-4 w-4'" />
+          Add Customer
+        </button>
+      }
     </div>
   </div>
 
@@ -201,49 +203,51 @@
                   (keydown)="$event.stopPropagation()"
                   role="presentation"
                 >
-                  <div class="dropdown dropdown-end">
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
-                      tabindex="0"
-                      aria-label="Customer actions"
-                    >
-                      <app-icon
-                        name="icon-ellipsis-vertical"
-                        [class]="'h-5 w-5 text-gray-600'"
-                        [fill]="'currentColor'"
-                      />
-                    </button>
-                    <ul
-                      tabindex="0"
-                      class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
-                    >
-                      <li>
-                        <button
-                          type="button"
-                          (click)="navigateToEditor(customer.id); $event.stopPropagation()"
-                          (keydown.enter)="navigateToEditor(customer.id); $event.stopPropagation()"
-                          (keydown.space)="navigateToEditor(customer.id); $event.stopPropagation()"
-                          class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-                        >
-                          <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
-                          Edit
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          type="button"
-                          (click)="deleteCustomer(customer); $event.stopPropagation()"
-                          (keydown.enter)="deleteCustomer(customer); $event.stopPropagation()"
-                          (keydown.space)="deleteCustomer(customer); $event.stopPropagation()"
-                          class="flex items-center gap-2 text-red-600 hover:bg-red-50"
-                        >
-                          <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />
+                  @if (canWriteCustomers()) {
+                    <div class="dropdown dropdown-end">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
+                        tabindex="0"
+                        aria-label="Customer actions"
+                      >
+                        <app-icon
+                          name="icon-ellipsis-vertical"
+                          [class]="'h-5 w-5 text-gray-600'"
+                          [fill]="'currentColor'"
+                        />
+                      </button>
+                      <ul
+                        tabindex="0"
+                        class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
+                      >
+                        <li>
+                          <button
+                            type="button"
+                            (click)="navigateToEditor(customer.id); $event.stopPropagation()"
+                            (keydown.enter)="navigateToEditor(customer.id); $event.stopPropagation()"
+                            (keydown.space)="navigateToEditor(customer.id); $event.stopPropagation()"
+                            class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+                          >
+                            <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
+                            Edit
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            (click)="deleteCustomer(customer); $event.stopPropagation()"
+                            (keydown.enter)="deleteCustomer(customer); $event.stopPropagation()"
+                            (keydown.space)="deleteCustomer(customer); $event.stopPropagation()"
+                            class="flex items-center gap-2 text-red-600 hover:bg-red-50"
+                          >
+                            <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />
                           Delete
                         </button>
                       </li>
-                    </ul>
-                  </div>
+                      </ul>
+                    </div>
+                  }
                 </div>
               </div>
             }

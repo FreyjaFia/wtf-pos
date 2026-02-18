@@ -73,14 +73,12 @@ export class CustomerEditorComponent implements OnInit {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        this.alertService.error(
-          'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
-        );
+        this.alertService.errorInvalidImageType();
         return;
       }
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.alertService.error('File size exceeds 5MB limit.');
+        this.alertService.errorFileTooLarge();
         return;
       }
       this.selectedFile.set(file);
@@ -134,14 +132,12 @@ export class CustomerEditorComponent implements OnInit {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      this.alertService.error(
-        'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
-      );
+      this.alertService.errorInvalidImageType();
       return;
     }
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      this.alertService.error('File size exceeds 5MB limit.');
+      this.alertService.errorFileTooLarge();
       return;
     }
     this.selectedFile.set(file);
@@ -168,10 +164,10 @@ export class CustomerEditorComponent implements OnInit {
         this.isUploading.set(false);
         this.selectedFile.set(null);
         this.imagePreview.set(null);
-        this.alertService.success('Image uploaded successfully');
+        this.alertService.successUploaded();
       },
       error: (err) => {
-        this.alertService.error(err.message || 'Failed to upload image');
+        this.alertService.error(err.message || this.alertService.getUploadErrorMessage('image'));
         this.isUploading.set(false);
       },
     });
@@ -277,10 +273,10 @@ export class CustomerEditorComponent implements OnInit {
         this.isSaving.set(false);
         this.skipGuard = true;
         this.navigateToDetails(id);
-        this.alertService.success('Image uploaded successfully');
+        this.alertService.successUploaded();
       },
       error: (err) => {
-        this.alertService.error(err.message || 'Failed to upload image');
+        this.alertService.error(err.message || this.alertService.getUploadErrorMessage('image'));
         this.isUploading.set(false);
         this.isSaving.set(false);
       },
@@ -363,3 +359,4 @@ export class CustomerEditorComponent implements OnInit {
     return !!control && control.invalid && control.touched;
   }
 }
+

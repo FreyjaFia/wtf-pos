@@ -1,7 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService, CustomerService } from '@core/services';
+import { AlertService, AuthService, CustomerService } from '@core/services';
 import { AvatarComponent, BadgeComponent, Icon } from '@shared/components';
 import { CustomerDto } from '@shared/models';
 
@@ -15,6 +15,7 @@ import { CustomerDto } from '@shared/models';
 })
 export class CustomerDetailsComponent implements OnInit {
   private readonly customerService = inject(CustomerService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly alertService = inject(AlertService);
@@ -31,7 +32,7 @@ export class CustomerDetailsComponent implements OnInit {
     }
 
     if (this.route.snapshot.queryParamMap.get('saved')) {
-      this.alertService.success('Customer saved successfully.');
+      this.alertService.successSaved('Customer');
     }
   }
 
@@ -55,12 +56,18 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   protected navigateToEdit() {
+    if (!this.canWriteCustomers()) {
+      return;
+    }
     if (this.customer()) {
       this.router.navigate(['/management/customers/edit', this.customer()!.id]);
     }
   }
 
   protected deleteCustomer() {
+    if (!this.canWriteCustomers()) {
+      return;
+    }
     if (!this.customer()) {
       return;
     }
@@ -73,6 +80,9 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   protected confirmDelete() {
+    if (!this.canWriteCustomers()) {
+      return;
+    }
     if (!this.customer()) {
       return;
     }
@@ -85,8 +95,14 @@ export class CustomerDetailsComponent implements OnInit {
         this.router.navigateByUrl('/management/customers');
       },
       error: (err) => {
-        this.alertService.error(err.message || 'Failed to delete customer');
+        this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('customer'));
       },
     });
   }
+
+  protected canWriteCustomers(): boolean {
+    return this.authService.canWriteCustomers();
+  }
 }
+
+

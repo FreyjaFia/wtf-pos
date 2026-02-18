@@ -2,7 +2,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertService, CustomerService } from '@core/services';
+import { AlertService, AuthService, CustomerService } from '@core/services';
 import {
   AvatarComponent,
   BadgeComponent,
@@ -31,6 +31,7 @@ type SortDirection = 'asc' | 'desc';
 })
 export class CustomerListComponent implements OnInit {
   private readonly customerService = inject(CustomerService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
 
@@ -145,6 +146,10 @@ export class CustomerListComponent implements OnInit {
   }
 
   protected navigateToEditor(customerId?: string) {
+    if (!this.canWriteCustomers()) {
+      return;
+    }
+
     if (customerId) {
       this.router.navigate(['/management/customers/edit', customerId]);
     } else {
@@ -157,6 +162,9 @@ export class CustomerListComponent implements OnInit {
   }
 
   protected deleteCustomer(customer: CustomerDto) {
+    if (!this.canWriteCustomers()) {
+      return;
+    }
     this.customerToDelete.set(customer);
     this.showDeleteModal.set(true);
   }
@@ -203,5 +211,9 @@ export class CustomerListComponent implements OnInit {
   protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+  }
+
+  protected canWriteCustomers(): boolean {
+    return this.authService.canWriteCustomers();
   }
 }
