@@ -8,7 +8,6 @@ import {
   ProductAddOnAssignmentDto,
   ProductCategoryEnum,
   ProductDto,
-  ProductSimpleDto,
   UpdateProductDto,
 } from '@shared/models';
 import { Observable, throwError } from 'rxjs';

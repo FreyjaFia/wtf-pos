@@ -1,8 +1,8 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '@environments/environment.development';
-import { LoginDto } from '@shared/models';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { LoginDto, MeDto } from '@shared/models';
+import { BehaviorSubject, Observable, Subject, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -10,7 +10,9 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
   private _isLoggedIn = new BehaviorSubject<boolean>(!!localStorage.getItem('token'));
+  private readonly meRefreshSubject = new Subject<void>();
   readonly isLoggedIn$ = this._isLoggedIn.asObservable();
+  readonly meRefresh$ = this.meRefreshSubject.asObservable();
 
   login(username: string, password: string): Observable<boolean> {
     if (!username || !password) {
@@ -58,6 +60,27 @@ export class AuthService {
         return throwError(() => new Error(errorMessage));
       }),
     );
+  }
+
+  getMe(): Observable<MeDto> {
+    return this.http.get<MeDto>(`${this.baseUrl}/me`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Get me error:', error);
+
+        const errorMessage =
+          error.status === 401
+            ? 'Unauthorized.'
+            : error.status === 0
+              ? 'Unable to connect to server. Please check your connection.'
+              : 'Failed to fetch user profile.';
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
+  notifyMeUpdated(): void {
+    this.meRefreshSubject.next();
   }
 
   logout() {
