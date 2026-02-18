@@ -281,6 +281,9 @@ export class UserEditorComponent implements OnInit {
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
+            if (this.isProfileMode()) {
+              this.authService.notifyMeUpdated();
+            }
             this.goBack();
           }
         },
@@ -335,6 +338,9 @@ export class UserEditorComponent implements OnInit {
         this.imagePreview.set(null);
         this.isSaving.set(false);
         this.skipGuard = true;
+        if (this.isProfileMode()) {
+          this.authService.notifyMeUpdated();
+        }
         this.goBack();
         this.alertService.success('Image uploaded successfully');
       },
