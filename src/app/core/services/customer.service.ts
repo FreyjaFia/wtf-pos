@@ -29,7 +29,9 @@ export class CustomerService {
         console.error('Error fetching customers:', error);
 
         const errorMessage =
-          error.status === 0
+          error.status === 403
+            ? 'Not authorized.'
+            : error.status === 0
             ? 'Unable to connect to server. Please check your connection.'
             : 'Failed to fetch customers. Please try again later.';
 
@@ -46,6 +48,8 @@ export class CustomerService {
         const errorMessage =
           error.status === 404
             ? 'Customer not found.'
+            : error.status === 403
+              ? 'Not authorized.'
             : error.status === 0
               ? 'Unable to connect to server. Please check your connection.'
               : 'Failed to fetch customer. Please try again later.';
@@ -61,7 +65,9 @@ export class CustomerService {
         console.error('Error creating customer:', error);
 
         const errorMessage =
-          error.status === 0
+          error.status === 403
+            ? 'Not authorized.'
+            : error.status === 0
             ? 'Unable to connect to server. Please check your connection.'
             : 'Failed to create customer. Please try again later.';
 
@@ -78,6 +84,8 @@ export class CustomerService {
         const errorMessage =
           error.status === 404
             ? 'Customer not found.'
+            : error.status === 403
+              ? 'Not authorized.'
             : error.status === 0
               ? 'Unable to connect to server. Please check your connection.'
               : 'Failed to update customer. Please try again later.';
@@ -95,6 +103,8 @@ export class CustomerService {
         const errorMessage =
           error.status === 404
             ? 'Customer not found.'
+            : error.status === 403
+              ? 'Not authorized.'
             : error.status === 0
               ? 'Unable to connect to server. Please check your connection.'
               : 'Failed to delete customer. Please try again later.';
@@ -114,7 +124,9 @@ export class CustomerService {
       catchError((error: HttpErrorResponse) => {
         console.error('Error uploading customer image:', error);
         const errorMessage =
-          error.status === 0
+          error.status === 403
+            ? 'Not authorized.'
+            : error.status === 0
             ? 'Unable to connect to server. Please check your connection.'
             : 'Failed to upload image. Please try again later.';
         return throwError(() => new Error(errorMessage));
