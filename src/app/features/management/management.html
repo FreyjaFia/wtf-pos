@@ -1,0 +1,46 @@
+﻿<div class="flex h-full w-full rounded-t-2xl bg-white">
+  <!-- Sidebar Navigation -->
+  <div class="flex w-64 shrink-0 flex-col overflow-y-auto border-r border-gray-200 bg-white">
+    <h2 class="mb-8 text-2xl font-bold text-gray-900">Management</h2>
+    <nav class="space-y-2">
+      <a
+        routerLink="products"
+        routerLinkActive="bg-green-50"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="mr-4 flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition-all hover:bg-gray-50"
+        [class.text-[#047857]]="isActive('products')"
+        [class.bg-green-50]="isActive('products')"
+      >
+        <app-icon name="icon-cart" [class]="'h-5 w-5'"></app-icon>
+        <span class="font-medium">Products</span>
+      </a>
+      <a
+        routerLink="customers"
+        routerLinkActive="bg-green-50"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="mr-4 flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition-all hover:bg-gray-50"
+        [class.text-[#047857]]="isActive('customers')"
+        [class.bg-green-50]="isActive('customers')"
+      >
+        <app-icon name="icon-people" [class]="'h-5 w-5'"></app-icon>
+        <span class="font-medium">Customers</span>
+      </a>
+      <a
+        routerLink="users"
+        routerLinkActive="bg-green-50"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="mr-4 flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition-all hover:bg-gray-50"
+        [class.text-[#047857]]="isActive('users')"
+        [class.bg-green-50]="isActive('users')"
+      >
+        <app-icon name="icon-user" [class]="'h-5 w-5'"></app-icon>
+        <span class="font-medium">Users</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Content Area -->
+  <div class="flex h-full min-h-0 flex-1 flex-col">
+    <router-outlet />
+  </div>
+</div>
