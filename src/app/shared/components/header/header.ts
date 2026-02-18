@@ -2,7 +2,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { AuthService } from '@core/services';
-import { jwtDecode } from 'jwt-decode';
 import { AvatarComponent } from '../avatar/avatar';
 
 @Component({
@@ -11,35 +10,19 @@ import { AvatarComponent } from '../avatar/avatar';
   templateUrl: './header.html',
 })
 export class Header implements OnInit, OnDestroy {
-  protected readonly auth = inject(AuthService);
+  protected readonly authService = inject(AuthService);
   protected readonly router = inject(Router);
 
-  protected readonly imageUrl: string | null;
-  protected readonly userFullName: string;
+  protected imageUrl: string | null = null;
+  protected userFullName = 'User';
+  protected readonly isLoadingMe = signal(true);
   protected readonly now = signal(new Date());
   protected readonly isOnline = signal(typeof navigator !== 'undefined' ? navigator.onLine : true);
   private clockIntervalId: ReturnType<typeof setInterval> | null = null;
   private routeSubscription?: { unsubscribe: () => void };
+  private meRefreshSubscription?: { unsubscribe: () => void };
   private readonly onOnline = () => this.isOnline.set(true);
   private readonly onOffline = () => this.isOnline.set(false);
-
-  constructor() {
-    const token = this.auth.getToken();
-    let decoded: Record<string, unknown> | null = null;
-    if (token) {
-      try {
-        decoded = jwtDecode(token);
-      } catch {
-        decoded = null;
-      }
-    }
-    this.imageUrl = (decoded?.['image_url'] as string) || null;
-
-    const givenName = (decoded?.['given_name'] as string) || '';
-    const surname = (decoded?.['family_name'] as string) || '';
-
-    this.userFullName = (givenName + ' ' + surname).trim() || 'User';
-  }
 
   ngOnInit() {
     this.clockIntervalId = setInterval(() => {
@@ -52,6 +35,11 @@ export class Header implements OnInit, OnDestroy {
         this.closeDropdownFocus();
       }
     });
+    this.meRefreshSubscription = this.authService.meRefresh$.subscribe(() => {
+      this.loadMe();
+    });
+
+    this.loadMe();
   }
 
   ngOnDestroy() {
@@ -62,6 +50,7 @@ export class Header implements OnInit, OnDestroy {
     window.removeEventListener('online', this.onOnline);
     window.removeEventListener('offline', this.onOffline);
     this.routeSubscription?.unsubscribe();
+    this.meRefreshSubscription?.unsubscribe();
   }
 
   protected goToMyProfile(event?: Event) {
@@ -71,8 +60,24 @@ export class Header implements OnInit, OnDestroy {
   }
 
   logout() {
-    this.auth.logout();
+    this.authService.logout();
     this.router.navigateByUrl('/login');
+  }
+
+  private loadMe() {
+    this.isLoadingMe.set(true);
+    this.authService.getMe().subscribe({
+      next: (me) => {
+        this.imageUrl = me.imageUrl ?? null;
+        this.userFullName = `${me.firstName ?? ''} ${me.lastName ?? ''}`.trim() || 'User';
+        this.isLoadingMe.set(false);
+      },
+      error: () => {
+        this.imageUrl = null;
+        this.userFullName = 'User';
+        this.isLoadingMe.set(false);
+      },
+    });
   }
 
   private closeDropdownFocus() {
