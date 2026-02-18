@@ -2,7 +2,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertService, UserService } from '@core/services';
+import { AlertService, AuthService, UserService } from '@core/services';
 import {
   AvatarComponent,
   BadgeComponent,
@@ -10,10 +10,10 @@ import {
   Icon,
   type FilterOption,
 } from '@shared/components';
-import { UserDto } from '@shared/models';
+import { UserDto, UserRoleEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
-type SortColumn = 'name' | 'username';
+type SortColumn = 'name' | 'role';
 type SortDirection = 'asc' | 'desc';
 
 @Component({
@@ -34,12 +34,14 @@ export class UserListComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
 
   protected readonly users = signal<UserDto[]>([]);
   protected readonly usersCache = signal<UserDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isRefreshing = signal(false);
 
+  protected readonly selectedRoles = signal<number[]>([]);
   protected readonly selectedStatuses = signal<string[]>(['active']);
 
   protected readonly filterForm = new FormGroup({
@@ -59,6 +61,29 @@ export class UserListComponent implements OnInit {
     };
   });
 
+  protected readonly roleCounts = computed(() => {
+    const cache = this.usersCache();
+    return {
+      [UserRoleEnum.Admin]: cache.filter((u) => u.roleId === UserRoleEnum.Admin).length,
+      [UserRoleEnum.Cashier]: cache.filter((u) => u.roleId === UserRoleEnum.Cashier).length,
+      [UserRoleEnum.AdminViewer]: cache.filter((u) => u.roleId === UserRoleEnum.AdminViewer).length,
+    };
+  });
+
+  protected readonly roleOptions = computed<FilterOption[]>(() => [
+    { id: UserRoleEnum.Admin, label: 'Admin', count: this.roleCounts()[UserRoleEnum.Admin] },
+    {
+      id: UserRoleEnum.Cashier,
+      label: 'Cashier',
+      count: this.roleCounts()[UserRoleEnum.Cashier],
+    },
+    {
+      id: UserRoleEnum.AdminViewer,
+      label: 'Admin Viewer',
+      count: this.roleCounts()[UserRoleEnum.AdminViewer],
+    },
+  ]);
+
   protected readonly statusOptions = computed<FilterOption[]>(() => [
     { id: 'active', label: 'Active', count: this.statusCounts().active },
     { id: 'inactive', label: 'Inactive', count: this.statusCounts().inactive },
@@ -74,9 +99,9 @@ export class UserListComponent implements OnInit {
         const comparison = nameA.localeCompare(nameB);
         return this.sortDirection() === 'asc' ? comparison : -comparison;
       });
-    } else if (this.sortColumn() === 'username') {
+    } else if (this.sortColumn() === 'role') {
       users.sort((a, b) => {
-        const comparison = (a.username || '').localeCompare(b.username || '');
+        const comparison = this.getRoleLabel(a).localeCompare(this.getRoleLabel(b));
         return this.sortDirection() === 'asc' ? comparison : -comparison;
       });
     }
@@ -125,9 +150,13 @@ export class UserListComponent implements OnInit {
         (u) =>
           u.firstName.toLowerCase().includes(lowerSearch) ||
           u.lastName.toLowerCase().includes(lowerSearch) ||
-          `${u.firstName} ${u.lastName}`.toLowerCase().includes(lowerSearch) ||
-          u.username.toLowerCase().includes(lowerSearch),
+          `${u.firstName} ${u.lastName}`.toLowerCase().includes(lowerSearch),
       );
+    }
+
+    const selectedRoles = this.selectedRoles();
+    if (selectedRoles.length > 0) {
+      items = items.filter((u) => selectedRoles.includes(u.roleId));
     }
 
     const selectedStatuses = this.selectedStatuses();
@@ -147,6 +176,11 @@ export class UserListComponent implements OnInit {
   }
 
   protected navigateToEditor(userId?: string) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (userId) {
       this.router.navigate(['/management/users/edit', userId]);
     } else {
@@ -159,6 +193,11 @@ export class UserListComponent implements OnInit {
   }
 
   protected deleteUser(user: UserDto) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     this.userToDelete.set(user);
     this.showDeleteModal.set(true);
   }
@@ -169,6 +208,11 @@ export class UserListComponent implements OnInit {
   }
 
   protected confirmDelete() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     const user = this.userToDelete();
 
     if (!user) {
@@ -202,8 +246,26 @@ export class UserListComponent implements OnInit {
     this.applyFiltersToCache();
   }
 
+  protected onRoleFilterChange(selectedIds: (string | number)[]) {
+    this.selectedRoles.set(selectedIds as number[]);
+    this.applyFiltersToCache();
+  }
+
+  protected onRoleFilterReset() {
+    this.selectedRoles.set([]);
+    this.applyFiltersToCache();
+  }
+
   protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+  }
+
+  protected getRoleLabel(user: UserDto): string {
+    return UserRoleEnum[user.roleId] ?? 'Unknown';
+  }
+
+  protected canWriteManagement(): boolean {
+    return this.authService.canWriteManagement();
   }
 }

@@ -11,8 +11,9 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AuthService, UserService } from '@app/core/services';
 import { AvatarComponent, Icon } from '@app/shared/components';
-import { CreateUserDto, UpdateUserDto } from '@app/shared/models';
+import { CreateUserDto, UpdateUserDto, UserRoleEnum } from '@app/shared/models';
 import { jwtDecode } from 'jwt-decode';
+import { of, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-user-editor',
@@ -38,6 +39,12 @@ export class UserEditorComponent implements OnInit {
   protected readonly isSaving = signal(false);
   protected readonly showPassword = signal(false);
   protected readonly showConfirmPassword = signal(false);
+  protected currentUserRoleLabel = 'Unknown';
+  protected readonly userRoleOptions = [
+    { label: 'Admin', value: UserRoleEnum.Admin },
+    { label: 'Cashier', value: UserRoleEnum.Cashier },
+    { label: 'Admin Viewer', value: UserRoleEnum.AdminViewer },
+  ];
 
   // Image upload signals
   protected readonly isUploading = signal(false);
@@ -61,6 +68,7 @@ export class UserEditorComponent implements OnInit {
         nonNullable: true,
         validators: [Validators.required, Validators.maxLength(100)],
       }),
+      roleId: new FormControl<UserRoleEnum | null>(null),
       password: new FormControl('', {
         nonNullable: false,
         validators: [Validators.maxLength(100)],
@@ -98,7 +106,9 @@ export class UserEditorComponent implements OnInit {
 
       this.isEditMode.set(true);
       this.userId = currentUserId;
+      this.currentUserRoleLabel = this.authService.getCurrentRoleLabel();
       this.applyPasswordValidators();
+      this.applyRoleValidators();
       this.loadUser(currentUserId);
       return;
     }
@@ -109,9 +119,11 @@ export class UserEditorComponent implements OnInit {
       this.isEditMode.set(true);
       this.userId = id;
       this.applyPasswordValidators();
+      this.applyRoleValidators();
       this.loadUser(id);
     } else {
       this.applyPasswordValidators();
+      this.applyRoleValidators();
     }
   }
 
@@ -125,14 +137,12 @@ export class UserEditorComponent implements OnInit {
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        this.alertService.error(
-          'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
-        );
+        this.alertService.errorInvalidImageType();
         return;
       }
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        this.alertService.error('File size exceeds 5MB limit.');
+        this.alertService.errorFileTooLarge();
         return;
       }
       this.selectedFile.set(file);
@@ -186,14 +196,12 @@ export class UserEditorComponent implements OnInit {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      this.alertService.error(
-        'Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.',
-      );
+      this.alertService.errorInvalidImageType();
       return;
     }
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      this.alertService.error('File size exceeds 5MB limit.');
+      this.alertService.errorFileTooLarge();
       return;
     }
     this.selectedFile.set(file);
@@ -220,7 +228,7 @@ export class UserEditorComponent implements OnInit {
         this.isUploading.set(false);
         this.selectedFile.set(null);
         this.imagePreview.set(null);
-        this.alertService.success('Image uploaded successfully');
+        this.alertService.successUploaded();
       },
       error: (err) => {
         this.alertService.error(err.message);
@@ -241,6 +249,7 @@ export class UserEditorComponent implements OnInit {
           firstName: user.firstName,
           lastName: user.lastName,
           username: user.username,
+          roleId: UserRoleEnum[user.roleId] !== undefined ? user.roleId : null,
         });
         // Set current image URL for preview, matching product-editor behavior
         this.currentImageUrl.set(user.imageUrl || null);
@@ -257,6 +266,11 @@ export class UserEditorComponent implements OnInit {
    * Handles user form submission for create/update
    */
   protected saveUser(): void {
+    if (this.isProfileMode()) {
+      this.saveProfile();
+      return;
+    }
+
     if (this.userForm.invalid) {
       this.userForm.markAllAsTouched();
       return;
@@ -271,19 +285,18 @@ export class UserEditorComponent implements OnInit {
         lastName: this.userForm.controls.lastName.value!,
         username: this.userForm.controls.username.value!,
         password: this.userForm.controls.password.value || undefined,
+        roleId: this.userForm.controls.roleId.value!,
       };
 
       this.userService.updateUser(dto).subscribe({
         next: () => {
           // If there's a file selected, upload it after updating the user
-          if (this.isProfileMode() && this.selectedFile()) {
+          if (this.selectedFile()) {
             this.uploadImageAndNavigate();
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
-            if (this.isProfileMode()) {
-              this.authService.notifyMeUpdated();
-            }
+            this.alertService.successUpdated('User');
             this.goBack();
           }
         },
@@ -298,16 +311,18 @@ export class UserEditorComponent implements OnInit {
         lastName: this.userForm.controls.lastName.value!,
         username: this.userForm.controls.username.value!,
         password: this.userForm.controls.password.value!,
+        roleId: this.userForm.controls.roleId.value!,
       };
 
       this.userService.createUser(dto).subscribe({
         next: (createdUser) => {
           // If there's a file selected, upload it after creating the user
-          if (this.isProfileMode() && this.selectedFile()) {
+          if (this.selectedFile()) {
             this.uploadImageAndNavigate(createdUser.id);
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
+            this.alertService.successCreated('User');
             this.goBack();
           }
         },
@@ -319,10 +334,74 @@ export class UserEditorComponent implements OnInit {
     }
   }
 
+  private saveProfile(): void {
+    if (this.userForm.invalid) {
+      this.userForm.markAllAsTouched();
+      return;
+    }
+
+    const password = (this.userForm.controls.password.value || '').trim();
+    const hasPasswordUpdate = password.length > 0;
+    const hasImageUpdate = !!this.selectedFile();
+
+    if (!hasPasswordUpdate && !hasImageUpdate) {
+      this.alertService.errorNothingToUpdate();
+      return;
+    }
+
+    this.isSaving.set(true);
+
+    const updatePassword$ = hasPasswordUpdate ? this.authService.updateMe(password) : of(void 0);
+
+    updatePassword$
+      .pipe(
+        switchMap(() => {
+          const file = this.selectedFile();
+          if (!file) {
+            return of(null);
+          }
+
+          this.isUploading.set(true);
+          return this.authService.uploadMeImage(file);
+        }),
+      )
+      .subscribe({
+        next: (updated) => {
+          if (updated?.imageUrl) {
+            this.currentImageUrl.set(updated.imageUrl);
+          }
+
+          this.isUploading.set(false);
+          this.isSaving.set(false);
+          this.selectedFile.set(null);
+          this.imagePreview.set(null);
+          this.userForm.controls.password.setValue(null);
+          this.userForm.controls.confirmPassword.setValue(null);
+          this.userForm.markAsPristine();
+          this.skipGuard = true;
+          this.authService.notifyMeUpdated();
+          this.alertService.successUpdated('Profile');
+          this.goBack();
+        },
+        error: (err) => {
+          this.alertService.error(
+            err.message || this.alertService.getUpdateErrorMessage('profile'),
+          );
+          this.isUploading.set(false);
+          this.isSaving.set(false);
+        },
+      });
+  }
+
   /**
    * Upload image and navigate to details after upload
    */
   protected uploadImageAndNavigate(userId?: string): void {
+    if (this.isProfileMode()) {
+      this.isSaving.set(false);
+      return;
+    }
+
     const file = this.selectedFile();
     const id = userId || this.userId;
     if (!file || !id) {
@@ -342,10 +421,14 @@ export class UserEditorComponent implements OnInit {
           this.authService.notifyMeUpdated();
         }
         this.goBack();
-        this.alertService.success('Image uploaded successfully');
+        if (this.isEditMode()) {
+          this.alertService.successUpdated('User');
+        } else {
+          this.alertService.successCreated('User');
+        }
       },
       error: (err) => {
-        this.alertService.error(err.message || 'Failed to upload image');
+        this.alertService.error(err.message || this.alertService.getUploadErrorMessage('image'));
         this.isUploading.set(false);
         this.isSaving.set(false);
       },
@@ -487,6 +570,21 @@ export class UserEditorComponent implements OnInit {
 
     passwordCtrl.updateValueAndValidity({ emitEvent: false });
     confirmCtrl.updateValueAndValidity({ emitEvent: false });
+    this.userForm.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private applyRoleValidators(): void {
+    const roleCtrl = this.userForm.controls.roleId;
+
+    if (this.isProfileMode()) {
+      roleCtrl.clearValidators();
+      roleCtrl.disable({ emitEvent: false });
+    } else {
+      roleCtrl.setValidators([Validators.required]);
+      roleCtrl.enable({ emitEvent: false });
+    }
+
+    roleCtrl.updateValueAndValidity({ emitEvent: false });
     this.userForm.updateValueAndValidity({ emitEvent: false });
   }
 

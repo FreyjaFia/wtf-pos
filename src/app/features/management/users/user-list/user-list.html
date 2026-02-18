@@ -18,10 +18,22 @@
         <input
           type="search"
           class="grow bg-transparent text-sm placeholder-gray-500 focus:caret-[#047857] focus:outline-none"
-          placeholder="Search by name or username"
+          placeholder="Search by name"
           [formControl]="filterForm.controls.searchTerm"
         />
       </label>
+
+      <!-- Role Filter Dropdown -->
+      <div class="dropdown dropdown-end">
+        <app-filter-dropdown
+          [title]="'Role'"
+          [icon]="'icon-user'"
+          [options]="roleOptions()"
+          [selectedIds]="selectedRoles()"
+          (filterChange)="onRoleFilterChange($event)"
+          (filterReset)="onRoleFilterReset()"
+        />
+      </div>
 
       <!-- Status Filter Dropdown -->
       <div class="dropdown dropdown-end">
@@ -61,13 +73,15 @@
       </button>
 
       <!-- Add User Button -->
-      <button
-        class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-        (click)="navigateToEditor()"
-      >
-        <app-icon name="icon-plus" [class]="'h-4 w-4'" />
-        Add User
-      </button>
+      @if (canWriteManagement()) {
+        <button
+          class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
+          (click)="navigateToEditor()"
+        >
+          <app-icon name="icon-plus" [class]="'h-4 w-4'" />
+          Add User
+        </button>
+      }
     </div>
   </div>
 
@@ -123,21 +137,21 @@
 
             <button
               class="col-span-5 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
-              [class.text-gray-600]="sortColumn() !== 'username'"
-              [class.hover:text-gray-900]="sortColumn() !== 'username'"
-              [class.text-[#047857]]="sortColumn() === 'username'"
+              [class.text-gray-600]="sortColumn() !== 'role'"
+              [class.hover:text-gray-900]="sortColumn() !== 'role'"
+              [class.text-[#047857]]="sortColumn() === 'role'"
               role="button"
               tabindex="0"
-              (click)="toggleSort('username')"
-              (keydown.enter)="toggleSort('username')"
-              (keydown.space)="toggleSort('username')"
-              aria-label="Sort by username"
+              (click)="toggleSort('role')"
+              (keydown.enter)="toggleSort('role')"
+              (keydown.space)="toggleSort('role')"
+              aria-label="Sort by role"
             >
-              Username
+              Role
               <span
                 class="text-xs transition-opacity"
-                [class.opacity-0]="sortColumn() !== 'username'"
-                [class.opacity-100]="sortColumn() === 'username'"
+                [class.opacity-0]="sortColumn() !== 'role'"
+                [class.opacity-100]="sortColumn() === 'role'"
               >
                 {{ sortDirection() === 'asc' ? '↑' : '↓' }}
               </span>
@@ -192,10 +206,10 @@
                   }
                 </div>
 
-                <!-- Username -->
+                <!-- Role -->
                 <div class="col-span-5">
                   <div class="truncate text-sm text-gray-700">
-                    {{ user.username }}
+                    {{ getRoleLabel(user) }}
                   </div>
                 </div>
 
@@ -206,7 +220,8 @@
                   (keydown)="$event.stopPropagation()"
                   role="presentation"
                 >
-                  <div class="dropdown dropdown-end">
+                  @if (canWriteManagement()) {
+                    <div class="dropdown dropdown-end">
                     <button
                       type="button"
                       class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
@@ -248,7 +263,8 @@
                         </button>
                       </li>
                     </ul>
-                  </div>
+                    </div>
+                  }
                 </div>
               </div>
             }
@@ -260,7 +276,7 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-@if (showDeleteModal() && userToDelete()) {
+@if (showDeleteModal() && userToDelete() && canWriteManagement()) {
   <div
     role="dialog"
     aria-modal="true"

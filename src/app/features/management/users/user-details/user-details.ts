@@ -1,9 +1,9 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService, UserService } from '@app/core/services';
+import { AlertService, AuthService, UserService } from '@app/core/services';
 import { AvatarComponent, BadgeComponent, Icon } from '@app/shared/components';
-import { UserDto } from '@app/shared/models';
+import { UserDto, UserRoleEnum } from '@app/shared/models';
 
 @Component({
   selector: 'app-user-details',
@@ -19,6 +19,7 @@ export class UserDetailsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
 
   protected readonly user = signal<UserDto | null>(null);
   protected readonly isLoading = signal(false);
@@ -34,7 +35,7 @@ export class UserDetailsComponent implements OnInit {
     }
 
     if (this.route.snapshot.queryParamMap.get('saved')) {
-      this.alertService.success('User saved successfully.');
+      this.alertService.successSaved('User');
     }
   }
 
@@ -59,12 +60,22 @@ export class UserDetailsComponent implements OnInit {
   }
 
   protected navigateToEdit() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (this.user()) {
       this.router.navigate(['/management/users/edit', this.user()!.id]);
     }
   }
 
   protected deleteUser() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (!this.user()) {
       return;
     }
@@ -77,6 +88,11 @@ export class UserDetailsComponent implements OnInit {
   }
 
   protected confirmDelete() {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
+      return;
+    }
+
     if (!this.user()) {
       return;
     }
@@ -85,7 +101,7 @@ export class UserDetailsComponent implements OnInit {
 
     this.userService.deleteUser(userId).subscribe({
       next: () => {
-        this.alertService.success('User deleted successfully');
+        this.alertService.successDeleted('User');
         this.goBack();
       },
       error: (err) => {
@@ -94,5 +110,13 @@ export class UserDetailsComponent implements OnInit {
     });
 
     this.showDeleteModal.set(false);
+  }
+
+  protected canWriteManagement(): boolean {
+    return this.authService.canWriteManagement();
+  }
+
+  protected getRoleLabel(user: UserDto): string {
+    return UserRoleEnum[user.roleId] ?? 'Unknown';
   }
 }

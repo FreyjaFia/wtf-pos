@@ -170,6 +170,47 @@
                   }
                 </div>
 
+                @if (!isProfileMode()) {
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-gray-900" for="roleId">
+                      Role <span class="text-error">*</span>
+                    </label>
+                    <select
+                      id="roleId"
+                      formControlName="roleId"
+                      class="select w-full border-transparent bg-gray-50 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
+                      [class.select-error]="hasError('roleId')"
+                    >
+                      <option [ngValue]="null">Select role</option>
+                      @for (role of userRoleOptions; track role.value) {
+                        <option [ngValue]="role.value">{{ role.label }}</option>
+                      }
+                    </select>
+                    @if (getErrorMessage('roleId')) {
+                      <p class="text-error mt-2 text-sm">{{ getErrorMessage('roleId') }}</p>
+                    }
+                  </div>
+                } @else {
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-gray-900" for="roleId">
+                      Role <span class="text-error">*</span>
+                    </label>
+                    <label
+                      class="input flex w-full cursor-not-allowed items-center gap-2 border-transparent bg-gray-100 transition-all"
+                    >
+                      <app-icon name="icon-lock" [class]="'h-4 w-4 text-gray-400'" />
+                      <input
+                        type="text"
+                        [value]="currentUserRoleLabel"
+                        readonly
+                        tabindex="-1"
+                        class="grow cursor-not-allowed bg-transparent text-gray-500 outline-none select-none"
+                        (mousedown)="$event.preventDefault()"
+                      />
+                    </label>
+                  </div>
+                }
+
                 <!-- Password -->
                 <div>
                   <label class="mb-2 block text-sm font-semibold text-gray-900" for="password">
