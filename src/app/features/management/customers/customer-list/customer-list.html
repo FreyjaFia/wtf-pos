@@ -124,7 +124,7 @@
             </div>
 
             <button
-              class="col-span-5 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
+              class="col-span-5 flex cursor-pointer items-center justify-center gap-1 text-center text-xs font-semibold tracking-wider uppercase transition-colors"
               [class.text-gray-600]="sortColumn() !== 'address'"
               [class.hover:text-gray-900]="sortColumn() !== 'address'"
               [class.text-[#047857]]="sortColumn() === 'address'"
@@ -191,8 +191,8 @@
 
                 <!-- Address -->
                 <div class="col-span-5">
-                  <div class="truncate text-sm text-gray-700">
-                    {{ customer.address || '—' }}
+                  <div class="truncate text-center text-sm text-gray-700">
+                    {{ customer.address }}
                   </div>
                 </div>
 
@@ -225,8 +225,12 @@
                           <button
                             type="button"
                             (click)="navigateToEditor(customer.id); $event.stopPropagation()"
-                            (keydown.enter)="navigateToEditor(customer.id); $event.stopPropagation()"
-                            (keydown.space)="navigateToEditor(customer.id); $event.stopPropagation()"
+                            (keydown.enter)="
+                              navigateToEditor(customer.id); $event.stopPropagation()
+                            "
+                            (keydown.space)="
+                              navigateToEditor(customer.id); $event.stopPropagation()
+                            "
                             class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
                           >
                             <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
@@ -242,9 +246,9 @@
                             class="flex items-center gap-2 text-red-600 hover:bg-red-50"
                           >
                             <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />
-                          Delete
-                        </button>
-                      </li>
+                            Delete
+                          </button>
+                        </li>
                       </ul>
                     </div>
                   }

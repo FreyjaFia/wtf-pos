@@ -117,6 +117,10 @@ export class UserDetailsComponent implements OnInit {
   }
 
   protected getRoleLabel(user: UserDto): string {
-    return UserRoleEnum[user.roleId] ?? 'Unknown';
+    const enumName = UserRoleEnum[user.roleId];
+    if (!enumName || typeof enumName !== 'string') {
+      return 'Unknown';
+    }
+    return enumName.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
   }
 }

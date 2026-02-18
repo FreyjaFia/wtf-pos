@@ -4,11 +4,11 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertService, AuthService, UserService } from '@core/services';
 import {
-  AvatarComponent,
-  BadgeComponent,
-  FilterDropdown,
-  Icon,
-  type FilterOption,
+    AvatarComponent,
+    BadgeComponent,
+    FilterDropdown,
+    Icon,
+    type FilterOption,
 } from '@shared/components';
 import { UserDto, UserRoleEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
@@ -262,7 +262,11 @@ export class UserListComponent implements OnInit {
   }
 
   protected getRoleLabel(user: UserDto): string {
-    return UserRoleEnum[user.roleId] ?? 'Unknown';
+    const enumName = UserRoleEnum[user.roleId];
+    if (!enumName || typeof enumName !== 'string') {
+      return 'Unknown';
+    }
+    return enumName.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
   }
 
   protected canWriteManagement(): boolean {

@@ -136,7 +136,7 @@
             </div>
 
             <button
-              class="col-span-5 flex cursor-pointer items-center gap-1 text-start text-xs font-semibold tracking-wider uppercase transition-colors"
+              class="col-span-3 flex cursor-pointer items-center justify-center gap-1 text-center text-xs font-semibold tracking-wider uppercase transition-colors"
               [class.text-gray-600]="sortColumn() !== 'role'"
               [class.hover:text-gray-900]="sortColumn() !== 'role'"
               [class.text-[#047857]]="sortColumn() === 'role'"
@@ -156,6 +156,12 @@
                 {{ sortDirection() === 'asc' ? '↑' : '↓' }}
               </span>
             </button>
+
+            <div
+              class="col-span-2 text-center text-xs font-semibold tracking-wider text-gray-600 uppercase"
+            >
+              Username
+            </div>
 
             <div class="col-span-1"></div>
           </div>
@@ -207,9 +213,16 @@
                 </div>
 
                 <!-- Role -->
-                <div class="col-span-5">
-                  <div class="truncate text-sm text-gray-700">
+                <div class="col-span-3">
+                  <div class="truncate text-center text-sm text-gray-700">
                     {{ getRoleLabel(user) }}
+                  </div>
+                </div>
+
+                <!-- Username -->
+                <div class="col-span-2">
+                  <div class="truncate text-center text-sm text-gray-700">
+                    {{ user.username }}
                   </div>
                 </div>
 
@@ -222,47 +235,47 @@
                 >
                   @if (canWriteManagement()) {
                     <div class="dropdown dropdown-end">
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
-                      tabindex="0"
-                      aria-label="User actions"
-                    >
-                      <app-icon
-                        name="icon-ellipsis-vertical"
-                        [class]="'h-5 w-5 text-gray-600'"
-                        [fill]="'currentColor'"
-                      />
-                    </button>
-                    <ul
-                      tabindex="0"
-                      class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
-                    >
-                      <li>
-                        <button
-                          type="button"
-                          (click)="navigateToEditor(user.id); $event.stopPropagation()"
-                          (keydown.enter)="navigateToEditor(user.id); $event.stopPropagation()"
-                          (keydown.space)="navigateToEditor(user.id); $event.stopPropagation()"
-                          class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-                        >
-                          <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
-                          Edit
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          type="button"
-                          (click)="deleteUser(user); $event.stopPropagation()"
-                          (keydown.enter)="deleteUser(user); $event.stopPropagation()"
-                          (keydown.space)="deleteUser(user); $event.stopPropagation()"
-                          class="flex items-center gap-2 text-red-600 hover:bg-red-50"
-                        >
-                          <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />
-                          Delete
-                        </button>
-                      </li>
-                    </ul>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
+                        tabindex="0"
+                        aria-label="User actions"
+                      >
+                        <app-icon
+                          name="icon-ellipsis-vertical"
+                          [class]="'h-5 w-5 text-gray-600'"
+                          [fill]="'currentColor'"
+                        />
+                      </button>
+                      <ul
+                        tabindex="0"
+                        class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
+                      >
+                        <li>
+                          <button
+                            type="button"
+                            (click)="navigateToEditor(user.id); $event.stopPropagation()"
+                            (keydown.enter)="navigateToEditor(user.id); $event.stopPropagation()"
+                            (keydown.space)="navigateToEditor(user.id); $event.stopPropagation()"
+                            class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+                          >
+                            <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
+                            Edit
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            (click)="deleteUser(user); $event.stopPropagation()"
+                            (keydown.enter)="deleteUser(user); $event.stopPropagation()"
+                            (keydown.space)="deleteUser(user); $event.stopPropagation()"
+                            class="flex items-center gap-2 text-red-600 hover:bg-red-50"
+                          >
+                            <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />
+                            Delete
+                          </button>
+                        </li>
+                      </ul>
                     </div>
                   }
                 </div>
