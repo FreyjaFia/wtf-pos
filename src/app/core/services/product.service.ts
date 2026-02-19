@@ -4,10 +4,13 @@ import { environment } from '@environments/environment.development';
 import {
   AddOnGroupDto,
   AddOnProductAssignmentDto,
+  CreateProductAddOnPriceOverrideDto,
   CreateProductDto,
   ProductAddOnAssignmentDto,
+  ProductAddOnPriceOverrideDto,
   ProductCategoryEnum,
   ProductDto,
+  UpdateProductAddOnPriceOverrideDto,
   UpdateProductDto,
 } from '@shared/models';
 import { Observable, throwError } from 'rxjs';
@@ -231,6 +234,86 @@ export class ProductService {
               error.error?.message || 'Invalid request. Please check the selected products.';
           } else if (error.status === 404) {
             errorMessage = 'Add-on not found.';
+          } else if (error.status === 0) {
+            errorMessage = 'Unable to connect to server. Please check your connection.';
+          }
+
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
+  }
+
+  getProductAddOnPriceOverrides(productId: string): Observable<ProductAddOnPriceOverrideDto[]> {
+    return this.http.get<ProductAddOnPriceOverrideDto[]>(
+      `${this.baseUrl}/${productId}/addon-price-overrides`,
+    );
+  }
+
+  createProductAddOnPriceOverride(
+    payload: CreateProductAddOnPriceOverrideDto,
+  ): Observable<ProductAddOnPriceOverrideDto> {
+    return this.http
+      .post<ProductAddOnPriceOverrideDto>(
+        `${this.baseUrl}/${payload.productId}/addon-price-overrides`,
+        payload,
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Error creating add-on price override:', error);
+
+          let errorMessage = 'Failed to create add-on price override. Please try again later.';
+
+          if (error.status === 400) {
+            errorMessage = error.error?.message || 'Invalid price override request.';
+          } else if (error.status === 404) {
+            errorMessage = 'Product or add-on not found.';
+          } else if (error.status === 0) {
+            errorMessage = 'Unable to connect to server. Please check your connection.';
+          }
+
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
+  }
+
+  updateProductAddOnPriceOverride(
+    payload: UpdateProductAddOnPriceOverrideDto,
+  ): Observable<ProductAddOnPriceOverrideDto> {
+    return this.http
+      .put<ProductAddOnPriceOverrideDto>(
+        `${this.baseUrl}/${payload.productId}/addon-price-overrides/${payload.addOnId}`,
+        payload,
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Error updating add-on price override:', error);
+
+          let errorMessage = 'Failed to update add-on price override. Please try again later.';
+
+          if (error.status === 400) {
+            errorMessage = error.error?.message || 'Invalid price override request.';
+          } else if (error.status === 404) {
+            errorMessage = 'Price override not found.';
+          } else if (error.status === 0) {
+            errorMessage = 'Unable to connect to server. Please check your connection.';
+          }
+
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
+  }
+
+  deleteProductAddOnPriceOverride(productId: string, addOnId: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.baseUrl}/${productId}/addon-price-overrides/${addOnId}`)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Error deleting add-on price override:', error);
+
+          let errorMessage = 'Failed to delete add-on price override. Please try again later.';
+
+          if (error.status === 404) {
+            errorMessage = 'Price override not found.';
           } else if (error.status === 0) {
             errorMessage = 'Unable to connect to server. Please check your connection.';
           }

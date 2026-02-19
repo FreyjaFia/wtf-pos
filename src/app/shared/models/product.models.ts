@@ -94,3 +94,24 @@ export interface AddOnGroupDto {
   displayName: string;
   options: ProductSimpleDto[];
 }
+
+export interface ProductAddOnPriceOverrideDto {
+  productId: string;
+  addOnId: string;
+  price: number;
+  isActive: boolean;
+}
+
+export interface CreateProductAddOnPriceOverrideDto {
+  productId: string;
+  addOnId: string;
+  price: number;
+  isActive?: boolean;
+}
+
+export interface UpdateProductAddOnPriceOverrideDto {
+  productId: string;
+  addOnId: string;
+  price: number;
+  isActive?: boolean;
+}
