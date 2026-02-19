@@ -28,9 +28,11 @@ export class CustomerEditorComponent implements OnInit {
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
+  protected readonly customerFullName = signal('');
 
   // Image upload signals
   protected readonly isUploading = signal(false);
+  protected readonly isDeletingImage = signal(false);
   protected readonly isDragging = signal(false);
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
@@ -54,6 +56,15 @@ export class CustomerEditorComponent implements OnInit {
   protected customerId: string | null = null;
 
   ngOnInit() {
+    this.customerFullName.set(
+      `${this.customerForm.controls.firstName.value || ''} ${this.customerForm.controls.lastName.value || ''}`.trim(),
+    );
+    this.customerForm.valueChanges.subscribe(() => {
+      const first = this.customerForm.controls.firstName.value || '';
+      const last = this.customerForm.controls.lastName.value || '';
+      this.customerFullName.set(`${first} ${last}`.trim());
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
@@ -101,6 +112,25 @@ export class CustomerEditorComponent implements OnInit {
     if (fileInput) {
       fileInput.value = '';
     }
+  }
+
+  protected removeCurrentImage(): void {
+    if (!this.customerId || !this.currentImageUrl() || this.isDeletingImage()) {
+      return;
+    }
+
+    this.isDeletingImage.set(true);
+    this.customerService.deleteCustomerImage(this.customerId).subscribe({
+      next: (updatedCustomer) => {
+        this.currentImageUrl.set(updatedCustomer.imageUrl || null);
+        this.isDeletingImage.set(false);
+        this.alertService.successDeleted('Image');
+      },
+      error: (err) => {
+        this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('image'));
+        this.isDeletingImage.set(false);
+      },
+    });
   }
 
   /**

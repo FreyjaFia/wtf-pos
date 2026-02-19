@@ -133,4 +133,21 @@ export class CustomerService {
       }),
     );
   }
+
+  deleteCustomerImage(id: string): Observable<CustomerDto> {
+    return this.http.delete<CustomerDto>(`${this.baseUrl}/${id}/image`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error deleting customer image:', error);
+        const errorMessage =
+          error.status === 404
+            ? 'Customer or image not found.'
+            : error.status === 403
+              ? 'Not authorized.'
+              : error.status === 0
+                ? 'Unable to connect to server. Please check your connection.'
+                : 'Failed to delete image. Please try again later.';
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
 }
