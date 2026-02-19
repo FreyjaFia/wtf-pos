@@ -37,7 +37,7 @@
 
       <!-- Refresh Button (Ghost Button Style with Tooltip) -->
       <button
-        class="tooltip tooltip-bottom pointer-events-auto cursor-pointer rounded-lg p-2 transition-all hover:bg-gray-100 active:scale-95"
+        class="tooltip tooltip-bottom pointer-events-auto z-30 cursor-pointer rounded-lg p-2 transition-all hover:bg-gray-100 active:scale-95"
         [class.opacity-70]="isRefreshing()"
         type="button"
         (click)="refresh()"
@@ -73,6 +73,7 @@
   @if (!isLoading()) {
     @if (orders().length === 0) {
       <div class="rounded-lg bg-white p-8 text-center shadow-lg">
+        <app-icon name="icon-cart" [class]="'mx-auto mb-3 h-12 w-12 text-gray-400'" />
         <p class="text-lg font-semibold text-gray-700">No orders found</p>
         <p class="text-sm text-gray-500">Try adjusting your filters</p>
       </div>
