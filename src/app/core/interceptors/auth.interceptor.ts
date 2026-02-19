@@ -6,9 +6,10 @@ import { catchError, switchMap, throwError } from 'rxjs';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const url = req.url || '';
+  const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh');
 
-  // Do not attach token to the login endpoint
-  if (url.includes('/auth/login')) {
+  // Do not attach token or trigger refresh flow on auth endpoints.
+  if (isAuthEndpoint) {
     return next(req);
   }
 
