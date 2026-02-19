@@ -162,6 +162,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
     this.productService.assignProductAddOns(this.productId, addOns).subscribe({
       next: () => {
         this.isSaving.set(false);
+        this.alertService.successSaved('Product add-ons');
         this.closeModal();
       },
       error: (err) => {

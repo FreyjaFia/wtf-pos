@@ -198,6 +198,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
     this.productService.assignLinkedProducts(this.addOnId, products).subscribe({
       next: () => {
         this.isSaving.set(false);
+        this.alertService.successSaved('Linked products');
         this.closeModal();
       },
       error: (err) => {
