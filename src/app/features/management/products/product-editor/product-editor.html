@@ -366,12 +366,12 @@
             @if (isEditMode() && productId && !productForm.controls.isAddOn.value) {
               <div class="card rounded-xl bg-white shadow-lg">
                 <div class="card-body">
-                  <div class="mb-1 flex items-baseline justify-between">
-                    <h3 class="text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                      Add-ons
+                  <div class="mb-1 flex flex-wrap items-baseline justify-between gap-1">
+                    <h3 class="text-xs font-semibold tracking-wider text-gray-400 uppercase sm:whitespace-nowrap">
+                      Associated Add-ons
                     </h3>
                     @if (flattenedAssignedAddOns().length > 0) {
-                      <span class="text-xs text-gray-400">
+                      <span class="text-xs text-gray-400 sm:whitespace-nowrap">
                         {{ flattenedAssignedAddOns().length }}
                         {{ flattenedAssignedAddOns().length === 1 ? 'add-on' : 'add-ons' }}
                       </span>
@@ -387,8 +387,9 @@
                     >
                       @for (addon of flattenedAssignedAddOns(); track addon.id; let odd = $odd) {
                         <div
-                          class="group/row flex items-center gap-3 border-b border-gray-50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-gray-50"
+                          class="group/row relative flex items-start gap-3 border-b border-gray-50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-gray-50"
                           [class.bg-gray-50/50]="odd"
+                          [class.bg-amber-50/30]="isAddOnOverridden(addon.id)"
                         >
                           <!-- Thumbnail -->
                           <div class="shrink-0">
@@ -402,38 +403,98 @@
                               <app-avatar [label]="addon.name" [size]="32" />
                             }
                           </div>
-                          <!-- Name + Type Badge + Price -->
-                          <div class="flex flex-1 items-center justify-between gap-2">
-                            <div class="flex min-w-0 items-center gap-2">
-                              <span
-                                class="text-sm font-medium text-gray-800"
-                                [class.line-through]="!addon.isActive"
-                                [class.text-gray-400]="!addon.isActive"
-                              >
-                                {{ addon.name }}
-                              </span>
-                              <span
-                                class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase"
-                              >
-                                {{ getAddOnTypeName(addon.addOnType) }}
-                              </span>
+                          <!-- Name + Type Badge + Price Override -->
+                          <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-2">
+                              <div class="min-w-0">
+                                <span
+                                  class="block break-words text-sm font-medium text-gray-800"
+                                  [class.line-through]="!addon.isActive"
+                                  [class.text-gray-400]="!addon.isActive"
+                                >
+                                  {{ addon.name }}
+                                </span>
+                                <div class="mt-0.5 flex flex-wrap items-center gap-2">
+                                  <span class="font-mono text-[10px] text-gray-400">
+                                    {{ addon.code }}
+                                  </span>
+                                  <span
+                                    class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase"
+                                  >
+                                    {{ getAddOnTypeName(addon.addOnType) }}
+                                  </span>
+                                  @if (isAddOnOverridden(addon.id)) {
+                                    <span
+                                      class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-amber-700 uppercase"
+                                    >
+                                      Overridden
+                                    </span>
+                                  }
+                                </div>
+                              </div>
+                              <div class="shrink-0 text-right">
+                                <span
+                                  class="block text-sm font-semibold text-gray-700"
+                                  [class.text-gray-400]="!addon.isActive"
+                                >
+                                  ₱{{ getAddOnEffectivePrice(addon.id, addon.price) | number: '1.2-2' }}
+                                </span>
+                              </div>
                             </div>
-                            <span
-                              class="shrink-0 text-sm font-semibold text-gray-700"
-                              [class.text-gray-400]="!addon.isActive"
-                            >
-                              ₱{{ addon.price | number: '1.2-2' }}
-                            </span>
+                            <div class="mt-2 flex flex-col items-end gap-1">
+                              <span class="text-[10px] text-gray-400">
+                                Default: ₱{{ getAddOnBasePrice(addon.id, addon.price) | number: '1.2-2' }}
+                              </span>
+                              <div class="flex flex-wrap items-center justify-end gap-1">
+                                <label
+                                  class="input input-xs flex h-7 w-24 items-center gap-1 border-gray-200 bg-white"
+                                >
+                                  <span class="text-[10px] text-gray-500">₱</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="{{ getAddOnBasePrice(addon.id, addon.price) | number: '1.2-2' }}"
+                                    class="w-full bg-transparent text-[10px] outline-none"
+                                    [value]="getAddOnOverrideDraft(addon.id)"
+                                    (input)="onAddOnOverrideInput(addon.id, $event)"
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  class="btn btn-xs h-7 min-h-0 rounded-md border-0 bg-[#047857] px-2 text-[10px] text-white hover:bg-[#065f46]"
+                                  [disabled]="isAddOnOverrideSaving(addon.id) || isSaving()"
+                                  (click)="saveAddOnPriceOverride(addon.id, getAddOnBasePrice(addon.id, addon.price))"
+                                  title="Save override"
+                                >
+                                  @if (isAddOnOverrideSaving(addon.id)) {
+                                    <span class="loading loading-spinner loading-xs"></span>
+                                  } @else {
+                                    {{ hasAddOnPriceOverride(addon.id) ? 'Update' : 'Set' }}
+                                  }
+                                </button>
+                                @if (hasAddOnPriceOverride(addon.id)) {
+                                  <button
+                                    type="button"
+                                    class="btn btn-xs h-7 min-h-0 rounded-md border border-gray-200 bg-white px-2 text-[10px] text-gray-600 hover:bg-gray-50"
+                                    [disabled]="isAddOnOverrideSaving(addon.id) || isSaving()"
+                                    (click)="clearAddOnPriceOverride(addon.id)"
+                                    title="Reset to default"
+                                  >
+                                    Reset
+                                  </button>
+                                }
+                                <button
+                                  type="button"
+                                  class="btn btn-ghost btn-xs h-7 min-h-0 px-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                                  (click)="removeAddOn(addon.id)"
+                                  title="Remove add-on"
+                                >
+                                  <app-icon name="icon-close" [class]="'h-3.5 w-3.5'" />
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <!-- Unlink -->
-                          <button
-                            type="button"
-                            class="shrink-0 cursor-pointer rounded-full p-1 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500"
-                            (click)="removeAddOn(addon.id)"
-                            title="Remove add-on"
-                          >
-                            <app-icon name="icon-close" [class]="'h-3.5 w-3.5'" />
-                          </button>
                         </div>
                       }
                     </div>
@@ -524,20 +585,25 @@
                             }
                           </div>
                           <!-- Name + Type Badge + Price -->
-                          <div class="flex flex-1 items-center justify-between gap-2">
-                            <div class="flex min-w-0 items-center gap-2">
+                          <div class="flex flex-1 items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
                               <span
-                                class="text-sm font-medium text-gray-800"
+                                class="block break-words text-sm font-medium text-gray-800"
                                 [class.line-through]="!linked.isActive"
                                 [class.text-gray-400]="!linked.isActive"
                               >
                                 {{ linked.name }}
                               </span>
-                              <span
-                                class="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase"
-                              >
-                                {{ getAddOnTypeName(linked.addOnType) }}
-                              </span>
+                              <div class="mt-0.5 flex items-center gap-2">
+                                <span class="font-mono text-[10px] text-gray-400">
+                                  {{ linked.code }}
+                                </span>
+                                <span
+                                  class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-gray-500 uppercase"
+                                >
+                                  {{ getAddOnTypeName(linked.addOnType) }}
+                                </span>
+                              </div>
                             </div>
                             <span
                               class="shrink-0 text-sm font-semibold text-gray-700"

@@ -13,11 +13,14 @@ import {
 import {
   AddOnGroupDto,
   AddOnProductAssignmentDto,
+  CreateProductAddOnPriceOverrideDto,
   AddOnTypeEnum,
   CreateProductDto,
   ProductAddOnAssignmentDto,
+  ProductAddOnPriceOverrideDto,
   ProductCategoryEnum,
   ProductPriceHistoryDto,
+  UpdateProductAddOnPriceOverrideDto,
   UpdateProductDto,
 } from '@shared/models';
 
@@ -67,6 +70,10 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isHistoryOpen = signal(false);
   protected readonly priceHistory = signal<ProductPriceHistoryDto[]>([]);
   protected readonly assignedAddOns = signal<AddOnGroupDto[]>([]);
+  protected readonly addOnBasePrices = signal<Record<string, number>>({});
+  protected readonly addOnPriceOverrides = signal<Record<string, ProductAddOnPriceOverrideDto>>({});
+  protected readonly addOnOverrideDrafts = signal<Record<string, string>>({});
+  protected readonly addOnOverrideSaving = signal<Record<string, boolean>>({});
   protected readonly linkedProducts = signal<AddOnGroupDto[]>([]);
   protected readonly lastUpdatedAt = signal<string | null>(null);
   protected readonly showAllAddOns = signal(false);
@@ -164,6 +171,9 @@ export class ProductEditorComponent implements OnInit {
         this.lastUpdatedAt.set(product.updatedAt || product.createdAt);
 
         if (product.isAddOn) {
+          this.addOnBasePrices.set({});
+          this.addOnPriceOverrides.set({});
+          this.addOnOverrideDrafts.set({});
           this.productForm.controls.category.disable();
           this.loadLinkedProducts(id);
         } else {
@@ -481,8 +491,65 @@ export class ProductEditorComponent implements OnInit {
 
   private loadAssignedAddOns(productId: string) {
     this.productService.getProductAddOns(productId).subscribe({
-      next: (addons) => this.assignedAddOns.set(addons),
-      error: () => this.assignedAddOns.set([]),
+      next: (addons) => {
+        this.assignedAddOns.set(addons);
+        this.loadAddOnBasePrices(addons);
+        this.loadAddOnPriceOverrides(productId);
+      },
+      error: () => {
+        this.assignedAddOns.set([]);
+        this.addOnBasePrices.set({});
+        this.addOnPriceOverrides.set({});
+      },
+    });
+  }
+
+  private loadAddOnBasePrices(addOnGroups: AddOnGroupDto[]) {
+    const assignedIds = new Set(addOnGroups.flatMap((group) => group.options.map((opt) => opt.id)));
+
+    if (assignedIds.size === 0) {
+      this.addOnBasePrices.set({});
+      return;
+    }
+
+    this.productService.getProducts({ isAddOn: true }).subscribe({
+      next: (allAddOns) => {
+        const baseMap: Record<string, number> = {};
+
+        for (const addOn of allAddOns) {
+          if (assignedIds.has(addOn.id)) {
+            baseMap[addOn.id] = addOn.price;
+          }
+        }
+
+        this.addOnBasePrices.set(baseMap);
+      },
+      error: () => {
+        this.addOnBasePrices.set({});
+      },
+    });
+  }
+
+  private loadAddOnPriceOverrides(productId: string) {
+    this.productService.getProductAddOnPriceOverrides(productId).subscribe({
+      next: (overrides) => {
+        const map: Record<string, ProductAddOnPriceOverrideDto> = {};
+        const drafts: Record<string, string> = {};
+
+        for (const override of overrides) {
+          if (override.isActive) {
+            map[override.addOnId] = override;
+            drafts[override.addOnId] = String(override.price);
+          }
+        }
+
+        this.addOnPriceOverrides.set(map);
+        this.addOnOverrideDrafts.set(drafts);
+      },
+      error: () => {
+        this.addOnPriceOverrides.set({});
+        this.addOnOverrideDrafts.set({});
+      },
     });
   }
 
@@ -581,11 +648,142 @@ export class ProductEditorComponent implements OnInit {
     this.assignedAddOns.set(updatedGroups);
 
     this.productService.assignProductAddOns(this.productId, assignments).subscribe({
+      next: () => {
+        this.alertService.successDeleted('Add-on');
+      },
       error: () => {
         this.alertService.error(this.alertService.getUpdateErrorMessage('product add-ons'));
         if (this.productId) {
           this.loadAssignedAddOns(this.productId);
         }
+      },
+    });
+  }
+
+  protected hasAddOnPriceOverride(addOnId: string): boolean {
+    return !!this.addOnPriceOverrides()[addOnId];
+  }
+
+  protected getAddOnBasePrice(addOnId: string, fallbackPrice: number): number {
+    return this.addOnBasePrices()[addOnId] ?? fallbackPrice;
+  }
+
+  protected getAddOnEffectivePrice(addOnId: string, fallbackPrice: number): number {
+    const basePrice = this.getAddOnBasePrice(addOnId, fallbackPrice);
+    return this.addOnPriceOverrides()[addOnId]?.price ?? basePrice;
+  }
+
+  protected getAddOnOverrideDraft(addOnId: string): string {
+    return this.addOnOverrideDrafts()[addOnId] ?? '';
+  }
+
+  protected onAddOnOverrideInput(addOnId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const next = { ...this.addOnOverrideDrafts() };
+    next[addOnId] = input.value;
+    this.addOnOverrideDrafts.set(next);
+  }
+
+  protected isAddOnOverrideSaving(addOnId: string): boolean {
+    return !!this.addOnOverrideSaving()[addOnId];
+  }
+
+  protected isAddOnOverridden(addOnId: string): boolean {
+    return this.hasAddOnPriceOverride(addOnId);
+  }
+
+  private setAddOnOverrideSaving(addOnId: string, isSaving: boolean) {
+    const next = { ...this.addOnOverrideSaving() };
+    next[addOnId] = isSaving;
+    this.addOnOverrideSaving.set(next);
+  }
+
+  protected saveAddOnPriceOverride(addOnId: string, defaultPrice: number) {
+    if (!this.productId) {
+      return;
+    }
+
+    const rawDraft = this.getAddOnOverrideDraft(addOnId).trim();
+
+    if (!rawDraft) {
+      if (this.hasAddOnPriceOverride(addOnId)) {
+        this.clearAddOnPriceOverride(addOnId);
+      }
+      return;
+    }
+
+    const parsedPrice = Number(rawDraft);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      this.alertService.error('Override price must be a valid amount (0 or higher).');
+      return;
+    }
+
+    if (!this.hasAddOnPriceOverride(addOnId) && parsedPrice === defaultPrice) {
+      return;
+    }
+
+    this.setAddOnOverrideSaving(addOnId, true);
+
+    const hasExistingOverride = this.hasAddOnPriceOverride(addOnId);
+    const payload = {
+      productId: this.productId,
+      addOnId,
+      price: parsedPrice,
+      isActive: true,
+    };
+
+    const request$ = hasExistingOverride
+      ? this.productService.updateProductAddOnPriceOverride(
+          payload as UpdateProductAddOnPriceOverrideDto,
+        )
+      : this.productService.createProductAddOnPriceOverride(
+          payload as CreateProductAddOnPriceOverrideDto,
+        );
+
+    request$.subscribe({
+      next: (savedOverride) => {
+        const nextOverrides = { ...this.addOnPriceOverrides() };
+        nextOverrides[addOnId] = savedOverride;
+        this.addOnPriceOverrides.set(nextOverrides);
+
+        const nextDrafts = { ...this.addOnOverrideDrafts() };
+        nextDrafts[addOnId] = String(savedOverride.price);
+        this.addOnOverrideDrafts.set(nextDrafts);
+
+        this.setAddOnOverrideSaving(addOnId, false);
+        this.alertService.successSaved('Add-on price override');
+      },
+      error: (err) => {
+        this.setAddOnOverrideSaving(addOnId, false);
+        this.alertService.error(err.message || this.alertService.getUpdateErrorMessage('override'));
+      },
+    });
+  }
+
+  protected clearAddOnPriceOverride(addOnId: string) {
+    if (!this.productId || !this.hasAddOnPriceOverride(addOnId)) {
+      return;
+    }
+
+    this.setAddOnOverrideSaving(addOnId, true);
+
+    this.productService.deleteProductAddOnPriceOverride(this.productId, addOnId).subscribe({
+      next: () => {
+        const nextOverrides = { ...this.addOnPriceOverrides() };
+        delete nextOverrides[addOnId];
+        this.addOnPriceOverrides.set(nextOverrides);
+
+        const nextDrafts = { ...this.addOnOverrideDrafts() };
+        delete nextDrafts[addOnId];
+        this.addOnOverrideDrafts.set(nextDrafts);
+
+        this.setAddOnOverrideSaving(addOnId, false);
+        this.alertService.successDeleted('Add-on price override');
+      },
+      error: (err) => {
+        this.setAddOnOverrideSaving(addOnId, false);
+        this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('override'));
       },
     });
   }
@@ -611,6 +809,9 @@ export class ProductEditorComponent implements OnInit {
     this.linkedProducts.set(updatedGroups);
 
     this.productService.assignLinkedProducts(this.productId, assignments).subscribe({
+      next: () => {
+        this.alertService.successDeleted('Linked product');
+      },
       error: () => {
         this.alertService.error(this.alertService.getUpdateErrorMessage('linked products'));
         if (this.productId) {
