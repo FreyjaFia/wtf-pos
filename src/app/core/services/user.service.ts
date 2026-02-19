@@ -123,4 +123,22 @@ export class UserService {
       }),
     );
   }
+
+  deleteUserImage(id: string): Observable<UserDto> {
+    return this.http.delete<UserDto>(`${this.baseUrl}/${id}/images`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error deleting user image:', error);
+
+        let errorMessage = 'Failed to delete image. Please try again later.';
+
+        if (error.status === 404) {
+          errorMessage = 'User or image not found.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
 }

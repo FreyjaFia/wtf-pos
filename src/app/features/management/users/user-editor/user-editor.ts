@@ -39,6 +39,7 @@ export class UserEditorComponent implements OnInit {
   protected readonly isSaving = signal(false);
   protected readonly showPassword = signal(false);
   protected readonly showConfirmPassword = signal(false);
+  protected readonly userFullNameLabel = signal('');
   protected currentUserRoleLabel = 'Unknown';
   protected readonly userRoleOptions = [
     { label: 'Admin', value: UserRoleEnum.Admin },
@@ -48,6 +49,7 @@ export class UserEditorComponent implements OnInit {
 
   // Image upload signals
   protected readonly isUploading = signal(false);
+  protected readonly isDeletingImage = signal(false);
   protected readonly isDragging = signal(false);
   protected readonly selectedFile = signal<File | null>(null);
   protected readonly imagePreview = signal<string | null>(null);
@@ -92,6 +94,15 @@ export class UserEditorComponent implements OnInit {
    * OnInit lifecycle hook
    */
   ngOnInit(): void {
+    this.userFullNameLabel.set(
+      `${this.userForm.controls.firstName.value || ''} ${this.userForm.controls.lastName.value || ''}`.trim(),
+    );
+    this.userForm.valueChanges.subscribe(() => {
+      const first = this.userForm.controls.firstName.value || '';
+      const last = this.userForm.controls.lastName.value || '';
+      this.userFullNameLabel.set(`${first} ${last}`.trim());
+    });
+
     const isProfile = this.route.snapshot.data['isProfile'] === true;
     this.isProfileMode.set(isProfile);
 
@@ -165,6 +176,25 @@ export class UserEditorComponent implements OnInit {
     if (fileInput) {
       fileInput.value = '';
     }
+  }
+
+  protected removeCurrentImage(): void {
+    if (!this.userId || !this.currentImageUrl() || this.isDeletingImage()) {
+      return;
+    }
+
+    this.isDeletingImage.set(true);
+    this.userService.deleteUserImage(this.userId).subscribe({
+      next: (updatedUser) => {
+        this.currentImageUrl.set(updatedUser.imageUrl || null);
+        this.isDeletingImage.set(false);
+        this.alertService.successDeleted('Image');
+      },
+      error: (err) => {
+        this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('image'));
+        this.isDeletingImage.set(false);
+      },
+    });
   }
 
   /**
