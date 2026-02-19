@@ -1,11 +1,10 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { ProductService } from '@core/services';
-import { Icon } from '@shared/components/icons/icon/icon';
 import { AvatarComponent } from '@shared/components/avatar/avatar';
+import { Icon } from '@shared/components/icons/icon/icon';
 import {
   AddOnGroupDto,
-  ProductAddOnPriceOverrideDto,
   AddOnTypeEnum,
   CartAddOnDto,
   ProductDto,
@@ -119,18 +118,8 @@ export class AddonSelectorComponent {
           ...g,
           options: g.options.filter((opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i),
         }));
-
-        this.productService.getProductAddOnPriceOverrides(productId).subscribe({
-          next: (overrides) => {
-            this.addOnGroups.set(this.applyPriceOverrides(deduped, overrides));
-            this.isLoading.set(false);
-          },
-          error: () => {
-            // If override endpoint fails, keep default add-on prices.
-            this.addOnGroups.set(deduped);
-            this.isLoading.set(false);
-          },
-        });
+        this.addOnGroups.set(deduped);
+        this.isLoading.set(false);
       },
       error: () => {
         this.addOnGroups.set([]);
@@ -266,22 +255,5 @@ export class AddonSelectorComponent {
     this.addOnGroups.set([]);
     this.selections.set({});
     this.specialInstructions.set('');
-  }
-
-  private applyPriceOverrides(
-    groups: AddOnGroupDto[],
-    overrides: ProductAddOnPriceOverrideDto[],
-  ): AddOnGroupDto[] {
-    const activeOverrides = new Map(
-      overrides.filter((o) => o.isActive).map((o) => [o.addOnId, o.price]),
-    );
-
-    return groups.map((group) => ({
-      ...group,
-      options: group.options.map((option) => ({
-        ...option,
-        price: activeOverrides.get(option.id) ?? option.price,
-      })),
-    }));
   }
 }
