@@ -80,15 +80,15 @@ export class ProductEditorComponent implements OnInit {
   protected readonly showAllLinked = signal(false);
 
   protected readonly flattenedAssignedAddOns = computed(() => {
-    return this.assignedAddOns().flatMap((group) =>
-      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
-    );
+    return this.assignedAddOns()
+      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
+      .sort((a, b) => a.name.localeCompare(b.name));
   });
 
   protected readonly flattenedLinkedProducts = computed(() => {
-    return this.linkedProducts().flatMap((group) =>
-      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
-    );
+    return this.linkedProducts()
+      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
+      .sort((a, b) => a.name.localeCompare(b.name));
   });
 
   protected getAddOnTypeName(type: AddOnTypeEnum): string {

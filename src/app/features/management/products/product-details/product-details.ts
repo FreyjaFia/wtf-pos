@@ -44,15 +44,15 @@ export class ProductDetailsComponent implements OnInit {
   protected readonly showDeleteModal = signal(false);
 
   protected readonly flattenedAddOns = computed(() => {
-    return this.addOns().flatMap((group) =>
-      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
-    );
+    return this.addOns()
+      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
+      .sort((a, b) => a.name.localeCompare(b.name));
   });
 
   protected readonly flattenedLinkedProducts = computed(() => {
-    return this.linkedProducts().flatMap((group) =>
-      group.options.map((opt) => ({ ...opt, addOnType: group.type })),
-    );
+    return this.linkedProducts()
+      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
+      .sort((a, b) => a.name.localeCompare(b.name));
   });
 
   protected getAddOnTypeName(type: AddOnTypeEnum): string {

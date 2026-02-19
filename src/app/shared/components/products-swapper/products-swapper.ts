@@ -82,8 +82,8 @@ export class ProductsSwapperComponent implements AfterViewInit {
               .filter((addon) => !linkedIds.has(addon.id))
               .map((addon) => ({ ...addon, type: AddOnTypeEnum.Size })); // Default type for available
 
-            this.availableProducts.set(availableNotLinked);
-            this.linkedProducts.set(assignedFlat);
+            this.availableProducts.set(this.sortByName(availableNotLinked));
+            this.linkedProducts.set(this.sortByName(assignedFlat));
             this.isLoading.set(false);
 
             // Initialize Sortable after data is loaded and DOM is populated
@@ -170,14 +170,18 @@ export class ProductsSwapperComponent implements AfterViewInit {
     );
 
     const allProducts = [...this.availableProducts(), ...this.linkedProducts()];
+    const productById = new Map(allProducts.map((p) => [p.id, p]));
 
     // Build a map of existing type selections to preserve them
     const existingTypes = new Map(this.linkedProducts().map((p) => [p.id, p.type]));
 
-    this.availableProducts.set(allProducts.filter((p) => availableIds.includes(p.id)));
+    this.availableProducts.set(
+      availableIds.map((id) => productById.get(id)).filter((p): p is ProductSimpleDto => !!p),
+    );
     this.linkedProducts.set(
-      allProducts
-        .filter((p) => linkedIds.includes(p.id))
+      linkedIds
+        .map((id) => productById.get(id))
+        .filter((p): p is ProductSimpleDto => !!p)
         .map((p) => ({ ...p, type: existingTypes.get(p.id) ?? this.addOnType })),
     );
   }
@@ -228,5 +232,9 @@ export class ProductsSwapperComponent implements AfterViewInit {
     this.linkedProducts.set(
       this.linkedProducts().map((p) => (p.id === productId ? { ...p, type: newType } : p)),
     );
+  }
+
+  private sortByName<T extends { name: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => a.name.localeCompare(b.name));
   }
 }

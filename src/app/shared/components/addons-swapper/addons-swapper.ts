@@ -81,8 +81,8 @@ export class AddonsSwapperComponent implements AfterViewInit {
               .filter((addon) => !assignedIds.has(addon.id))
               .map((addon) => ({ ...addon, type: AddOnTypeEnum.Size })); // Default type for available
 
-            this.availableAddOns.set(availableNotAssigned);
-            this.assignedAddOns.set(assignedFlat);
+            this.availableAddOns.set(this.sortByName(availableNotAssigned));
+            this.assignedAddOns.set(this.sortByName(assignedFlat));
             this.isLoading.set(false);
 
             // Initialize Sortable after data is loaded and DOM is populated
@@ -140,10 +140,19 @@ export class AddonsSwapperComponent implements AfterViewInit {
 
     // Get all add-ons from both current lists
     const allAddOns = [...this.availableAddOns(), ...this.assignedAddOns()];
+    const addOnById = new Map(allAddOns.map((addon) => [addon.id, addon]));
 
     // Update signals to reflect current state after drag
-    this.availableAddOns.set(allAddOns.filter((addon) => availableIds.includes(addon.id)));
-    this.assignedAddOns.set(allAddOns.filter((addon) => assignedIds.includes(addon.id)));
+    this.availableAddOns.set(
+      availableIds
+        .map((id) => addOnById.get(id))
+        .filter((addon): addon is ProductSimpleDto & { type: AddOnTypeEnum } => !!addon),
+    );
+    this.assignedAddOns.set(
+      assignedIds
+        .map((id) => addOnById.get(id))
+        .filter((addon): addon is ProductSimpleDto & { type: AddOnTypeEnum } => !!addon),
+    );
   }
 
   protected saveAddOns() {
@@ -193,5 +202,9 @@ export class AddonsSwapperComponent implements AfterViewInit {
     this.assignedAddOns.set(
       this.assignedAddOns().map((a) => (a.id === addonId ? { ...a, type: newType } : a)),
     );
+  }
+
+  private sortByName<T extends { name: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => a.name.localeCompare(b.name));
   }
 }

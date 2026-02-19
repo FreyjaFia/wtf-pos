@@ -116,7 +116,9 @@ export class AddonSelectorComponent {
         // Deduplicate options within each group (display only)
         const deduped = groups.map((g) => ({
           ...g,
-          options: g.options.filter((opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i),
+          options: g.options
+            .filter((opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i)
+            .sort((a, b) => a.name.localeCompare(b.name)),
         }));
         this.addOnGroups.set(deduped);
         this.isLoading.set(false);
