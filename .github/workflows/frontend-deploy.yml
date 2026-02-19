@@ -36,4 +36,4 @@ jobs:
           username: ${{ secrets.MONSTERASP_FTP_USERNAME }}
           password: ${{ secrets.MONSTERASP_FTP_PASSWORD }}
           local-dir: ./dist/wtf-pos/browser/
-          server-dir: /
+          server-dir: /wwwroot/
