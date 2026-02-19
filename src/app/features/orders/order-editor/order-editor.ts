@@ -13,6 +13,7 @@ import type { CustomerDropdownOption, FilterOption } from '@shared/components';
 import {
   AddonSelectorComponent,
   AvatarComponent,
+  BadgeComponent,
   CustomerDropdown,
   FilterDropdown,
   Icon,
@@ -45,6 +46,7 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
     CustomerDropdown,
     AddonSelectorComponent,
     AvatarComponent,
+    BadgeComponent,
   ],
   templateUrl: './order-editor.html',
 })
@@ -79,6 +81,7 @@ export class OrderEditor implements OnInit {
 
   // Cancel order
   protected readonly showCancelOrderModal = signal(false);
+  protected readonly showOrderSummaryModal = signal(false);
   protected readonly showCreateCustomerModal = signal(false);
   protected readonly isCreatingCustomer = signal(false);
 
@@ -118,6 +121,43 @@ export class OrderEditor implements OnInit {
 
   protected readonly isReadOnly = computed(
     () => this.isCompleted() || this.isCancelled() || this.isRefunded(),
+  );
+  protected readonly showPaymentSummary = computed(() => {
+    const order = this.currentOrder();
+    if (!order) {
+      return false;
+    }
+
+    const isSettledOrder =
+      order.status === OrderStatusEnum.Completed || order.status === OrderStatusEnum.Refunded;
+    const hasPaymentData =
+      order.paymentMethod != null ||
+      order.amountReceived != null ||
+      order.changeAmount != null ||
+      order.tips != null;
+
+    return isSettledOrder && hasPaymentData;
+  });
+  protected readonly paymentTipsAmount = computed(() => this.currentOrder()?.tips ?? 0);
+  protected readonly paymentChangeAmount = computed(() => this.currentOrder()?.changeAmount ?? 0);
+  protected readonly paymentOrderTotal = computed(
+    () => this.currentOrder()?.totalAmount ?? this.totalPrice(),
+  );
+  protected readonly paymentAmountPaid = computed(() => {
+    const order = this.currentOrder();
+    if (!order) {
+      return 0;
+    }
+
+    if (order.amountReceived !== null && order.amountReceived !== undefined) {
+      return order.amountReceived;
+    }
+
+    // For non-cash payments where amountReceived may be omitted, infer from total + tips.
+    return this.paymentOrderTotal() + this.paymentTipsAmount();
+  });
+  protected readonly paymentTotalPaid = computed(
+    () => this.paymentAmountPaid() - this.paymentChangeAmount(),
   );
 
   protected readonly isCancellable = computed(() => {
@@ -460,6 +500,13 @@ export class OrderEditor implements OnInit {
 
   // Helper for template add-on price calculation
   protected readonly addOnPriceReducer = (sum: number, ao: CartAddOnDto) => sum + ao.price;
+  protected getUnitAddOnTotal(item: CartItemDto): number {
+    return (item.addOns ?? []).reduce(this.addOnPriceReducer, 0);
+  }
+
+  protected getUnitSubtotal(item: CartItemDto): number {
+    return item.price + this.getUnitAddOnTotal(item);
+  }
 
   increment(productId: string, index: number) {
     if (!this.canManageOrderActions()) {
@@ -505,6 +552,61 @@ export class OrderEditor implements OnInit {
 
   protected getCustomerDisplayName(customer: CustomerDto) {
     return `${customer.firstName} ${customer.lastName}`.trim();
+  }
+
+  protected getPaymentMethodLabel(method?: PaymentMethodEnum | null): string {
+    if (method === PaymentMethodEnum.Cash) {
+      return 'Cash';
+    }
+
+    if (method === PaymentMethodEnum.GCash) {
+      return 'GCash';
+    }
+
+    return 'N/A';
+  }
+
+  protected getStatusVariant(
+    status?: OrderStatusEnum | null,
+  ): 'success' | 'error' | 'warning' | 'info' | 'default' {
+    switch (status) {
+      case OrderStatusEnum.Pending:
+        return 'warning';
+      case OrderStatusEnum.Completed:
+        return 'success';
+      case OrderStatusEnum.Cancelled:
+        return 'default';
+      case OrderStatusEnum.Refunded:
+        return 'error';
+      default:
+        return 'info';
+    }
+  }
+
+  protected getStatusLabel(status?: OrderStatusEnum | null): string {
+    switch (status) {
+      case OrderStatusEnum.Pending:
+        return 'Pending';
+      case OrderStatusEnum.Completed:
+        return 'Completed';
+      case OrderStatusEnum.Cancelled:
+        return 'Cancelled';
+      case OrderStatusEnum.Refunded:
+        return 'Refunded';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  protected openOrderSummaryModal() {
+    if (!this.showPaymentSummary()) {
+      return;
+    }
+    this.showOrderSummaryModal.set(true);
+  }
+
+  protected closeOrderSummaryModal() {
+    this.showOrderSummaryModal.set(false);
   }
 
   protected openCreateCustomerModal() {
@@ -821,4 +923,3 @@ export class OrderEditor implements OnInit {
     }));
   }
 }
-
