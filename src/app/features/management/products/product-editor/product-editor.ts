@@ -55,9 +55,10 @@ export class ProductEditorComponent implements OnInit {
   protected readonly isLoading = signal(false);
 
   // For avatar fallback
-  protected readonly productName = computed(() => this.productForm.get('name')?.value ?? '');
+  protected readonly productName = signal('');
   protected readonly isSaving = signal(false);
   protected readonly isUploading = signal(false);
+  protected readonly isDeletingImage = signal(false);
   protected readonly isDragging = signal(false);
   protected readonly ProductCategoryEnum = ProductCategoryEnum;
   protected readonly selectedFile = signal<File | null>(null);
@@ -119,6 +120,11 @@ export class ProductEditorComponent implements OnInit {
   protected productId: string | null = null;
 
   ngOnInit() {
+    this.productName.set(this.productForm.controls.name.value || '');
+    this.productForm.controls.name.valueChanges.subscribe((value) => {
+      this.productName.set(value || '');
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
@@ -275,6 +281,26 @@ export class ProductEditorComponent implements OnInit {
     if (fileInput) {
       fileInput.value = '';
     }
+  }
+
+  protected removeCurrentImage() {
+    if (!this.productId || !this.currentImageUrl() || this.isDeletingImage()) {
+      return;
+    }
+
+    this.isDeletingImage.set(true);
+
+    this.productService.deleteProductImage(this.productId).subscribe({
+      next: (updatedProduct) => {
+        this.currentImageUrl.set(updatedProduct.imageUrl || null);
+        this.isDeletingImage.set(false);
+        this.alertService.successDeleted('Image');
+      },
+      error: (err) => {
+        this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('image'));
+        this.isDeletingImage.set(false);
+      },
+    });
   }
 
   protected onDragOver(event: DragEvent) {
@@ -594,4 +620,3 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 }
-

@@ -144,6 +144,24 @@ export class ProductService {
     );
   }
 
+  deleteProductImage(productId: string): Observable<ProductDto> {
+    return this.http.delete<ProductDto>(`${this.baseUrl}/${productId}/images`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error deleting product image:', error);
+
+        let errorMessage = 'Failed to delete image. Please try again later.';
+
+        if (error.status === 404) {
+          errorMessage = 'Product or image not found.';
+        } else if (error.status === 0) {
+          errorMessage = 'Unable to connect to server. Please check your connection.';
+        }
+
+        return throwError(() => new Error(errorMessage));
+      }),
+    );
+  }
+
   getProductAddOns(productId: string): Observable<AddOnGroupDto[]> {
     return this.http.get<AddOnGroupDto[]>(`${this.baseUrl}/${productId}/addons`).pipe(
       catchError((error: HttpErrorResponse) => {
