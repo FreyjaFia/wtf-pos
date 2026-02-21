@@ -1,11 +1,9 @@
 ﻿import { Component, input } from '@angular/core';
 
-import { CommonModule } from '@angular/common';
-
 @Component({
   selector: 'app-avatar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './avatar.html',
 })
 export class AvatarComponent {
@@ -24,7 +22,7 @@ export class AvatarComponent {
       return '';
     }
 
-    const parts = value.split(/\s+/).filter(Boolean);
+    const parts = value.split(/\s+/).filter((p) => /^[a-zA-Z]/.test(p));
     const chars = parts.map((p) => p[0]).join('');
 
     return chars.slice(0, 2).toUpperCase();

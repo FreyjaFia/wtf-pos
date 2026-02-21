@@ -1,4 +1,4 @@
-﻿<ng-container *ngIf="imageUrl(); else initialsBlock">
+﻿@if (imageUrl()) {
   <img
     [src]="imageUrl()"
     [alt]="label()"
@@ -7,8 +7,7 @@
     [style.height.px]="size()"
     [style.lineHeight.px]="size()"
   />
-</ng-container>
-<ng-template #initialsBlock>
+} @else {
   <span
     class="inline-flex items-center justify-center rounded-full bg-black font-bold text-white uppercase select-none"
     [style.width.px]="size()"
@@ -18,4 +17,4 @@
   >
     {{ initials }}
   </span>
-</ng-template>
+}
