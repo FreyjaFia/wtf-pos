@@ -11,7 +11,7 @@ import { CartAddOnDto, CartItemDto, PaymentMethodEnum } from '@shared/models';
   styleUrl: './checkout-modal.css',
 })
 export class CheckoutModal {
-  readonly checkoutDialog = viewChild.required<ElementRef<HTMLDialogElement>>('checkoutDialog');
+  private readonly checkoutDialog = viewChild.required<ElementRef<HTMLDialogElement>>('checkoutDialog');
 
   readonly cartItems = input<CartItemDto[]>([]);
   readonly totalPrice = input<number>(0);
@@ -62,8 +62,8 @@ export class CheckoutModal {
   // Helper for template add-on price calculation
   protected readonly addOnPriceReducer = (sum: number, ao: CartAddOnDto) => sum + ao.price;
 
-  protected get isConfirmDisabled(): boolean {
-    const paymentMethod = this.paymentForm.get('paymentMethod')?.value;
+  protected readonly isConfirmDisabled = computed(() => {
+    const paymentMethod = this.selectedPaymentMethod();
 
     // Disable if form is invalid
     if (this.paymentForm.invalid) {
@@ -79,7 +79,7 @@ export class CheckoutModal {
     }
 
     return false;
-  }
+  });
 
   constructor() {
     this.paymentForm.get('paymentMethod')?.valueChanges.subscribe((value) => {
@@ -104,11 +104,11 @@ export class CheckoutModal {
     this.checkoutDialog().nativeElement.showModal();
   }
 
-  toggleSummary() {
+  protected toggleSummary() {
     this.showSummary.set(!this.showSummary());
   }
 
-  calculateChange() {
+  protected calculateChange() {
     const paymentMethod = this.selectedPaymentMethod();
     const amountReceived = this.amountReceivedValue();
 
@@ -125,7 +125,7 @@ export class CheckoutModal {
     }
   }
 
-  confirmOrder() {
+  protected confirmOrder() {
     const paymentMethod = this.paymentForm.get('paymentMethod')?.value;
     const amountReceived = this.paymentForm.get('amountReceived')?.value;
     const tips = this.paymentForm.get('tips')?.value;
@@ -147,7 +147,7 @@ export class CheckoutModal {
     });
   }
 
-  cancelCheckout() {
+  protected cancelCheckout() {
     this.checkoutDialog().nativeElement.close();
   }
 

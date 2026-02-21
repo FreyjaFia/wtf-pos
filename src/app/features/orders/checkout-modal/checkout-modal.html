@@ -118,9 +118,9 @@
         <button
           type="button"
           class="btn pointer-events-auto flex-2 rounded-lg border-0 bg-[#047857] text-base font-semibold text-white shadow-lg transition-all hover:bg-[#065f46] hover:shadow-xl disabled:bg-gray-300 disabled:opacity-75 disabled:shadow-none"
-          [style.cursor]="isConfirmDisabled ? 'not-allowed' : 'pointer'"
+          [style.cursor]="isConfirmDisabled() ? 'not-allowed' : 'pointer'"
           (click)="confirmOrder()"
-          [disabled]="isConfirmDisabled"
+          [disabled]="isConfirmDisabled()"
         >
           Confirm & Pay
         </button>
