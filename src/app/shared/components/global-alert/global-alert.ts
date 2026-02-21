@@ -7,7 +7,7 @@ import { AlertService } from '@core/services';
   imports: [AlertComponent],
   template: `
     @if (alertService.alert().visible) {
-      <div class="fixed top-20 left-1/2 z-50 max-w-md -translate-x-1/2 px-4">
+      <div class="fixed right-6 bottom-6 z-9999 w-full max-w-sm">
         <app-alert
           [type]="alertService.alert().type"
           [message]="alertService.alert().message"

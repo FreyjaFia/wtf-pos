@@ -1,51 +1,21 @@
-﻿@switch (type()) {
-  @case ('success') {
-    <div
-      class="flex items-center gap-3 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-500"
-      [class.alert-dismissing]="isDismissing()"
-      role="alert"
-    >
-      <ng-container *ngTemplateOutlet="alertContent" />
-    </div>
-  }
-  @case ('error') {
-    <div
-      class="flex items-center gap-3 rounded-xl bg-red-50 p-4 text-sm text-red-500"
-      [class.alert-dismissing]="isDismissing()"
-      role="alert"
-    >
-      <ng-container *ngTemplateOutlet="alertContent" />
-    </div>
-  }
-  @case ('warning') {
-    <div
-      class="flex items-center gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-500"
-      [class.alert-dismissing]="isDismissing()"
-      role="alert"
-    >
-      <ng-container *ngTemplateOutlet="alertContent" />
-    </div>
-  }
-  @case ('info') {
-    <div
-      class="flex items-center gap-3 rounded-xl bg-indigo-50 p-4 text-sm text-indigo-600"
-      [class.alert-dismissing]="isDismissing()"
-      role="alert"
-    >
-      <ng-container *ngTemplateOutlet="alertContent" />
-    </div>
-  }
-}
-
-<ng-template #alertContent>
-  <app-icon [name]="iconId" [fill]="'none'" [class]="'h-5 w-5 shrink-0 stroke-current'" />
-  <span class="flex-1">{{ message() }}</span>
+﻿<div
+  class="toast-enter flex items-center gap-3 rounded-xl border-l-4 bg-white/80 px-4 py-3 text-sm shadow-lg backdrop-blur-md"
+  [class]="borderClass()"
+  [class.toast-exit]="isDismissing()"
+  role="alert"
+>
+  <app-icon
+    [name]="iconId"
+    [fill]="'none'"
+    [class]="'h-5 w-5 shrink-0 stroke-current ' + iconClass()"
+  />
+  <span class="flex-1 font-medium text-gray-800">{{ message() }}</span>
   <button
     type="button"
-    class="ml-auto shrink-0 cursor-pointer opacity-60 hover:opacity-100"
+    class="ml-auto shrink-0 cursor-pointer rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
     (click)="dismiss()"
     aria-label="Close alert"
   >
-    <app-icon name="icon-close" [fill]="'currentColor'" [class]="'h-5 w-5'" />
+    <app-icon name="icon-close" [fill]="'currentColor'" [class]="'h-4 w-4'" />
   </button>
-</ng-template>
+</div>

@@ -1,5 +1,4 @@
-﻿import { NgTemplateOutlet } from '@angular/common';
-import {
+﻿import {
   Component,
   computed,
   DestroyRef,
@@ -15,7 +14,7 @@ export type AlertType = 'info' | 'success' | 'error' | 'warning';
 
 @Component({
   selector: 'app-alert',
-  imports: [Icon, NgTemplateOutlet],
+  imports: [Icon],
   templateUrl: './alert.html',
   styleUrl: './alert.css',
 })
@@ -30,11 +29,10 @@ export class AlertComponent {
 
   constructor() {
     effect(() => {
-      // Trigger effect when message changes
       this.message();
       const timer = setTimeout(() => {
         this.dismiss();
-      }, 3000);
+      }, 4000);
       this.destroyRef.onDestroy(() => clearTimeout(timer));
     });
   }
@@ -43,22 +41,37 @@ export class AlertComponent {
     return `icon-${this.type()}`;
   }
 
-  protected readonly alertLabel = computed(() => {
-    const labels: Record<AlertType, string> = {
-      success: 'Success',
-      error: 'Error',
-      warning: 'Warning',
-      info: 'Info',
-    };
-    return labels[this.type()];
+  protected readonly borderClass = computed(() => {
+    switch (this.type()) {
+      case 'success':
+        return 'border-l-[#065f46]';
+      case 'error':
+        return 'border-l-[#991b1b]';
+      case 'warning':
+        return 'border-l-[#92400e]';
+      case 'info':
+        return 'border-l-[#1e40af]';
+    }
+  });
+
+  protected readonly iconClass = computed(() => {
+    switch (this.type()) {
+      case 'success':
+        return 'text-[#065f46]';
+      case 'error':
+        return 'text-[#991b1b]';
+      case 'warning':
+        return 'text-[#92400e]';
+      case 'info':
+        return 'text-[#1e40af]';
+    }
   });
 
   protected dismiss(): void {
     this.isDismissing.set(true);
 
-    // Wait for transition to complete before emitting dismissed event
     setTimeout(() => {
       this.dismissed.emit();
-    }, 300);
+    }, 250);
   }
 }
