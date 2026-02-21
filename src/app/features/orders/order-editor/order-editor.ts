@@ -51,27 +51,19 @@ import { CheckoutModal } from '../checkout-modal/checkout-modal';
   templateUrl: './order-editor.html',
 })
 export class OrderEditor implements OnInit {
-  protected onOrderSpecialInstructionsInput(event: Event) {
-    if (!this.canManageOrderActions()) {
-      return;
-    }
-
-    const value = event.target instanceof HTMLTextAreaElement ? event.target.value : '';
-    this.orderSpecialInstructions.set(value);
-  }
-  readonly checkoutModal = viewChild.required(CheckoutModal);
-  readonly addonSelector = viewChild.required(AddonSelectorComponent);
+  private readonly checkoutModal = viewChild.required(CheckoutModal);
+  private readonly addonSelector = viewChild.required(AddonSelectorComponent);
   private readonly productService = inject(ProductService);
   private readonly orderService = inject(OrderService);
   private readonly customerService = inject(CustomerService);
   private readonly authService = inject(AuthService);
-  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
 
   // Order-level special instructions state
   public readonly orderSpecialInstructions = signal('');
-  public readonly showOrderSpecialInstructions = signal(false);
+  protected readonly showOrderSpecialInstructions = signal(false);
 
   // Abandon order guard
   protected readonly showAbandonModal = signal(false);
@@ -102,7 +94,7 @@ export class OrderEditor implements OnInit {
   protected readonly selectedCustomerId = signal<string | null>(null);
   protected readonly isLoadingCustomers = signal(false);
   protected readonly isLoading = signal(false);
-  protected readonly editMode = signal(false);
+  protected readonly isEditMode = signal(false);
   protected readonly currentOrder = signal<OrderDto | null>(null);
 
   protected readonly isCompleted = computed(() => {
@@ -174,7 +166,7 @@ export class OrderEditor implements OnInit {
       return false;
     }
 
-    if (!this.editMode()) {
+    if (!this.isEditMode()) {
       return true;
     }
 
@@ -186,7 +178,7 @@ export class OrderEditor implements OnInit {
       return false;
     }
 
-    if (!this.editMode()) {
+    if (!this.isEditMode()) {
       return true;
     }
 
@@ -194,7 +186,7 @@ export class OrderEditor implements OnInit {
     return order?.status === OrderStatusEnum.Pending;
   });
   protected readonly canCreateCustomerInOrder = computed(() =>
-    this.authService.canCreateCustomerInOrder(this.editMode()),
+    this.authService.canCreateCustomerInOrder(this.isEditMode()),
   );
   protected readonly canManageOrderActions = computed(() => this.authService.canManageOrders());
   protected readonly selectedCustomerName = computed(() => {
@@ -247,12 +239,21 @@ export class OrderEditor implements OnInit {
     },
   ]);
 
+  protected onOrderSpecialInstructionsInput(event: Event) {
+    if (!this.canManageOrderActions()) {
+      return;
+    }
+
+    const value = event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+    this.orderSpecialInstructions.set(value);
+  }
+
   ngOnInit() {
     this.loadCustomers();
 
-    const orderId = this.activatedRoute.snapshot.paramMap.get('id');
+    const orderId = this.route.snapshot.paramMap.get('id');
     if (orderId) {
-      this.editMode.set(true);
+      this.isEditMode.set(true);
       this.loadOrderForEditing(orderId);
     } else {
       this.loadProducts();
@@ -263,7 +264,7 @@ export class OrderEditor implements OnInit {
     });
   }
 
-  loadOrderForEditing(orderId: string) {
+  private loadOrderForEditing(orderId: string) {
     this.isLoading.set(true);
 
     this.orderService
@@ -321,7 +322,7 @@ export class OrderEditor implements OnInit {
     this.cart.set(cartItems);
   }
 
-  loadProducts() {
+  private loadProducts() {
     this.isLoading.set(true);
 
     const { searchTerm } = this.filterForm.value;
@@ -446,7 +447,7 @@ export class OrderEditor implements OnInit {
     };
   }
 
-  addToCart(p: ProductDto) {
+  protected addToCart(p: ProductDto) {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -455,7 +456,7 @@ export class OrderEditor implements OnInit {
     this.addonSelector().open(p);
   }
 
-  onAddonSelected(event: {
+  protected onAddonSelected(event: {
     product: ProductDto;
     addOns: CartAddOnDto[];
     specialInstructions?: string | null;
@@ -509,7 +510,7 @@ export class OrderEditor implements OnInit {
     return item.price + this.getUnitAddOnTotal(item);
   }
 
-  increment(productId: string, index: number) {
+  protected increment(productId: string, index: number) {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -517,7 +518,7 @@ export class OrderEditor implements OnInit {
     this.cart.set(this.cart().map((c, i) => (i === index ? { ...c, qty: c.qty + 1 } : c)));
   }
 
-  decrement(productId: string, index: number) {
+  protected decrement(productId: string, index: number) {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -535,7 +536,7 @@ export class OrderEditor implements OnInit {
     }
   }
 
-  clearAll() {
+  protected clearAll() {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -668,7 +669,7 @@ export class OrderEditor implements OnInit {
       });
   }
 
-  cancel() {
+  protected cancel() {
     this.router.navigate(['/orders/list']);
   }
 
@@ -747,7 +748,7 @@ export class OrderEditor implements OnInit {
     this.showCancelOrderModal.set(false);
   }
 
-  checkout() {
+  protected checkout() {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -760,7 +761,7 @@ export class OrderEditor implements OnInit {
     this.checkoutModal().triggerOpen();
   }
 
-  onOrderSaved() {
+  protected onOrderSaved() {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -774,14 +775,14 @@ export class OrderEditor implements OnInit {
       return;
     }
 
-    if (this.editMode()) {
+    if (this.isEditMode()) {
       this.updateExistingOrder(OrderStatusEnum.Pending);
     } else {
       this.createNewOrder(OrderStatusEnum.Pending);
     }
   }
 
-  onOrderConfirmed(event: {
+  protected onOrderConfirmed(event: {
     paymentMethod: PaymentMethodEnum;
     amountReceived?: number;
     changeAmount?: number;
@@ -792,7 +793,7 @@ export class OrderEditor implements OnInit {
       return;
     }
 
-    if (this.editMode()) {
+    if (this.isEditMode()) {
       this.updateExistingOrder(OrderStatusEnum.Completed, event);
     } else {
       this.createNewOrder(OrderStatusEnum.Completed, event);
@@ -840,7 +841,6 @@ export class OrderEditor implements OnInit {
       },
       error: (err) => {
         this.isSavingOrder.set(false);
-        console.error('Failed to create order', err);
         this.alertService.error(err.message || this.alertService.getCreateErrorMessage('order'));
       },
     });
@@ -891,7 +891,6 @@ export class OrderEditor implements OnInit {
       },
       error: (err) => {
         this.isSavingOrder.set(false);
-        console.error('Failed to update order', err);
         this.alertService.error(err.message || this.alertService.getUpdateErrorMessage('order'));
       },
     });
@@ -916,12 +915,12 @@ export class OrderEditor implements OnInit {
     this.products.set(items);
   }
 
-  onProductCategoryFilterChange(selectedIds: (string | number)[]) {
+  protected onProductCategoryFilterChange(selectedIds: (string | number)[]) {
     this.selectedProductCategories.set(selectedIds as ProductCategoryEnum[]);
     this.applyFiltersToCache();
   }
 
-  onProductCategoryFilterReset() {
+  protected onProductCategoryFilterReset() {
     this.selectedProductCategories.set([]);
     this.applyFiltersToCache();
   }

@@ -1,12 +1,12 @@
 ﻿<div class="flex h-full gap-4">
   <div class="flex flex-1 flex-col">
-    @if (editMode() && isLoading()) {
+    @if (isEditMode() && isLoading()) {
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     }
 
-    @if (!editMode() || !isLoading()) {
+    @if (!isEditMode() || !isLoading()) {
       <!-- Header: Title on Left, Tools on Right -->
       <div class="mb-6 flex shrink-0 items-center justify-between">
         <!-- Left: Title -->
@@ -113,7 +113,7 @@
     <div class="shrink-0 border-b border-gray-100 p-4">
       <div class="flex items-center justify-between">
         <div>
-          @if (editMode()) {
+          @if (isEditMode()) {
             <h3 class="text-lg font-semibold">
               {{ isReadOnly() ? 'Order Details' : 'Edit Order' }}
             </h3>
@@ -179,7 +179,7 @@
       <div class="mt-2 text-sm opacity-70">{{ itemCount() }} items</div>
     </div>
 
-    @if (editMode() && isLoading()) {
+    @if (isEditMode() && isLoading()) {
       <div class="flex min-h-0 flex-1 flex-col items-center justify-center p-4">
         <span class="loading loading-spinner loading-lg text-gray-400"></span>
         <div class="mt-3 text-sm text-gray-400">Loading order items…</div>
@@ -377,7 +377,7 @@
           </div>
         } @else {
           <div class="flex gap-2">
-            @if (editMode()) {
+            @if (isEditMode()) {
               <button class="btn btn-neutral flex-1 rounded-lg" (click)="cancel()">
                 <app-icon name="icon-back" [class]="'h-5 w-5'" />
                 Back
@@ -396,10 +396,10 @@
               @if (isSavingOrder()) {
                 <span class="loading loading-spinner loading-xs mr-2"></span>
               }
-              {{ isSavingOrder() ? (editMode() ? 'Updating Order...' : 'Saving Order...') : 'Save' }}
+              {{ isSavingOrder() ? (isEditMode() ? 'Updating Order...' : 'Saving Order...') : 'Save' }}
             </button>
           </div>
-          @if (editMode() && isCancellable() && canManageOrderActions()) {
+          @if (isEditMode() && isCancellable() && canManageOrderActions()) {
             <button
               class="btn btn-error btn-outline w-full rounded-lg"
               (click)="openCancelOrderModal()"
