@@ -162,6 +162,7 @@
           type="button"
           class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
           (click)="cancelDelete()"
+          [disabled]="isDeleting()"
         >
           Cancel
         </button>
@@ -169,8 +170,12 @@
           type="button"
           class="cursor-pointer rounded-xl bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 hover:shadow-md active:scale-[0.97]"
           (click)="confirmDelete()"
+          [disabled]="isDeleting()"
         >
-          Delete Customer
+          @if (isDeleting()) {
+            <span class="loading loading-spinner loading-xs mr-2"></span>
+          }
+          {{ isDeleting() ? 'Deleting Customer...' : 'Delete Customer' }}
         </button>
       </div>
     </div>

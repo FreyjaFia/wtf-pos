@@ -23,6 +23,7 @@ export class CustomerDetailsComponent implements OnInit {
   protected readonly customer = signal<CustomerDto | null>(null);
   protected readonly isLoading = signal(false);
   protected readonly showDeleteModal = signal(false);
+  protected readonly isDeleting = signal(false);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -76,10 +77,18 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   protected cancelDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     this.showDeleteModal.set(false);
   }
 
   protected confirmDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     if (!this.canWriteCustomers()) {
       return;
     }
@@ -88,13 +97,16 @@ export class CustomerDetailsComponent implements OnInit {
     }
 
     const customerId = this.customer()!.id;
-    this.showDeleteModal.set(false);
+    this.isDeleting.set(true);
 
     this.customerService.deleteCustomer(customerId).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.showDeleteModal.set(false);
         this.router.navigateByUrl('/management/customers');
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('customer'));
       },
     });

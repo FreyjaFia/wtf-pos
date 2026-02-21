@@ -34,7 +34,11 @@
         @if (isSaving()) {
           <span class="loading loading-spinner loading-sm"></span>
         }
-        {{ isEditMode() ? 'Update' : 'Create' }} Customer
+        {{
+          isSaving()
+            ? (isEditMode() ? 'Updating Customer...' : 'Creating Customer...')
+            : (isEditMode() ? 'Update' : 'Create') + ' Customer'
+        }}
       </button>
     </div>
   </div>
@@ -142,7 +146,7 @@
                           @if (isDeletingImage()) {
                             <span class="loading loading-spinner loading-xs"></span>
                           }
-                          Remove current image
+                          {{ isDeletingImage() ? 'Removing image...' : 'Remove current image' }}
                         </button>
                       </div>
                     </div>

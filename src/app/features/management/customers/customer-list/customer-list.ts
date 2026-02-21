@@ -50,6 +50,7 @@ export class CustomerListComponent implements OnInit {
   protected readonly sortDirection = signal<SortDirection>('asc');
   protected readonly showDeleteModal = signal(false);
   protected readonly customerToDelete = signal<CustomerDto | null>(null);
+  protected readonly isDeleting = signal(false);
 
   protected readonly statusCounts = computed(() => {
     const cache = this.customersCache();
@@ -170,25 +171,36 @@ export class CustomerListComponent implements OnInit {
   }
 
   protected cancelDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     this.showDeleteModal.set(false);
     this.customerToDelete.set(null);
   }
 
   protected confirmDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     const customer = this.customerToDelete();
 
     if (!customer) {
       return;
     }
 
-    this.showDeleteModal.set(false);
-    this.customerToDelete.set(null);
+    this.isDeleting.set(true);
 
     this.customerService.deleteCustomer(customer.id).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.showDeleteModal.set(false);
+        this.customerToDelete.set(null);
         this.loadCustomers();
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.alertService.error(err.message);
       },
     });
