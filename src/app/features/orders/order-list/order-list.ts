@@ -2,13 +2,19 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertService, OrderService } from '@core/services';
+import { AlertService, ListStateService, OrderService } from '@core/services';
 import { BadgeComponent, FilterDropdown, Icon, type FilterOption } from '@shared/components';
 import { OrderDto, OrderStatusEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
 type SortColumn = 'orderNumber' | 'date' | 'totalAmount';
 type SortDirection = 'asc' | 'desc';
+type OrderListState = {
+  searchTerm: string;
+  selectedStatuses: OrderStatusEnum[];
+  sortColumn: SortColumn | null;
+  sortDirection: SortDirection;
+};
 
 interface OrderGroup {
   label: string;
@@ -21,9 +27,11 @@ interface OrderGroup {
   templateUrl: './order-list.html',
 })
 export class OrderList implements OnInit {
+  private readonly stateKey = 'orders:order-list';
   private readonly orderService = inject(OrderService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+  private readonly listState = inject(ListStateService);
 
   protected readonly filterForm = new FormGroup({
     searchTerm: new FormControl(''),
@@ -90,10 +98,12 @@ export class OrderList implements OnInit {
   ]);
 
   ngOnInit() {
+    this.restoreState();
     this.loadOrders();
 
     this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       this.applyFiltersToCache();
+      this.saveState();
     });
   }
 
@@ -123,11 +133,13 @@ export class OrderList implements OnInit {
   onStatusFilterChange(selectedIds: (string | number)[]) {
     this.selectedStatuses.set(selectedIds as OrderStatusEnum[]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   toggleSort(column: SortColumn) {
@@ -138,6 +150,7 @@ export class OrderList implements OnInit {
       this.sortDirection.set('desc');
     }
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   resetFilters() {
@@ -146,6 +159,7 @@ export class OrderList implements OnInit {
     });
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' | 'default' {
@@ -272,6 +286,34 @@ export class OrderList implements OnInit {
     }
 
     this.orders.set(items);
+  }
+
+  private restoreState() {
+    const state = this.listState.load<OrderListState>(this.stateKey, {
+      searchTerm: '',
+      selectedStatuses: [],
+      sortColumn: null,
+      sortDirection: 'desc',
+    });
+
+    this.filterForm.patchValue(
+      {
+        searchTerm: state.searchTerm,
+      },
+      { emitEvent: false },
+    );
+    this.selectedStatuses.set(state.selectedStatuses);
+    this.sortColumn.set(state.sortColumn);
+    this.sortDirection.set(state.sortDirection);
+  }
+
+  private saveState() {
+    this.listState.save<OrderListState>(this.stateKey, {
+      searchTerm: this.filterForm.controls.searchTerm.value ?? '',
+      selectedStatuses: this.selectedStatuses(),
+      sortColumn: this.sortColumn(),
+      sortDirection: this.sortDirection(),
+    });
   }
 }
 

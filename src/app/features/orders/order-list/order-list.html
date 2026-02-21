@@ -30,6 +30,7 @@
           [icon]="'icon-status'"
           [options]="filterOptions()"
           [selectedIds]="selectedStatuses()"
+          [showSelectedState]="true"
           (filterChange)="onStatusFilterChange($event)"
           (filterReset)="onStatusFilterReset()"
         />
@@ -175,7 +176,7 @@
               <!-- Order Cards for this day -->
               @for (order of group.orders; track order.id) {
                 <div
-                  class="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
+                  class="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-shadow duration-200 hover:shadow-xl"
                   role="button"
                   tabindex="0"
                   (click)="editOrder(order)"
