@@ -181,6 +181,7 @@ export class ProductDetailsComponent implements OnInit {
       next: () => {
         this.isDeleting.set(false);
         this.showDeleteModal.set(false);
+        this.alertService.successDeleted('Product');
         this.router.navigateByUrl('/management/products');
       },
       error: (err) => {
