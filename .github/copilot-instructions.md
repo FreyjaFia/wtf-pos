@@ -61,30 +61,64 @@ This application follows a **feature-based architecture** with clear separation 
 ```
 src/app/
 ├── core/                      # App-wide singleton services and infrastructure
-│   ├── auth/                  # Authentication module
-│   │   ├── auth.service.ts    # Authentication service
-│   │   ├── auth.guard.ts      # Route guard
-│   │   └── auth.guard.spec.ts # Guard tests
+│   ├── guards/                # Route guards
+│   │   ├── auth.guard.ts      # Authentication guard
+│   │   ├── role.guard.ts      # Role-based access guard
+│   │   └── unsaved-changes.guard.ts
+│   ├── interceptors/          # HTTP interceptors
+│   │   ├── auth.interceptor.ts
+│   │   └── utc-date.interceptor.ts
 │   └── services/              # App-wide API/data services
-│       ├── product.service.ts # Product API service
-│       └── order.service.ts   # Order API service
+│       ├── alert.service.ts
+│       ├── auth.service.ts
+│       ├── customer.service.ts
+│       ├── list-state.service.ts
+│       ├── order.service.ts
+│       ├── product.service.ts
+│       └── user.service.ts
 │
 ├── shared/                    # Reusable UI components and models
 │   ├── components/            # Shared components
+│   │   ├── addon-selector/
+│   │   ├── addons-swapper/
+│   │   ├── alert/
+│   │   ├── avatar/
+│   │   ├── badge/
+│   │   ├── customer-dropdown/
 │   │   ├── dock/
+│   │   ├── filter-dropdown/
+│   │   ├── global-alert/
 │   │   ├── header/
 │   │   ├── icons/
-│   │   └── layout/
+│   │   ├── layout/
+│   │   ├── price-history-drawer/
+│   │   └── products-swapper/
 │   └── models/                # Shared data models/interfaces
+│       ├── auth.models.ts
+│       ├── cart.models.ts
+│       ├── customer.models.ts
+│       ├── order.models.ts
 │       ├── product.models.ts
-│       └── order.models.ts
+│       └── user.models.ts
 │
 └── features/                  # Feature modules
-    ├── home/
     ├── login/
+    ├── management/
+    │   ├── customers/
+    │   │   ├── customer-details/
+    │   │   ├── customer-editor/
+    │   │   └── customer-list/
+    │   ├── products/
+    │   │   ├── product-details/
+    │   │   ├── product-editor/
+    │   │   └── product-list/
+    │   └── users/
+    │       ├── user-details/
+    │       ├── user-editor/
+    │       └── user-list/
     └── orders/
-        ├── orders.ts
-        ├── new-order/
+        ├── checkout-modal/
+        ├── order-editor/
         └── order-list/
 ```
 
@@ -135,7 +169,7 @@ if (condition) {
 if (condition) doSomething();
 
 // ✓ Correct - with logical grouping
-login() {
+protected login(): void {
   const credentials = this.getCredentials();
 
   if (!credentials.isValid) {
@@ -168,7 +202,7 @@ export const environment = {
 **Usage:**
 
 ```typescript
-import { environment } from '../../../environments/environment.development';
+import { environment } from '@environments/environment.development';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -185,6 +219,36 @@ export class ProductService {
 
 - **Prefer `inject()` over constructor injection:** Use the `inject()` function for dependencies for readability and type inference.
 
+### Imports
+
+- **Always use path aliases:** Use the configured TypeScript path aliases instead of relative paths for cross-module imports. The project defines these aliases in `tsconfig.json`:
+
+| Alias              | Maps to              |
+| ------------------ | -------------------- |
+| `@app/*`           | `app/*`              |
+| `@core/*`          | `app/core/*`         |
+| `@features/*`      | `app/features/*`     |
+| `@shared/*`        | `app/shared/*`       |
+| `@environments/*`  | `environments/*`     |
+
+- **When to use aliases:** For any import that crosses module boundaries (e.g., a feature importing from core or shared).
+- **When relative paths are fine:** For imports within the same feature or module (sibling/child files).
+- **Never use deep relative paths:** Avoid `../../../core/services/...` — use `@core/services/...` instead.
+
+**Example:**
+
+```typescript
+// ✓ Correct — path aliases
+import { AuthService } from '@core/services';
+import { Product } from '@shared/models';
+import { environment } from '@environments/environment.development';
+
+// ✗ Incorrect — deep relative paths
+import { AuthService } from '../../../core/services/auth.service';
+import { Product } from '../../../shared/models/product.models';
+import { environment } from '../../../environments/environment.development';
+```
+
 ### Forms
 
 - **Always use Reactive Forms:** Use `ReactiveFormsModule` with `FormControl`, `FormGroup`, and `FormBuilder` instead of template-driven forms (`ngModel`).
@@ -199,7 +263,7 @@ protected readonly filterForm = new FormGroup({
   isActive: new FormControl(true)
 });
 
-ngOnInit() {
+public ngOnInit(): void {
   this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
     this.loadData();
   });
@@ -218,6 +282,136 @@ ngOnInit() {
 - **Event handler naming:** Name handlers for what they do, not the event (e.g., `saveUserData()` instead of `handleClick()`).
 - **Lifecycle hooks:** Keep lifecycle methods simple; delegate logic to named methods.
 - **Lifecycle interfaces:** Implement TypeScript interfaces for lifecycle hooks (e.g., `OnInit`).
+
+### Access Modifiers & Return Types
+
+- **Always use explicit modifiers:** Every variable and method must have an access modifier (`private`, `protected`, `public`, or `readonly`). Never leave members with implicit/default access.
+- **Always specify return types on methods:** Every method must have an explicit return type (e.g., `void`, `string`, `Observable<Product[]>`). Do not rely on type inference for method return types.
+- **Combine `readonly` with access modifiers:** For immutable properties, use both an access modifier and `readonly` (e.g., `private readonly`, `protected readonly`).
+- **Use `protected` for template-bound members:** Members accessed only in the component template should be `protected`.
+- **Use `private` for internal logic:** Members not accessed in the template or by subclasses should be `private`.
+- **Use `public` sparingly:** Only use `public` for members that are part of the component's public API (accessed by parent components or external code).
+
+**Example:**
+
+```typescript
+// ✓ Correct — explicit modifiers and return types
+private readonly authService = inject(AuthService);
+protected readonly isLoading = signal(false);
+
+public ngOnInit(): void {
+  this.loadData();
+}
+
+protected submitForm(): void {
+  this.authService.login(this.form.value);
+}
+
+private loadData(): void {
+  this.isLoading.set(true);
+  // ...
+}
+
+private formatDate(date: Date): string {
+  return date.toISOString();
+}
+
+// ✗ Incorrect — missing modifiers and return types
+authService = inject(AuthService);
+isLoading = signal(false);
+
+ngOnInit() {
+  this.loadData();
+}
+
+submitForm() {
+  this.authService.login(this.form.value);
+}
+
+loadData() {
+  this.isLoading.set(true);
+}
+```
+
+### Class Member Ordering
+
+Organize class members in a consistent, predictable order. Group by purpose and modifier, with lifecycle methods always first.
+
+**Ordering rules:**
+
+1. **Injected dependencies** (`private readonly` / `protected readonly` via `inject()`)
+2. **Inputs, outputs, and queries** (`readonly input()`, `readonly output()`, `readonly viewChild()`)
+3. **Public properties**
+4. **Protected properties** (template-bound signals, computed, form groups, etc.)
+5. **Private properties**
+6. **Lifecycle methods** (`ngOnInit`, `ngOnChanges`, `ngOnDestroy`, etc.) — always come before other methods
+7. **Public methods**
+8. **Protected methods** (template event handlers, etc.)
+9. **Private helper methods**
+
+**Example:**
+
+```typescript
+@Component({ ... })
+export class ProductEditorComponent implements OnInit, OnDestroy {
+  // 1. Injected dependencies
+  private readonly productService = inject(ProductService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  // 2. Inputs, outputs, queries
+  public readonly productId = input.required<number>();
+  public readonly saved = output<Product>();
+
+  // 3-5. Properties grouped by modifier
+  protected readonly isLoading = signal(false);
+  protected readonly form = new FormGroup({
+    name: new FormControl('', Validators.required),
+    price: new FormControl(0),
+  });
+  private previousValues: Partial<Product> | null = null;
+
+  // 6. Lifecycle methods — always first among methods
+  public ngOnInit(): void {
+    this.loadProduct();
+  }
+
+  public ngOnDestroy(): void {
+    this.cleanup();
+  }
+
+  // 7. Public methods
+  // (none in this example)
+
+  // 8. Protected methods (template handlers)
+  protected submitForm(): void {
+    if (!this.form.valid) {
+      return;
+    }
+
+    this.productService.update(this.form.value);
+    this.saved.emit(this.form.value as Product);
+  }
+
+  protected resetForm(): void {
+    this.form.reset(this.previousValues);
+  }
+
+  // 9. Private helper methods
+  private loadProduct(): void {
+    this.isLoading.set(true);
+    this.productService.getById(this.productId()).subscribe((p) => {
+      this.previousValues = p;
+      this.form.patchValue(p);
+      this.isLoading.set(false);
+    });
+  }
+
+  private cleanup(): void {
+    // teardown logic
+  }
+}
+```
 
 ## Styling
 
@@ -415,6 +609,7 @@ Write a detailed body when:
    - Commit all updates to a single service together
    - Commit all usages of a service together
    - Commit component changes together
+   - **When the same type of change spans multiple files, group them into one commit** (e.g., adding access modifiers to all management components = one commit, not one per file)
 
 2. **Separate concerns:**
    - Model changes in one commit
@@ -423,7 +618,12 @@ Write a detailed body when:
    - Index/export updates in their own commit
    - Style/UI changes last
 
-3. **Example workflow:**
+3. **Group by change type, not by file:**
+   - If multiple files receive the **same kind of change** (e.g., adding modifiers, renaming a method, updating imports), batch them into a single commit
+   - If a single file receives **different kinds of changes** (e.g., a new feature + a style fix), split them into separate commits
+   - The goal: each commit represents **one logical change** that can be described in a single subject line
+
+4. **Example workflow:**
 
    ```
    Commit 1: Update product.models.ts - Add code field to DTOs
@@ -435,12 +635,27 @@ Write a detailed body when:
    Commit 7: Update templates - Integrate global alert
    ```
 
-4. **Use git add with file paths:**
+   **Grouping example (same change across files):**
+
+   ```
+   # ✓ Correct — one commit for the same change type across files
+   git add src/app/features/management/customers/**
+   git add src/app/features/management/products/**
+   git add src/app/features/management/users/**
+   git commit -m "Add access modifiers to management components"
+
+   # ✗ Incorrect — separate commits for the same change per file
+   git commit -m "Add modifiers to customer-list"
+   git commit -m "Add modifiers to product-list"
+   git commit -m "Add modifiers to user-list"
+   ```
+
+5. **Use git add with file paths:**
    - `git add src/app/core/services/product.service.ts` (single file)
    - `git add src/app/features/products/**` (feature changes only)
    - Avoid `git add .` (commits everything indiscriminately)
 
-5. **Why this matters:**
+6. **Why this matters:**
    - Easier to review: reviewers can understand each commit's purpose
    - Easier to revert: remove one change without affecting others
    - Git history is cleaner: bisecting for bugs becomes tractable
