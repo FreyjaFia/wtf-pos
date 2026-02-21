@@ -34,7 +34,13 @@
         @if (isSaving()) {
           <span class="loading loading-spinner loading-sm"></span>
         }
-        {{ isProfileMode() ? 'Save Profile' : (isEditMode() ? 'Update' : 'Create') + ' User' }}
+        {{
+          isSaving()
+            ? (isProfileMode()
+              ? 'Saving Profile...'
+              : (isEditMode() ? 'Updating User...' : 'Creating User...'))
+            : (isProfileMode() ? 'Save Profile' : (isEditMode() ? 'Update' : 'Create') + ' User')
+        }}
       </button>
     </div>
   </div>
@@ -313,7 +319,7 @@
                             @if (isDeletingImage()) {
                               <span class="loading loading-spinner loading-xs"></span>
                             }
-                            Remove current image
+                            {{ isDeletingImage() ? 'Removing image...' : 'Remove current image' }}
                           </button>
                         </div>
                       </div>

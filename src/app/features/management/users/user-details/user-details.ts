@@ -24,6 +24,7 @@ export class UserDetailsComponent implements OnInit {
   protected readonly user = signal<UserDto | null>(null);
   protected readonly isLoading = signal(false);
   protected readonly showDeleteModal = signal(false);
+  protected readonly isDeleting = signal(false);
   // For image preview consistency with editor
   protected readonly currentImageUrl = signal<string | null>(null);
 
@@ -84,10 +85,18 @@ export class UserDetailsComponent implements OnInit {
   }
 
   protected cancelDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     this.showDeleteModal.set(false);
   }
 
   protected confirmDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -98,18 +107,20 @@ export class UserDetailsComponent implements OnInit {
     }
 
     const userId = this.user()!.id;
+    this.isDeleting.set(true);
 
     this.userService.deleteUser(userId).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.showDeleteModal.set(false);
         this.alertService.successDeleted('User');
         this.goBack();
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.alertService.error(err.message);
       },
     });
-
-    this.showDeleteModal.set(false);
   }
 
   protected canWriteManagement(): boolean {

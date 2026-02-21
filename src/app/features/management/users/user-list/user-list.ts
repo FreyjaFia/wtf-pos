@@ -52,6 +52,7 @@ export class UserListComponent implements OnInit {
   protected readonly sortDirection = signal<SortDirection>('asc');
   protected readonly showDeleteModal = signal(false);
   protected readonly userToDelete = signal<UserDto | null>(null);
+  protected readonly isDeleting = signal(false);
 
   protected readonly statusCounts = computed(() => {
     const cache = this.usersCache();
@@ -203,11 +204,19 @@ export class UserListComponent implements OnInit {
   }
 
   protected cancelDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     this.showDeleteModal.set(false);
     this.userToDelete.set(null);
   }
 
   protected confirmDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -219,14 +228,17 @@ export class UserListComponent implements OnInit {
       return;
     }
 
-    this.showDeleteModal.set(false);
-    this.userToDelete.set(null);
+    this.isDeleting.set(true);
 
     this.userService.deleteUser(user.id).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.showDeleteModal.set(false);
+        this.userToDelete.set(null);
         this.loadUsers();
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.alertService.error(err.message);
       },
     });
