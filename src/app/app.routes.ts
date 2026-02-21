@@ -132,6 +132,7 @@ export const routes: Routes = [
               {
                 path: 'new',
                 component: UserEditorComponent,
+                canDeactivate: [unsavedChangesGuard],
                 canActivate: [roleGuard],
                 data: { roles: ['Admin'] },
               },
@@ -142,6 +143,7 @@ export const routes: Routes = [
               {
                 path: 'edit/:id',
                 component: UserEditorComponent,
+                canDeactivate: [unsavedChangesGuard],
                 canActivate: [roleGuard],
                 data: { roles: ['Admin'] },
               },
