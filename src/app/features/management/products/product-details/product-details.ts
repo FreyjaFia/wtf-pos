@@ -1,6 +1,6 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertService, AuthService, ProductService } from '@core/services';
 import {
   AvatarComponent,
@@ -19,7 +19,7 @@ import {
 
 @Component({
   selector: 'app-product-details',
-  imports: [CommonModule, Icon, BadgeComponent, PriceHistoryDrawerComponent, AvatarComponent],
+  imports: [CommonModule, RouterLink, Icon, BadgeComponent, PriceHistoryDrawerComponent, AvatarComponent],
   templateUrl: './product-details.html',
   host: {
     class: 'block h-full',

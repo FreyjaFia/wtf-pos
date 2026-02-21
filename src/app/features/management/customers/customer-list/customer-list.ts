@@ -1,8 +1,8 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AlertService, AuthService, CustomerService } from '@core/services';
+import { Router, RouterLink } from '@angular/router';
+import { AlertService, AuthService, CustomerService, ListStateService } from '@core/services';
 import {
   AvatarComponent,
   BadgeComponent,
@@ -13,14 +13,22 @@ import {
 import { CustomerDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
+
 type SortColumn = 'name' | 'address';
 type SortDirection = 'asc' | 'desc';
+type CustomerListState = {
+  searchTerm: string;
+  selectedStatuses: string[];
+  sortColumn: SortColumn | null;
+  sortDirection: SortDirection;
+};
 
 @Component({
   selector: 'app-customer-list',
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     Icon,
     FilterDropdown,
     BadgeComponent,
@@ -30,10 +38,12 @@ type SortDirection = 'asc' | 'desc';
   host: { class: 'flex-1 min-h-0' },
 })
 export class CustomerListComponent implements OnInit {
+  private readonly stateKey = 'management:customer-list';
   private readonly customerService = inject(CustomerService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+  private readonly listState = inject(ListStateService);
 
   protected readonly customers = signal<CustomerDto[]>([]);
   protected readonly customersCache = signal<CustomerDto[]>([]);
@@ -86,10 +96,12 @@ export class CustomerListComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.restoreState();
     this.loadCustomers();
 
     this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       this.applyFiltersToCache();
+      this.saveState();
     });
   }
 
@@ -213,19 +225,51 @@ export class CustomerListComponent implements OnInit {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
+
+    this.saveState();
   }
 
   protected onStatusFilterChange(selectedIds: (string | number)[]) {
     this.selectedStatuses.set(selectedIds as string[]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected canWriteCustomers(): boolean {
     return this.authService.canWriteCustomers();
+  }
+
+  private restoreState() {
+    const state = this.listState.load<CustomerListState>(this.stateKey, {
+      searchTerm: '',
+      selectedStatuses: ['active'],
+      sortColumn: 'name',
+      sortDirection: 'asc',
+    });
+
+    this.filterForm.patchValue(
+      {
+        searchTerm: state.searchTerm,
+      },
+      { emitEvent: false },
+    );
+    this.selectedStatuses.set(state.selectedStatuses);
+    this.sortColumn.set(state.sortColumn);
+    this.sortDirection.set(state.sortDirection);
+  }
+
+  private saveState() {
+    this.listState.save<CustomerListState>(this.stateKey, {
+      searchTerm: this.filterForm.controls.searchTerm.value ?? '',
+      selectedStatuses: this.selectedStatuses(),
+      sortColumn: this.sortColumn(),
+      sortDirection: this.sortDirection(),
+    });
   }
 }

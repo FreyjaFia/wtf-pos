@@ -1,21 +1,30 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AlertService, AuthService, ProductService } from '@core/services';
+import { Router, RouterLink } from '@angular/router';
+import { AlertService, AuthService, ListStateService, ProductService } from '@core/services';
 import type { FilterOption } from '@shared/components';
 import { AvatarComponent, BadgeComponent, FilterDropdown, Icon } from '@shared/components';
 import { ProductCategoryEnum, ProductDto } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
+
 type SortColumn = 'name' | 'price';
 type SortDirection = 'asc' | 'desc';
+type ProductListState = {
+  searchTerm: string;
+  selectedTypes: number[];
+  selectedStatuses: string[];
+  sortColumn: SortColumn | null;
+  sortDirection: SortDirection;
+};
 
 @Component({
   selector: 'app-product-list',
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     Icon,
     FilterDropdown,
     BadgeComponent,
@@ -25,10 +34,12 @@ type SortDirection = 'asc' | 'desc';
   host: { class: 'flex-1 min-h-0' },
 })
 export class ProductListComponent implements OnInit {
+  private readonly stateKey = 'management:product-list';
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
   private readonly authService = inject(AuthService);
+  private readonly listState = inject(ListStateService);
 
   protected readonly products = signal<ProductDto[]>([]);
   protected readonly productsCache = signal<ProductDto[]>([]);
@@ -118,10 +129,12 @@ export class ProductListComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.restoreState();
     this.loadProducts();
 
     this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       this.applyFiltersToCache();
+      this.saveState();
     });
   }
 
@@ -263,30 +276,67 @@ export class ProductListComponent implements OnInit {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
+
+    this.saveState();
   }
 
   protected onTypeFilterChange(selectedIds: (string | number)[]) {
     this.selectedTypes.set(selectedIds as number[]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onTypeFilterReset() {
     this.selectedTypes.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onStatusFilterChange(selectedIds: (string | number)[]) {
     this.selectedStatuses.set(selectedIds as string[]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected canWriteManagement(): boolean {
     return this.authService.canWriteManagement();
+  }
+
+  private restoreState() {
+    const state = this.listState.load<ProductListState>(this.stateKey, {
+      searchTerm: '',
+      selectedTypes: [],
+      selectedStatuses: ['active'],
+      sortColumn: 'name',
+      sortDirection: 'asc',
+    });
+
+    this.filterForm.patchValue(
+      {
+        searchTerm: state.searchTerm,
+      },
+      { emitEvent: false },
+    );
+    this.selectedTypes.set(state.selectedTypes);
+    this.selectedStatuses.set(state.selectedStatuses);
+    this.sortColumn.set(state.sortColumn);
+    this.sortDirection.set(state.sortDirection);
+  }
+
+  private saveState() {
+    this.listState.save<ProductListState>(this.stateKey, {
+      searchTerm: this.filterForm.controls.searchTerm.value ?? '',
+      selectedTypes: this.selectedTypes(),
+      selectedStatuses: this.selectedStatuses(),
+      sortColumn: this.sortColumn(),
+      sortDirection: this.sortDirection(),
+    });
   }
 }
 

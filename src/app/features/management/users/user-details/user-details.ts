@@ -1,6 +1,6 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertService, AuthService, UserService } from '@app/core/services';
 import { AvatarComponent, BadgeComponent, Icon } from '@app/shared/components';
 import { UserDto, UserRoleEnum } from '@app/shared/models';
@@ -8,7 +8,7 @@ import { UserDto, UserRoleEnum } from '@app/shared/models';
 @Component({
   selector: 'app-user-details',
   standalone: true,
-  imports: [CommonModule, Icon, BadgeComponent, AvatarComponent],
+  imports: [CommonModule, RouterLink, Icon, BadgeComponent, AvatarComponent],
   templateUrl: './user-details.html',
   host: {
     class: 'block h-full',

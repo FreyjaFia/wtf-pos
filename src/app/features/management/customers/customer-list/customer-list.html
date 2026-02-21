@@ -30,6 +30,7 @@
           [icon]="'icon-status'"
           [options]="statusOptions()"
           [selectedIds]="selectedStatuses()"
+          [showSelectedState]="true"
           (filterChange)="onStatusFilterChange($event)"
           (filterReset)="onStatusFilterReset()"
         />
@@ -62,13 +63,13 @@
 
       <!-- Add Customer Button -->
       @if (canWriteCustomers()) {
-        <button
+        <a
           class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-          (click)="navigateToEditor()"
+          [routerLink]="['/management/customers/new']"
         >
           <app-icon name="icon-plus" [class]="'h-4 w-4'" />
           Add Customer
-        </button>
+        </a>
       }
     </div>
   </div>
@@ -151,63 +152,58 @@
           @if (sortedCustomers().length > 0) {
             @for (customer of sortedCustomers(); track customer.id) {
               <div
-                class="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
-                (click)="navigateToDetails(customer.id)"
-                (keydown.enter)="navigateToDetails(customer.id)"
-                (keydown.space)="navigateToDetails(customer.id)"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="
-                  'View details for ' + customer.firstName + ' ' + customer.lastName
-                "
+                class="grid grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-shadow duration-200 hover:shadow-xl"
               >
-                <!-- Avatar and Name -->
-                <div class="col-span-4 flex items-center gap-4">
-                  <div class="w-14 shrink-0">
-                    <div class="flex h-14 w-14 items-center justify-center">
-                      <app-avatar
-                        [label]="`${customer.firstName || ''} ${customer.lastName || ''}`"
-                        [size]="36"
-                        [imageUrl]="customer.imageUrl"
-                      />
+                <a
+                  class="col-span-11 grid grid-cols-11 items-center gap-4 self-stretch cursor-pointer no-underline focus:outline-none"
+                  [routerLink]="['/management/customers/details', customer.id]"
+                  [attr.aria-label]="
+                    'View details for ' + customer.firstName + ' ' + customer.lastName
+                  "
+                >
+                  <!-- Avatar and Name -->
+                  <div class="col-span-4 flex items-center gap-4">
+                    <div class="w-14 shrink-0">
+                      <div class="flex h-14 w-14 items-center justify-center">
+                        <app-avatar
+                          [label]="`${customer.firstName || ''} ${customer.lastName || ''}`"
+                          [size]="36"
+                          [imageUrl]="customer.imageUrl"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="min-w-0">
+                      <h3 class="font-semibold text-gray-900">
+                        {{ customer.firstName }} {{ customer.lastName }}
+                      </h3>
                     </div>
                   </div>
 
-                  <div class="min-w-0">
-                    <h3 class="font-semibold text-gray-900">
-                      {{ customer.firstName }} {{ customer.lastName }}
-                    </h3>
+                  <!-- Status -->
+                  <div class="col-span-2 flex justify-center">
+                    @if (customer.isActive) {
+                      <app-badge variant="success">Active</app-badge>
+                    } @else {
+                      <app-badge variant="error">Inactive</app-badge>
+                    }
                   </div>
-                </div>
 
-                <!-- Status -->
-                <div class="col-span-2 flex justify-center">
-                  @if (customer.isActive) {
-                    <app-badge variant="success">Active</app-badge>
-                  } @else {
-                    <app-badge variant="error">Inactive</app-badge>
-                  }
-                </div>
-
-                <!-- Address -->
-                <div class="col-span-5">
-                  <div class="truncate text-center text-sm text-gray-700">
-                    {{ customer.address }}
+                  <!-- Address -->
+                  <div class="col-span-5">
+                    <div class="truncate text-center text-sm text-gray-700">
+                      {{ customer.address }}
+                    </div>
                   </div>
-                </div>
+                </a>
 
                 <!-- Actions -->
-                <div
-                  class="col-span-1 flex justify-end"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  role="presentation"
-                >
+                <div class="col-span-1 flex justify-end" role="presentation">
                   @if (canWriteCustomers()) {
                     <div class="dropdown dropdown-end">
                       <button
                         type="button"
-                        class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
+                        class="cursor-pointer rounded-lg p-1.5 transition-all hover:bg-gray-100 active:scale-95"
                         tabindex="0"
                         aria-label="Customer actions"
                       >
@@ -222,27 +218,20 @@
                         class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
                       >
                         <li>
-                          <button
-                            type="button"
-                            (click)="navigateToEditor(customer.id); $event.stopPropagation()"
-                            (keydown.enter)="
-                              navigateToEditor(customer.id); $event.stopPropagation()
-                            "
-                            (keydown.space)="
-                              navigateToEditor(customer.id); $event.stopPropagation()
-                            "
+                          <a
+                            [routerLink]="['/management/customers/edit', customer.id]"
                             class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
                           >
                             <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
                             Edit
-                          </button>
+                          </a>
                         </li>
                         <li>
                           <button
                             type="button"
-                            (click)="deleteCustomer(customer); $event.stopPropagation()"
-                            (keydown.enter)="deleteCustomer(customer); $event.stopPropagation()"
-                            (keydown.space)="deleteCustomer(customer); $event.stopPropagation()"
+                            (click)="deleteCustomer(customer)"
+                            (keydown.enter)="deleteCustomer(customer)"
+                            (keydown.space)="deleteCustomer(customer)"
                             class="flex items-center gap-2 text-red-600 hover:bg-red-50"
                           >
                             <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />

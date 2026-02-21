@@ -2,13 +2,13 @@
   <!-- Sticky Header: Back + Title on Left, Actions on Right -->
   <div class="mb-6 flex shrink-0 items-center justify-between">
     <div class="flex min-w-0 items-center gap-4">
-      <button
+      <a
         class="cursor-pointer rounded-lg p-2 transition-all hover:bg-gray-100 active:scale-95"
-        (click)="goBack()"
+        [routerLink]="['/management/customers']"
         aria-label="Go back"
       >
         <app-icon name="icon-back" [class]="'h-5 w-5 text-gray-600'" />
-      </button>
+      </a>
       @if (customer()) {
         <div class="min-w-0">
           <div class="flex items-center gap-3">
@@ -27,15 +27,15 @@
 
     @if (customer() && canWriteCustomers()) {
       <div class="flex shrink-0 gap-2">
-        <button
+        <a
           class="btn btn-sm gap-2 rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-          (click)="navigateToEdit()"
+          [routerLink]="['/management/customers/edit', customer()!.id]"
         >
           <app-icon name="icon-edit" [class]="'h-4 w-4'" />
           Edit
-        </button>
+        </a>
         <button
-          class="btn btn-ghost btn-sm gap-2 text-red-500 hover:bg-red-50 hover:text-red-600"
+          class="inline-flex items-center gap-2 cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-red-500 transition-all hover:bg-red-50 hover:text-red-600 active:scale-95"
           (click)="deleteCustomer()"
         >
           <app-icon name="icon-delete" [class]="'h-4 w-4'" />

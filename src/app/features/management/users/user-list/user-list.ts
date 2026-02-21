@@ -1,8 +1,8 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AlertService, AuthService, UserService } from '@core/services';
+import { Router, RouterLink } from '@angular/router';
+import { AlertService, AuthService, ListStateService, UserService } from '@core/services';
 import {
     AvatarComponent,
     BadgeComponent,
@@ -13,8 +13,16 @@ import {
 import { UserDto, UserRoleEnum } from '@shared/models';
 import { debounceTime } from 'rxjs';
 
+
 type SortColumn = 'name' | 'role';
 type SortDirection = 'asc' | 'desc';
+type UserListState = {
+  searchTerm: string;
+  selectedRoles: number[];
+  selectedStatuses: string[];
+  sortColumn: SortColumn | null;
+  sortDirection: SortDirection;
+};
 
 @Component({
   selector: 'app-user-list',
@@ -22,6 +30,7 @@ type SortDirection = 'asc' | 'desc';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterLink,
     Icon,
     FilterDropdown,
     BadgeComponent,
@@ -31,10 +40,12 @@ type SortDirection = 'asc' | 'desc';
   host: { class: 'flex-1 min-h-0' },
 })
 export class UserListComponent implements OnInit {
+  private readonly stateKey = 'management:user-list';
   private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
   private readonly authService = inject(AuthService);
+  private readonly listState = inject(ListStateService);
 
   protected readonly users = signal<UserDto[]>([]);
   protected readonly usersCache = signal<UserDto[]>([]);
@@ -111,10 +122,12 @@ export class UserListComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.restoreState();
     this.loadUsers();
 
     this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => {
       this.applyFiltersToCache();
+      this.saveState();
     });
   }
 
@@ -251,26 +264,32 @@ export class UserListComponent implements OnInit {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
+
+    this.saveState();
   }
 
   protected onStatusFilterChange(selectedIds: (string | number)[]) {
     this.selectedStatuses.set(selectedIds as string[]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onRoleFilterChange(selectedIds: (string | number)[]) {
     this.selectedRoles.set(selectedIds as number[]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onRoleFilterReset() {
     this.selectedRoles.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
+    this.saveState();
   }
 
   protected getRoleLabel(user: UserDto): string {
@@ -283,5 +302,36 @@ export class UserListComponent implements OnInit {
 
   protected canWriteManagement(): boolean {
     return this.authService.canWriteManagement();
+  }
+
+  private restoreState() {
+    const state = this.listState.load<UserListState>(this.stateKey, {
+      searchTerm: '',
+      selectedRoles: [],
+      selectedStatuses: ['active'],
+      sortColumn: 'name',
+      sortDirection: 'asc',
+    });
+
+    this.filterForm.patchValue(
+      {
+        searchTerm: state.searchTerm,
+      },
+      { emitEvent: false },
+    );
+    this.selectedRoles.set(state.selectedRoles);
+    this.selectedStatuses.set(state.selectedStatuses);
+    this.sortColumn.set(state.sortColumn);
+    this.sortDirection.set(state.sortDirection);
+  }
+
+  private saveState() {
+    this.listState.save<UserListState>(this.stateKey, {
+      searchTerm: this.filterForm.controls.searchTerm.value ?? '',
+      selectedRoles: this.selectedRoles(),
+      selectedStatuses: this.selectedStatuses(),
+      sortColumn: this.sortColumn(),
+      sortDirection: this.sortDirection(),
+    });
   }
 }

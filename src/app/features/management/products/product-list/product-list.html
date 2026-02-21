@@ -30,6 +30,7 @@
           [icon]="'icon-category'"
           [options]="typeOptions()"
           [selectedIds]="selectedTypes()"
+          [showSelectedState]="true"
           (filterChange)="onTypeFilterChange($event)"
           (filterReset)="onTypeFilterReset()"
         />
@@ -42,6 +43,7 @@
           [icon]="'icon-status'"
           [options]="statusOptions()"
           [selectedIds]="selectedStatuses()"
+          [showSelectedState]="true"
           (filterChange)="onStatusFilterChange($event)"
           (filterReset)="onStatusFilterReset()"
         />
@@ -74,13 +76,13 @@
 
       <!-- Add Product Button (Forest Green) -->
       @if (canWriteManagement()) {
-        <button
+        <a
           class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-          (click)="navigateToEditor()"
+          [routerLink]="['/management/products/new']"
         >
           <app-icon name="icon-plus" [class]="'h-4 w-4'" />
           Add Product
-        </button>
+        </a>
       }
     </div>
   </div>
@@ -168,65 +170,65 @@
           @if (sortedProducts().length > 0) {
             @for (product of sortedProducts(); track product.id) {
               <div
-                class="relative grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:shadow-xl focus-within:z-30"
-                (click)="navigateToDetails(product.id)"
-                (keydown.enter)="navigateToDetails(product.id)"
-                (keydown.space)="navigateToDetails(product.id)"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'View details for ' + product.name"
+                class="relative grid grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-shadow duration-200 hover:z-10 hover:shadow-xl focus-within:z-30"
               >
-                <!-- Image and Name -->
-                <div class="col-span-5 flex items-center gap-4">
-                  <div class="w-14 shrink-0">
-                    @if (product.imageUrl) {
-                      <div class="flex h-14 w-14 items-center justify-center">
-                        <img
-                          [src]="product.imageUrl"
-                          [alt]="product.name"
-                          class="h-14 w-14 object-contain"
-                        />
-                      </div>
+                <a
+                  class="col-span-11 grid grid-cols-11 items-center gap-4 self-stretch cursor-pointer no-underline focus:outline-none"
+                  [routerLink]="['/management/products/details', product.id]"
+                  [attr.aria-label]="'View details for ' + product.name"
+                >
+                  <!-- Image and Name -->
+                  <div class="col-span-5 flex items-center gap-4">
+                    <div class="w-14 shrink-0">
+                      @if (product.imageUrl) {
+                        <div class="flex h-14 w-14 items-center justify-center">
+                          <img
+                            [src]="product.imageUrl"
+                            [alt]="product.name"
+                            class="h-14 w-14 object-contain"
+                          />
+                        </div>
+                      } @else {
+                        <app-avatar [label]="product.name" [class]="'h-14 w-14'" />
+                      }
+                    </div>
+
+                    <div class="min-w-0">
+                      <h3 class="font-semibold text-gray-900">{{ product.name }}</h3>
+                      <p class="font-mono text-xs text-gray-400">{{ product.code }}</p>
+                    </div>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="col-span-2 flex justify-center">
+                    @if (product.isActive) {
+                      <app-badge variant="success">Active</app-badge>
                     } @else {
-                      <app-avatar [label]="product.name" [class]="'h-14 w-14'" />
+                      <app-badge variant="error">Inactive</app-badge>
                     }
                   </div>
 
-                  <div class="min-w-0">
-                    <h3 class="font-semibold text-gray-900">{{ product.name }}</h3>
-                    <p class="font-mono text-xs text-gray-400">{{ product.code }}</p>
+                  <!-- Category -->
+                  <div class="col-span-2 text-center">
+                    <div class="text-sm text-gray-700">
+                      {{ getProductCategoryName(product.category) }}
+                    </div>
+                    <div class="text-xs text-gray-400">
+                      {{ getAssociationLabel(product) }}
+                    </div>
                   </div>
-                </div>
 
-                <!-- Status -->
-                <div class="col-span-2 flex justify-center">
-                  @if (product.isActive) {
-                    <app-badge variant="success">Active</app-badge>
-                  } @else {
-                    <app-badge variant="error">Inactive</app-badge>
-                  }
-                </div>
-
-                <!-- Category -->
-                <div class="col-span-2 text-center">
-                  <div class="text-sm text-gray-700">
-                    {{ getProductCategoryName(product.category) }}
+                  <!-- Price -->
+                  <div class="col-span-2 text-right">
+                    <div class="text-lg font-semibold text-black">
+                      <span class="text-base opacity-70">₱</span>{{ product.price.toFixed(2) }}
+                    </div>
                   </div>
-                  <div class="text-xs text-gray-400">
-                    {{ getAssociationLabel(product) }}
-                  </div>
-                </div>
-
-                <!-- Price -->
-                <div class="col-span-2 text-right">
-                  <div class="text-lg font-semibold text-black">
-                    <span class="text-base opacity-70">₱</span>{{ product.price.toFixed(2) }}
-                  </div>
-                </div>
+                </a>
 
                 <!-- Actions -->
                 <div
-                  class="relative z-40 col-span-1 flex justify-end"
+                  class="relative col-span-1 flex justify-end"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                   role="presentation"
@@ -235,7 +237,7 @@
                     <div class="dropdown dropdown-end">
                     <button
                       type="button"
-                      class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
+                      class="cursor-pointer rounded-lg p-1.5 transition-all hover:bg-gray-100 active:scale-95"
                       tabindex="0"
                       aria-label="Product actions"
                     >
@@ -250,16 +252,14 @@
                       class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow"
                     >
                       <li>
-                        <button
-                          type="button"
-                          (click)="navigateToEditor(product.id); $event.stopPropagation()"
-                          (keydown.enter)="navigateToEditor(product.id); $event.stopPropagation()"
-                          (keydown.space)="navigateToEditor(product.id); $event.stopPropagation()"
+                        <a
+                          [routerLink]="['/management/products/edit', product.id]"
+                          (click)="$event.stopPropagation()"
                           class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
                         >
                           <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
                           Edit
-                        </button>
+                        </a>
                       </li>
                       <li>
                         <button

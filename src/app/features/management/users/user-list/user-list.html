@@ -30,6 +30,7 @@
           [icon]="'icon-user'"
           [options]="roleOptions()"
           [selectedIds]="selectedRoles()"
+          [showSelectedState]="true"
           (filterChange)="onRoleFilterChange($event)"
           (filterReset)="onRoleFilterReset()"
         />
@@ -42,6 +43,7 @@
           [icon]="'icon-status'"
           [options]="statusOptions()"
           [selectedIds]="selectedStatuses()"
+          [showSelectedState]="true"
           (filterChange)="onStatusFilterChange($event)"
           (filterReset)="onStatusFilterReset()"
         />
@@ -74,13 +76,13 @@
 
       <!-- Add User Button -->
       @if (canWriteManagement()) {
-        <button
+        <a
           class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
-          (click)="navigateToEditor()"
+          [routerLink]="['/management/users/new']"
         >
           <app-icon name="icon-plus" [class]="'h-4 w-4'" />
           Add User
-        </button>
+        </a>
       }
     </div>
   </div>
@@ -169,75 +171,69 @@
           @if (sortedUsers().length > 0) {
             @for (user of sortedUsers(); track user.id) {
               <div
-                class="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
-                (click)="navigateToDetails(user.id)"
-                (keydown.enter)="navigateToDetails(user.id)"
-                (keydown.space)="navigateToDetails(user.id)"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'View details for ' + user.firstName + ' ' + user.lastName"
+                class="grid grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-shadow duration-200 hover:shadow-xl"
               >
-                <!-- Avatar and Name -->
-                <div class="col-span-4 flex items-center gap-4">
-                  <div class="w-14 shrink-0">
-                    <div class="flex h-14 w-14 items-center justify-center">
-                      @if (user.imageUrl) {
-                        <img
-                          [src]="user.imageUrl"
-                          alt="User image"
-                          class="h-14 w-14 rounded-full object-cover"
-                        />
-                      } @else {
-                        <app-avatar
-                          [label]="`${user.firstName || ''} ${user.lastName || ''}`"
-                          [size]="36"
-                        />
-                      }
+                <a
+                  class="col-span-11 grid grid-cols-11 items-center gap-4 self-stretch cursor-pointer no-underline focus:outline-none"
+                  [routerLink]="['/management/users/details', user.id]"
+                  [attr.aria-label]="'View details for ' + user.firstName + ' ' + user.lastName"
+                >
+                  <!-- Avatar and Name -->
+                  <div class="col-span-4 flex items-center gap-4">
+                    <div class="w-14 shrink-0">
+                      <div class="flex h-14 w-14 items-center justify-center">
+                        @if (user.imageUrl) {
+                          <img
+                            [src]="user.imageUrl"
+                            alt="User image"
+                            class="h-14 w-14 rounded-full object-cover"
+                          />
+                        } @else {
+                          <app-avatar
+                            [label]="`${user.firstName || ''} ${user.lastName || ''}`"
+                            [size]="36"
+                          />
+                        }
+                      </div>
+                    </div>
+
+                    <div class="min-w-0">
+                      <h3 class="font-semibold text-gray-900">
+                        {{ user.firstName }} {{ user.lastName }}
+                      </h3>
                     </div>
                   </div>
 
-                  <div class="min-w-0">
-                    <h3 class="font-semibold text-gray-900">
-                      {{ user.firstName }} {{ user.lastName }}
-                    </h3>
+                  <!-- Status -->
+                  <div class="col-span-2 flex justify-center">
+                    @if (user.isActive) {
+                      <app-badge variant="success">Active</app-badge>
+                    } @else {
+                      <app-badge variant="error">Inactive</app-badge>
+                    }
                   </div>
-                </div>
 
-                <!-- Status -->
-                <div class="col-span-2 flex justify-center">
-                  @if (user.isActive) {
-                    <app-badge variant="success">Active</app-badge>
-                  } @else {
-                    <app-badge variant="error">Inactive</app-badge>
-                  }
-                </div>
-
-                <!-- Role -->
-                <div class="col-span-3">
-                  <div class="truncate text-center text-sm text-gray-700">
-                    {{ getRoleLabel(user) }}
+                  <!-- Role -->
+                  <div class="col-span-3">
+                    <div class="truncate text-center text-sm text-gray-700">
+                      {{ getRoleLabel(user) }}
+                    </div>
                   </div>
-                </div>
-
-                <!-- Username -->
-                <div class="col-span-2">
-                  <div class="truncate text-center text-sm text-gray-700">
-                    {{ user.username }}
+                  <!-- Username -->
+                  <div class="col-span-2">
+                    <div class="truncate text-center text-sm text-gray-700">
+                      {{ user.username }}
+                    </div>
                   </div>
-                </div>
+                </a>
 
                 <!-- Actions -->
-                <div
-                  class="col-span-1 flex justify-end"
-                  (click)="$event.stopPropagation()"
-                  (keydown)="$event.stopPropagation()"
-                  role="presentation"
-                >
+                <div class="col-span-1 flex justify-end" role="presentation">
                   @if (canWriteManagement()) {
                     <div class="dropdown dropdown-end">
                       <button
                         type="button"
-                        class="btn btn-sm btn-ghost cursor-pointer p-1 transition-colors hover:bg-gray-100"
+                        class="cursor-pointer rounded-lg p-1.5 transition-all hover:bg-gray-100 active:scale-95"
                         tabindex="0"
                         aria-label="User actions"
                       >
@@ -252,23 +248,20 @@
                         class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
                       >
                         <li>
-                          <button
-                            type="button"
-                            (click)="navigateToEditor(user.id); $event.stopPropagation()"
-                            (keydown.enter)="navigateToEditor(user.id); $event.stopPropagation()"
-                            (keydown.space)="navigateToEditor(user.id); $event.stopPropagation()"
+                          <a
+                            [routerLink]="['/management/users/edit', user.id]"
                             class="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
                           >
                             <app-icon name="icon-edit" [class]="'h-4 w-4 text-gray-600'" />
                             Edit
-                          </button>
+                          </a>
                         </li>
                         <li>
                           <button
                             type="button"
-                            (click)="deleteUser(user); $event.stopPropagation()"
-                            (keydown.enter)="deleteUser(user); $event.stopPropagation()"
-                            (keydown.space)="deleteUser(user); $event.stopPropagation()"
+                            (click)="deleteUser(user)"
+                            (keydown.enter)="deleteUser(user)"
+                            (keydown.space)="deleteUser(user)"
                             class="flex items-center gap-2 text-red-600 hover:bg-red-50"
                           >
                             <app-icon name="icon-delete" [class]="'h-4 w-4 text-red-600'" />

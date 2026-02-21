@@ -22,7 +22,7 @@
 
     <!-- Right: Action Buttons -->
     <div class="flex shrink-0 gap-2">
-      <button type="button" class="btn btn-ghost btn-sm" (click)="goBack()" [disabled]="isSaving()">
+      <button type="button" class="cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-100 disabled:opacity-50 active:scale-95" (click)="goBack()" [disabled]="isSaving()">
         Cancel
       </button>
       <button
