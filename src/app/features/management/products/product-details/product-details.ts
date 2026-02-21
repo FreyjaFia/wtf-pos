@@ -9,9 +9,8 @@ import {
   PriceHistoryDrawerComponent,
 } from '@shared/components';
 import {
+  ADD_ON_TYPE_ORDER,
   AddOnGroupDto,
-  AddOnTypeEnum,
-  ProductAddOnPriceOverrideDto,
   ProductCategoryEnum,
   ProductDto,
   ProductPriceHistoryDto,
@@ -41,7 +40,6 @@ export class ProductDetailsComponent implements OnInit {
 
   protected readonly product = signal<ProductDto | null>(null);
   protected readonly addOns = signal<AddOnGroupDto[]>([]);
-  protected readonly addOnPriceOverrides = signal<Record<string, ProductAddOnPriceOverrideDto>>({});
   protected readonly linkedProducts = signal<AddOnGroupDto[]>([]);
   protected readonly isLoading = signal(false);
   protected readonly isHistoryOpen = signal(false);
@@ -51,21 +49,31 @@ export class ProductDetailsComponent implements OnInit {
   protected readonly showDeleteModal = signal(false);
   protected readonly isDeleting = signal(false);
 
-  protected readonly flattenedAddOns = computed(() => {
-    return this.addOns()
-      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
+  protected readonly sortedAddOns = computed(() =>
+    [...this.addOns()]
+      .sort((a, b) => ADD_ON_TYPE_ORDER[a.type] - ADD_ON_TYPE_ORDER[b.type])
+      .map((group) => ({
+        ...group,
+        options: [...group.options].sort((a, b) => a.name.localeCompare(b.name)),
+      })),
+  );
 
-  protected readonly flattenedLinkedProducts = computed(() => {
-    return this.linkedProducts()
-      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
+  protected readonly sortedLinkedProducts = computed(() =>
+    [...this.linkedProducts()]
+      .sort((a, b) => ADD_ON_TYPE_ORDER[a.type] - ADD_ON_TYPE_ORDER[b.type])
+      .map((group) => ({
+        ...group,
+        options: [...group.options].sort((a, b) => a.name.localeCompare(b.name)),
+      })),
+  );
 
-  protected getAddOnTypeName(type: AddOnTypeEnum): string {
-    return AddOnTypeEnum[type];
-  }
+  protected readonly totalAddOnsCount = computed(() =>
+    this.addOns().reduce((sum, group) => sum + group.options.length, 0),
+  );
+
+  protected readonly totalLinkedCount = computed(() =>
+    this.linkedProducts().reduce((sum, group) => sum + group.options.length, 0),
+  );
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -84,7 +92,6 @@ export class ProductDetailsComponent implements OnInit {
         this.priceHistory.set(product.priceHistory || []);
 
         if (product.isAddOn) {
-          this.addOnPriceOverrides.set({});
           // Load products that use this add-on
           this.productService.getLinkedProducts(id).subscribe({
             next: (linked) => {
@@ -101,12 +108,10 @@ export class ProductDetailsComponent implements OnInit {
           this.productService.getProductAddOns(id).subscribe({
             next: (addOns) => {
               this.addOns.set(addOns);
-              this.loadAddOnPriceOverrides(id);
               this.isLoading.set(false);
             },
             error: (err) => {
               console.error('Failed to load add-ons:', err);
-              this.addOnPriceOverrides.set({});
               this.isLoading.set(false);
             },
           });
@@ -207,32 +212,5 @@ export class ProductDetailsComponent implements OnInit {
 
   protected canWriteManagement(): boolean {
     return this.authService.canWriteManagement();
-  }
-
-  private loadAddOnPriceOverrides(productId: string) {
-    this.productService.getProductAddOnPriceOverrides(productId).subscribe({
-      next: (overrides) => {
-        const map: Record<string, ProductAddOnPriceOverrideDto> = {};
-
-        for (const override of overrides) {
-          if (override.isActive) {
-            map[override.addOnId] = override;
-          }
-        }
-
-        this.addOnPriceOverrides.set(map);
-      },
-      error: () => {
-        this.addOnPriceOverrides.set({});
-      },
-    });
-  }
-
-  protected hasAddOnPriceOverride(addOnId: string): boolean {
-    return !!this.addOnPriceOverrides()[addOnId];
-  }
-
-  protected getAddOnEffectivePrice(addOnId: string, defaultPrice: number): number {
-    return this.addOnPriceOverrides()[addOnId]?.price ?? defaultPrice;
   }
 }
