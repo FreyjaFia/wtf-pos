@@ -97,18 +97,18 @@ export class CheckoutModal {
     });
   }
 
-  triggerOpen() {
+  public triggerOpen(): void {
     this.resetForm();
     // Calculate initial change to show the amount owed
     this.calculateChange();
     this.checkoutDialog().nativeElement.showModal();
   }
 
-  protected toggleSummary() {
+  protected toggleSummary(): void {
     this.showSummary.set(!this.showSummary());
   }
 
-  protected calculateChange() {
+  protected calculateChange(): void {
     const paymentMethod = this.selectedPaymentMethod();
     const amountReceived = this.amountReceivedValue();
 
@@ -125,7 +125,7 @@ export class CheckoutModal {
     }
   }
 
-  protected confirmOrder() {
+  protected confirmOrder(): void {
     const paymentMethod = this.paymentForm.get('paymentMethod')?.value;
     const amountReceived = this.paymentForm.get('amountReceived')?.value;
     const tips = this.paymentForm.get('tips')?.value;
@@ -147,11 +147,11 @@ export class CheckoutModal {
     });
   }
 
-  protected cancelCheckout() {
+  protected cancelCheckout(): void {
     this.checkoutDialog().nativeElement.close();
   }
 
-  private resetForm() {
+  private resetForm(): void {
     this.paymentForm.reset({
       paymentMethod: PaymentMethodEnum.Cash,
       amountReceived: null,

@@ -41,18 +41,13 @@ import {
   },
 })
 export class ProductEditorComponent implements OnInit {
-  // Unsaved changes guard
-  protected readonly showDiscardModal = signal(false);
-  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
-  private skipGuard = false;
-
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly alertService = inject(AlertService);
 
-  @ViewChild(AddonsSwapperComponent) addonsSwapper!: AddonsSwapperComponent;
-  @ViewChild(ProductsSwapperComponent) productsSwapper!: ProductsSwapperComponent;
+  @ViewChild(AddonsSwapperComponent) private addonsSwapper!: AddonsSwapperComponent;
+  @ViewChild(ProductsSwapperComponent) private productsSwapper!: ProductsSwapperComponent;
 
   protected readonly isEditMode = signal(false);
   protected readonly isLoading = signal(false);
@@ -136,7 +131,12 @@ export class ProductEditorComponent implements OnInit {
 
   protected productId: string | null = null;
 
-  ngOnInit() {
+  // Unsaved changes guard
+  protected readonly showDiscardModal = signal(false);
+  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
+  private skipGuard = false;
+
+  public ngOnInit(): void {
     this.productName.set(this.productForm.controls.name.value || '');
     this.productForm.controls.name.valueChanges.subscribe((value) => {
       this.productName.set(value || '');
@@ -162,7 +162,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  private loadProduct(id: string) {
+  private loadProduct(id: string): void {
     this.isLoading.set(true);
 
     this.productService.getProduct(id).subscribe({
@@ -199,7 +199,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected saveProduct() {
+  protected saveProduct(): void {
     if (this.productForm.invalid) {
       this.productForm.markAllAsTouched();
       return;
@@ -262,7 +262,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected onFileSelected(event: Event) {
+  protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
 
     if (input.files && input.files[0]) {
@@ -293,7 +293,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected removeImage() {
+  protected removeImage(): void {
     this.selectedFile.set(null);
     this.imagePreview.set(null);
 
@@ -305,7 +305,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected removeCurrentImage() {
+  protected removeCurrentImage(): void {
     if (!this.productId || !this.currentImageUrl() || this.isDeletingImage()) {
       return;
     }
@@ -325,19 +325,19 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected onDragOver(event: DragEvent) {
+  protected onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(true);
   }
 
-  protected onDragLeave(event: DragEvent) {
+  protected onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(false);
   }
 
-  protected onFileDrop(event: DragEvent) {
+  protected onFileDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(false);
@@ -369,7 +369,7 @@ export class ProductEditorComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  protected uploadImage(productId?: string) {
+  protected uploadImage(productId?: string): void {
     const file = this.selectedFile();
     const id = productId || this.productId;
 
@@ -406,7 +406,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  canDeactivate(): boolean | Promise<boolean> {
+  public canDeactivate(): boolean | Promise<boolean> {
     if (this.skipGuard || !this.productForm.dirty) {
       return true;
     }
@@ -418,7 +418,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected confirmDiscard() {
+  protected confirmDiscard(): void {
     this.showDiscardModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -427,7 +427,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected cancelDiscard() {
+  protected cancelDiscard(): void {
     this.showDiscardModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -436,7 +436,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected goBack() {
+  protected goBack(): void {
     if (this.isEditMode() && this.productId) {
       this.router.navigate(['/management/products/details', this.productId]);
     } else {
@@ -444,7 +444,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  private navigateToDetails(productId: string) {
+  private navigateToDetails(productId: string): void {
     this.router.navigate(['/management/products/details', productId]);
   }
 
@@ -495,13 +495,13 @@ export class ProductEditorComponent implements OnInit {
     return !!control && control.invalid && control.touched;
   }
 
-  protected onCodeInput(event: Event) {
+  protected onCodeInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const uppercased = input.value.toUpperCase();
     this.productForm.controls.code.setValue(uppercased, { emitEvent: false });
   }
 
-  private loadAssignedAddOns(productId: string) {
+  private loadAssignedAddOns(productId: string): void {
     this.productService.getProductAddOns(productId).subscribe({
       next: (addons) => {
         this.assignedAddOns.set(addons);
@@ -516,7 +516,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  private loadAddOnBasePrices(addOnGroups: AddOnGroupDto[]) {
+  private loadAddOnBasePrices(addOnGroups: AddOnGroupDto[]): void {
     const assignedIds = new Set(addOnGroups.flatMap((group) => group.options.map((opt) => opt.id)));
 
     if (assignedIds.size === 0) {
@@ -542,7 +542,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  private loadAddOnPriceOverrides(productId: string) {
+  private loadAddOnPriceOverrides(productId: string): void {
     this.productService.getProductAddOnPriceOverrides(productId).subscribe({
       next: (overrides) => {
         const map: Record<string, ProductAddOnPriceOverrideDto> = {};
@@ -565,7 +565,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  private loadLinkedProducts(productId: string) {
+  private loadLinkedProducts(productId: string): void {
     this.productService.getLinkedProducts(productId).subscribe({
       next: (linked) => {
         this.linkedProducts.set(linked);
@@ -574,7 +574,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected openAddOnsManager() {
+  protected openAddOnsManager(): void {
     if (!this.productId) {
       this.alertService.error('Please save the product first before managing add-ons.');
       return;
@@ -603,7 +603,7 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected openProductsManager() {
+  protected openProductsManager(): void {
     if (!this.productId) {
       this.alertService.error('Please save the product first before managing linked products.');
       return;
@@ -631,15 +631,15 @@ export class ProductEditorComponent implements OnInit {
     }
   }
 
-  protected openPriceHistory() {
+  protected openPriceHistory(): void {
     this.isHistoryOpen.set(true);
   }
 
-  protected closePriceHistory() {
+  protected closePriceHistory(): void {
     this.isHistoryOpen.set(false);
   }
 
-  protected removeAddOn(addOnId: string) {
+  protected removeAddOn(addOnId: string): void {
     if (!this.productId) {
       return;
     }
@@ -704,13 +704,13 @@ export class ProductEditorComponent implements OnInit {
     return this.hasAddOnPriceOverride(addOnId);
   }
 
-  private setAddOnOverrideSaving(addOnId: string, isSaving: boolean) {
+  private setAddOnOverrideSaving(addOnId: string, isSaving: boolean): void {
     const next = { ...this.addOnOverrideSaving() };
     next[addOnId] = isSaving;
     this.addOnOverrideSaving.set(next);
   }
 
-  protected saveAddOnPriceOverride(addOnId: string, defaultPrice: number) {
+  protected saveAddOnPriceOverride(addOnId: string, defaultPrice: number): void {
     if (!this.productId) {
       return;
     }
@@ -773,7 +773,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected clearAddOnPriceOverride(addOnId: string) {
+  protected clearAddOnPriceOverride(addOnId: string): void {
     if (!this.productId || !this.hasAddOnPriceOverride(addOnId)) {
       return;
     }
@@ -800,7 +800,7 @@ export class ProductEditorComponent implements OnInit {
     });
   }
 
-  protected removeLinkedProduct(linkedProductId: string) {
+  protected removeLinkedProduct(linkedProductId: string): void {
     if (!this.productId) {
       return;
     }

@@ -97,7 +97,7 @@ export class OrderList implements OnInit {
     },
   ]);
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.restoreState();
     this.loadOrders();
 
@@ -107,7 +107,7 @@ export class OrderList implements OnInit {
     });
   }
 
-  protected loadOrders() {
+  protected loadOrders(): void {
     this.isLoading.set(true);
 
     this.orderService.getOrders().subscribe({
@@ -125,24 +125,24 @@ export class OrderList implements OnInit {
     });
   }
 
-  protected refresh() {
+  protected refresh(): void {
     this.isRefreshing.set(true);
     this.loadOrders();
   }
 
-  protected onStatusFilterChange(selectedIds: (string | number)[]) {
+  protected onStatusFilterChange(selectedIds: (string | number)[]): void {
     this.selectedStatuses.set(selectedIds as OrderStatusEnum[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onStatusFilterReset() {
+  protected onStatusFilterReset(): void {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected toggleSort(column: SortColumn) {
+  protected toggleSort(column: SortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -153,7 +153,7 @@ export class OrderList implements OnInit {
     this.saveState();
   }
 
-  protected resetFilters() {
+  protected resetFilters(): void {
     this.filterForm.reset({
       searchTerm: '',
     });
@@ -225,7 +225,7 @@ export class OrderList implements OnInit {
     }
   }
 
-  protected editOrder(order: OrderDto) {
+  protected editOrder(order: OrderDto): void {
     this.router.navigate(['/orders/editor', order.id]);
   }
 
@@ -237,7 +237,7 @@ export class OrderList implements OnInit {
     event.stopPropagation();
   }
 
-  private applyFiltersToCache() {
+  private applyFiltersToCache(): void {
     const { searchTerm } = this.filterForm.value;
 
     let items = [...this.ordersCache()];
@@ -288,7 +288,7 @@ export class OrderList implements OnInit {
     this.orders.set(items);
   }
 
-  private restoreState() {
+  private restoreState(): void {
     const state = this.listState.load<OrderListState>(this.stateKey, {
       searchTerm: '',
       selectedStatuses: [],
@@ -307,7 +307,7 @@ export class OrderList implements OnInit {
     this.sortDirection.set(state.sortDirection);
   }
 
-  private saveState() {
+  private saveState(): void {
     this.listState.save<OrderListState>(this.stateKey, {
       searchTerm: this.filterForm.controls.searchTerm.value ?? '',
       selectedStatuses: this.selectedStatuses(),

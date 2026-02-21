@@ -128,7 +128,7 @@ export class ProductListComponent implements OnInit {
     return products;
   });
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.restoreState();
     this.loadProducts();
 
@@ -138,7 +138,7 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  protected loadProducts() {
+  protected loadProducts(): void {
     this.isLoading.set(true);
 
     this.productService.getProducts().subscribe({
@@ -156,12 +156,12 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  protected refresh() {
+  protected refresh(): void {
     this.isRefreshing.set(true);
     this.loadProducts();
   }
 
-  private applyFiltersToCache() {
+  private applyFiltersToCache(): void {
     const { searchTerm } = this.filterForm.value;
     let items = [...this.productsCache()];
 
@@ -187,7 +187,7 @@ export class ProductListComponent implements OnInit {
     this.products.set(items);
   }
 
-  protected navigateToEditor(productId?: string) {
+  protected navigateToEditor(productId?: string): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -200,11 +200,11 @@ export class ProductListComponent implements OnInit {
     }
   }
 
-  protected navigateToDetails(productId: string) {
+  protected navigateToDetails(productId: string): void {
     this.router.navigate(['/management/products/details', productId]);
   }
 
-  protected deleteProduct(product: ProductDto) {
+  protected deleteProduct(product: ProductDto): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -214,7 +214,7 @@ export class ProductListComponent implements OnInit {
     this.showDeleteModal.set(true);
   }
 
-  protected cancelDelete() {
+  protected cancelDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -223,7 +223,7 @@ export class ProductListComponent implements OnInit {
     this.productToDelete.set(null);
   }
 
-  protected confirmDelete() {
+  protected confirmDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -269,7 +269,7 @@ export class ProductListComponent implements OnInit {
     return `${count} ${count === 1 ? 'associated add-on' : 'associated add-ons'}`;
   }
 
-  protected toggleSort(column: SortColumn) {
+  protected toggleSort(column: SortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -280,25 +280,25 @@ export class ProductListComponent implements OnInit {
     this.saveState();
   }
 
-  protected onTypeFilterChange(selectedIds: (string | number)[]) {
+  protected onTypeFilterChange(selectedIds: (string | number)[]): void {
     this.selectedTypes.set(selectedIds as number[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onTypeFilterReset() {
+  protected onTypeFilterReset(): void {
     this.selectedTypes.set([]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onStatusFilterChange(selectedIds: (string | number)[]) {
+  protected onStatusFilterChange(selectedIds: (string | number)[]): void {
     this.selectedStatuses.set(selectedIds as string[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onStatusFilterReset() {
+  protected onStatusFilterReset(): void {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
     this.saveState();
@@ -308,7 +308,7 @@ export class ProductListComponent implements OnInit {
     return this.authService.canWriteManagement();
   }
 
-  private restoreState() {
+  private restoreState(): void {
     const state = this.listState.load<ProductListState>(this.stateKey, {
       searchTerm: '',
       selectedTypes: [],
@@ -329,7 +329,7 @@ export class ProductListComponent implements OnInit {
     this.sortDirection.set(state.sortDirection);
   }
 
-  private saveState() {
+  private saveState(): void {
     this.listState.save<ProductListState>(this.stateKey, {
       searchTerm: this.filterForm.controls.searchTerm.value ?? '',
       selectedTypes: this.selectedTypes(),

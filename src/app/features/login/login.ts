@@ -23,7 +23,7 @@ export class Login implements OnInit {
     password: new FormControl('', Validators.required),
   });
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.checkExistingSession();
   }
 
@@ -31,7 +31,7 @@ export class Login implements OnInit {
    * Check if user has a valid token or refresh token on page load
    * If valid, redirect to home. If expired, try to refresh and redirect.
    */
-  private checkExistingSession() {
+  private checkExistingSession(): void {
     // Check if token is already valid
     if (this.auth.isTokenValid()) {
       this.router.navigateByUrl('/orders');
@@ -59,7 +59,7 @@ export class Login implements OnInit {
     }
   }
 
-  login() {
+  protected login(): void {
     const { username, password } = this.loginForm.value;
 
     this.loading = true;
@@ -88,7 +88,7 @@ export class Login implements OnInit {
       });
   }
 
-  protected togglePasswordVisibility() {
+  protected togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
 }

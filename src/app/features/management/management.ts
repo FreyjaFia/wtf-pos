@@ -15,15 +15,15 @@ export class ManagementComponent implements OnInit {
   protected readonly authService = inject(AuthService);
   protected readonly isSidebarCollapsed = signal(false);
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.isSidebarCollapsed.set(this.listState.load<boolean>('management:sidebar-collapsed', false));
   }
 
-  isActive(route: string): boolean {
+  protected isActive(route: string): boolean {
     return this.router.url.includes(route);
   }
 
-  canReadCustomers(): boolean {
+  protected canReadCustomers(): boolean {
     return this.authService.canReadCustomers();
   }
 

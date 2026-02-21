@@ -27,7 +27,7 @@ export class UserDetailsComponent implements OnInit {
   // For image preview consistency with editor
   protected readonly currentImageUrl = signal<string | null>(null);
 
-  ngOnInit() {
+  public ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
@@ -35,7 +35,7 @@ export class UserDetailsComponent implements OnInit {
     }
   }
 
-  private loadUser(id: string) {
+  private loadUser(id: string): void {
     this.isLoading.set(true);
 
     this.userService.getUserById(id).subscribe({
@@ -51,11 +51,11 @@ export class UserDetailsComponent implements OnInit {
     });
   }
 
-  protected goBack() {
+  protected goBack(): void {
     this.router.navigate(['/management/users']);
   }
 
-  protected navigateToEdit() {
+  protected navigateToEdit(): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -66,7 +66,7 @@ export class UserDetailsComponent implements OnInit {
     }
   }
 
-  protected deleteUser() {
+  protected deleteUser(): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -79,7 +79,7 @@ export class UserDetailsComponent implements OnInit {
     this.showDeleteModal.set(true);
   }
 
-  protected cancelDelete() {
+  protected cancelDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -87,7 +87,7 @@ export class UserDetailsComponent implements OnInit {
     this.showDeleteModal.set(false);
   }
 
-  protected confirmDelete() {
+  protected confirmDelete(): void {
     if (this.isDeleting()) {
       return;
     }

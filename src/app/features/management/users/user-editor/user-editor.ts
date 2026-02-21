@@ -88,10 +88,7 @@ export class UserEditorComponent implements OnInit {
 
   protected userId: string | null = null;
 
-  /**
-   * OnInit lifecycle hook
-   */
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.userFullNameLabel.set(
       `${this.userForm.controls.firstName.value || ''} ${this.userForm.controls.lastName.value || ''}`.trim(),
     );
@@ -136,9 +133,7 @@ export class UserEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * File input change handler
-   */
+
   protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
@@ -163,9 +158,6 @@ export class UserEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * Remove selected image
-   */
   protected removeImage(): void {
     this.selectedFile.set(null);
     this.imagePreview.set(null);
@@ -195,25 +187,16 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Drag over handler
-   */
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(true);
   }
 
-  /**
-   * Drag leave handler
-   */
   protected onDragLeave(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
   }
 
-  /**
-   * File drop handler
-   */
   protected onFileDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
@@ -240,9 +223,6 @@ export class UserEditorComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  /**
-   * Upload image to server (placeholder, implement endpoint in UserService if needed)
-   */
   protected uploadImage(userId?: string): void {
     const file = this.selectedFile();
     const id = userId || this.userId;
@@ -265,9 +245,6 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Loads user data for editing
-   */
   private loadUser(id: string): void {
     this.isLoading.set(true);
 
@@ -290,9 +267,6 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Handles user form submission for create/update
-   */
   protected saveUser(): void {
     if (this.isProfileMode()) {
       this.saveProfile();
@@ -421,9 +395,6 @@ export class UserEditorComponent implements OnInit {
       });
   }
 
-  /**
-   * Upload image and navigate to details after upload
-   */
   protected uploadImageAndNavigate(userId?: string): void {
     if (this.isProfileMode()) {
       this.isSaving.set(false);
@@ -461,10 +432,7 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Navigates back to the user list
-   */
-  protected goBack() {
+  protected goBack(): void {
     if (this.isProfileMode()) {
       this.router.navigate(['/orders/list']);
       return;
@@ -481,9 +449,6 @@ export class UserEditorComponent implements OnInit {
     this.router.navigate(['/management/users/details', userId]);
   }
 
-  /**
-   * Returns true if the control is invalid and touched/dirty
-   */
   protected hasError(control: string): boolean {
     const ctrl = this.userForm.get(control);
     const touched = !!ctrl && (ctrl.dirty || ctrl.touched);
@@ -505,9 +470,6 @@ export class UserEditorComponent implements OnInit {
     return hasControlError;
   }
 
-  /**
-   * Returns the error message for a control
-   */
   protected getErrorMessage(control: string): string | null {
     if (!this.hasError(control)) {
       return null;
@@ -536,10 +498,7 @@ export class UserEditorComponent implements OnInit {
     return null;
   }
 
-  /**
-   * Unsaved changes guard logic for navigation
-   */
-  canDeactivate(): boolean | Promise<boolean> {
+  public canDeactivate(): boolean | Promise<boolean> {
     if (this.skipGuard || !this.userForm.dirty) {
       return true;
     }
@@ -550,9 +509,6 @@ export class UserEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Cancels the discard action in the modal
-   */
   protected cancelDiscard(): void {
     this.showDiscardModal.set(false);
     if (this.pendingDeactivateResolve) {
@@ -561,10 +517,7 @@ export class UserEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * Confirms the discard action in the modal
-   */
-  protected confirmDiscard() {
+  protected confirmDiscard(): void {
     this.showDiscardModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -573,9 +526,6 @@ export class UserEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * Returns the full name from the form controls
-   */
   protected userFullName(): string {
     const first = this.userForm.controls.firstName.value || '';
     const last = this.userForm.controls.lastName.value || '';

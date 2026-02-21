@@ -15,11 +15,6 @@ import { CreateCustomerDto, UpdateCustomerDto } from '@shared/models';
   },
 })
 export class CustomerEditorComponent implements OnInit {
-  // Unsaved changes guard
-  protected readonly showDiscardModal = signal(false);
-  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
-  private skipGuard = false;
-
   private readonly customerService = inject(CustomerService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -55,7 +50,12 @@ export class CustomerEditorComponent implements OnInit {
 
   protected customerId: string | null = null;
 
-  ngOnInit() {
+  // Unsaved changes guard
+  protected readonly showDiscardModal = signal(false);
+  private pendingDeactivateResolve: ((value: boolean) => void) | null = null;
+  private skipGuard = false;
+
+  public ngOnInit(): void {
     this.customerFullName.set(
       `${this.customerForm.controls.firstName.value || ''} ${this.customerForm.controls.lastName.value || ''}`.trim(),
     );
@@ -74,9 +74,6 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * File input change handler
-   */
   protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
@@ -101,9 +98,6 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * Remove selected image
-   */
   protected removeImage(): void {
     this.selectedFile.set(null);
     this.imagePreview.set(null);
@@ -133,25 +127,16 @@ export class CustomerEditorComponent implements OnInit {
     });
   }
 
-  /**
-   * Drag over handler
-   */
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(true);
   }
 
-  /**
-   * Drag leave handler
-   */
   protected onDragLeave(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
   }
 
-  /**
-   * File drop handler
-   */
   protected onFileDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragging.set(false);
@@ -178,9 +163,6 @@ export class CustomerEditorComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  /**
-   * Upload image to server (placeholder, implement endpoint in CustomerService if needed)
-   */
   protected uploadImage(customerId?: string): void {
     const file = this.selectedFile();
     const id = customerId || this.customerId;
@@ -203,7 +185,7 @@ export class CustomerEditorComponent implements OnInit {
     });
   }
 
-  private loadCustomer(id: string) {
+  private loadCustomer(id: string): void {
     this.isLoading.set(true);
 
     this.customerService.getCustomer(id).subscribe({
@@ -223,7 +205,7 @@ export class CustomerEditorComponent implements OnInit {
     });
   }
 
-  protected saveCustomer() {
+  protected saveCustomer(): void {
     if (this.customerForm.invalid) {
       this.customerForm.markAllAsTouched();
       return;
@@ -285,9 +267,6 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
-  /**
-   * Upload image and navigate to details after upload
-   */
   protected uploadImageAndNavigate(customerId?: string): void {
     const file = this.selectedFile();
     const id = customerId || this.customerId;
@@ -315,7 +294,7 @@ export class CustomerEditorComponent implements OnInit {
     });
   }
 
-  canDeactivate(): boolean | Promise<boolean> {
+  public canDeactivate(): boolean | Promise<boolean> {
     if (this.skipGuard || !this.customerForm.dirty) {
       return true;
     }
@@ -327,7 +306,7 @@ export class CustomerEditorComponent implements OnInit {
     });
   }
 
-  protected confirmDiscard() {
+  protected confirmDiscard(): void {
     this.showDiscardModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -336,7 +315,7 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
-  protected cancelDiscard() {
+  protected cancelDiscard(): void {
     this.showDiscardModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -345,7 +324,7 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
-  protected goBack() {
+  protected goBack(): void {
     if (this.isEditMode() && this.customerId) {
       this.router.navigate(['/management/customers/details', this.customerId]);
     } else {
@@ -353,7 +332,7 @@ export class CustomerEditorComponent implements OnInit {
     }
   }
 
-  private navigateToDetails(customerId: string) {
+  private navigateToDetails(customerId: string): void {
     this.router.navigate(['/management/customers/details', customerId]);
   }
 

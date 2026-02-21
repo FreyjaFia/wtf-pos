@@ -95,7 +95,7 @@ export class CustomerListComponent implements OnInit {
     return customers;
   });
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.restoreState();
     this.loadCustomers();
 
@@ -105,7 +105,7 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
-  protected loadCustomers() {
+  protected loadCustomers(): void {
     this.isLoading.set(true);
 
     this.customerService.getCustomers().subscribe({
@@ -123,12 +123,12 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
-  protected refresh() {
+  protected refresh(): void {
     this.isRefreshing.set(true);
     this.loadCustomers();
   }
 
-  private applyFiltersToCache() {
+  private applyFiltersToCache(): void {
     const { searchTerm } = this.filterForm.value;
     let items = [...this.customersCache()];
 
@@ -158,7 +158,7 @@ export class CustomerListComponent implements OnInit {
     this.customers.set(items);
   }
 
-  protected navigateToEditor(customerId?: string) {
+  protected navigateToEditor(customerId?: string): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -171,11 +171,11 @@ export class CustomerListComponent implements OnInit {
     }
   }
 
-  protected navigateToDetails(customerId: string) {
+  protected navigateToDetails(customerId: string): void {
     this.router.navigate(['/management/customers/details', customerId]);
   }
 
-  protected deleteCustomer(customer: CustomerDto) {
+  protected deleteCustomer(customer: CustomerDto): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -184,7 +184,7 @@ export class CustomerListComponent implements OnInit {
     this.showDeleteModal.set(true);
   }
 
-  protected cancelDelete() {
+  protected cancelDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -193,7 +193,7 @@ export class CustomerListComponent implements OnInit {
     this.customerToDelete.set(null);
   }
 
-  protected confirmDelete() {
+  protected confirmDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -225,7 +225,7 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
-  protected toggleSort(column: SortColumn) {
+  protected toggleSort(column: SortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -236,13 +236,13 @@ export class CustomerListComponent implements OnInit {
     this.saveState();
   }
 
-  protected onStatusFilterChange(selectedIds: (string | number)[]) {
+  protected onStatusFilterChange(selectedIds: (string | number)[]): void {
     this.selectedStatuses.set(selectedIds as string[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onStatusFilterReset() {
+  protected onStatusFilterReset(): void {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
     this.saveState();
@@ -252,7 +252,7 @@ export class CustomerListComponent implements OnInit {
     return this.authService.canWriteManagement();
   }
 
-  private restoreState() {
+  private restoreState(): void {
     const state = this.listState.load<CustomerListState>(this.stateKey, {
       searchTerm: '',
       selectedStatuses: ['active'],
@@ -271,7 +271,7 @@ export class CustomerListComponent implements OnInit {
     this.sortDirection.set(state.sortDirection);
   }
 
-  private saveState() {
+  private saveState(): void {
     this.listState.save<CustomerListState>(this.stateKey, {
       searchTerm: this.filterForm.controls.searchTerm.value ?? '',
       selectedStatuses: this.selectedStatuses(),

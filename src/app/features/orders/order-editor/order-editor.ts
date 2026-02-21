@@ -239,7 +239,7 @@ export class OrderEditor implements OnInit {
     },
   ]);
 
-  protected onOrderSpecialInstructionsInput(event: Event) {
+  protected onOrderSpecialInstructionsInput(event: Event): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -248,7 +248,7 @@ export class OrderEditor implements OnInit {
     this.orderSpecialInstructions.set(value);
   }
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.loadCustomers();
 
     const orderId = this.route.snapshot.paramMap.get('id');
@@ -264,7 +264,7 @@ export class OrderEditor implements OnInit {
     });
   }
 
-  private loadOrderForEditing(orderId: string) {
+  private loadOrderForEditing(orderId: string): void {
     this.isLoading.set(true);
 
     this.orderService
@@ -289,7 +289,7 @@ export class OrderEditor implements OnInit {
       });
   }
 
-  private populateCartFromOrder(order: OrderDto) {
+  private populateCartFromOrder(order: OrderDto): void {
     const isReadOnly =
       order.status === OrderStatusEnum.Completed ||
       order.status === OrderStatusEnum.Cancelled ||
@@ -322,7 +322,7 @@ export class OrderEditor implements OnInit {
     this.cart.set(cartItems);
   }
 
-  private loadProducts() {
+  private loadProducts(): void {
     this.isLoading.set(true);
 
     const { searchTerm } = this.filterForm.value;
@@ -347,7 +347,7 @@ export class OrderEditor implements OnInit {
       });
   }
 
-  private loadCustomers() {
+  private loadCustomers(): void {
     this.isLoadingCustomers.set(true);
 
     this.customerService.getCustomers().subscribe({
@@ -400,7 +400,7 @@ export class OrderEditor implements OnInit {
     }
   }
 
-  private enrichCartItems(allProducts: ProductDto[]) {
+  private enrichCartItems(allProducts: ProductDto[]): void {
     const enrichedCart = this.cart().map((cartItem) => {
       const product = allProducts.find((p) => p.id === cartItem.productId);
       const enrichedAddOns = cartItem.addOns?.map((ao) => {
@@ -423,7 +423,7 @@ export class OrderEditor implements OnInit {
     this.snapshotCart();
   }
 
-  private snapshotCart() {
+  private snapshotCart(): void {
     this.originalCartSnapshot = JSON.stringify(this.getOrderSnapshotPayload());
   }
 
@@ -447,7 +447,7 @@ export class OrderEditor implements OnInit {
     };
   }
 
-  protected addToCart(p: ProductDto) {
+  protected addToCart(p: ProductDto): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -460,7 +460,7 @@ export class OrderEditor implements OnInit {
     product: ProductDto;
     addOns: CartAddOnDto[];
     specialInstructions?: string | null;
-  }) {
+  }): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -510,7 +510,7 @@ export class OrderEditor implements OnInit {
     return item.price + this.getUnitAddOnTotal(item);
   }
 
-  protected increment(productId: string, index: number) {
+  protected increment(productId: string, index: number): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -518,7 +518,7 @@ export class OrderEditor implements OnInit {
     this.cart.set(this.cart().map((c, i) => (i === index ? { ...c, qty: c.qty + 1 } : c)));
   }
 
-  protected decrement(productId: string, index: number) {
+  protected decrement(productId: string, index: number): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -536,7 +536,7 @@ export class OrderEditor implements OnInit {
     }
   }
 
-  protected clearAll() {
+  protected clearAll(): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -544,7 +544,7 @@ export class OrderEditor implements OnInit {
     this.cart.set([]);
   }
 
-  protected onCustomerSelected(customerId: string | null) {
+  protected onCustomerSelected(customerId: string | null): void {
     if (!this.canManageOrderActions()) {
       return;
     }
@@ -552,7 +552,7 @@ export class OrderEditor implements OnInit {
     this.selectedCustomerId.set(customerId);
   }
 
-  protected getCustomerDisplayName(customer: CustomerDto) {
+  protected getCustomerDisplayName(customer: CustomerDto): string {
     return `${customer.firstName} ${customer.lastName}`.trim();
   }
 
@@ -611,7 +611,7 @@ export class OrderEditor implements OnInit {
     this.showOrderSummaryModal.set(false);
   }
 
-  protected openCreateCustomerModal() {
+  protected openCreateCustomerModal(): void {
     if (!this.canCreateCustomerInOrder()) {
       this.alertService.errorUnauthorized();
       return;
@@ -626,14 +626,14 @@ export class OrderEditor implements OnInit {
     this.showCreateCustomerModal.set(true);
   }
 
-  protected closeCreateCustomerModal() {
+  protected closeCreateCustomerModal(): void {
     if (this.isCreatingCustomer()) {
       return;
     }
     this.showCreateCustomerModal.set(false);
   }
 
-  protected saveCustomerFromModal() {
+  protected saveCustomerFromModal(): void {
     if (!this.canCreateCustomerInOrder()) {
       this.alertService.errorUnauthorized();
       return;
@@ -669,11 +669,11 @@ export class OrderEditor implements OnInit {
       });
   }
 
-  protected cancel() {
+  protected cancel(): void {
     this.router.navigate(['/orders/list']);
   }
 
-  canDeactivate(): boolean | Promise<boolean> {
+  public canDeactivate(): boolean | Promise<boolean> {
     // No guard for completed/cancelled orders, after successful save, or unchanged cart
     if (this.skipGuard || this.isReadOnly() || !this.hasCartChanged()) {
       return true;
@@ -686,7 +686,7 @@ export class OrderEditor implements OnInit {
     });
   }
 
-  protected confirmAbandon() {
+  protected confirmAbandon(): void {
     this.showAbandonModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -695,7 +695,7 @@ export class OrderEditor implements OnInit {
     }
   }
 
-  protected cancelAbandon() {
+  protected cancelAbandon(): void {
     this.showAbandonModal.set(false);
 
     if (this.pendingDeactivateResolve) {
@@ -704,7 +704,7 @@ export class OrderEditor implements OnInit {
     }
   }
 
-  protected openCancelOrderModal() {
+  protected openCancelOrderModal(): void {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -713,7 +713,7 @@ export class OrderEditor implements OnInit {
     this.showCancelOrderModal.set(true);
   }
 
-  protected confirmCancelOrder() {
+  protected confirmCancelOrder(): void {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -744,11 +744,11 @@ export class OrderEditor implements OnInit {
     });
   }
 
-  protected dismissCancelOrder() {
+  protected dismissCancelOrder(): void {
     this.showCancelOrderModal.set(false);
   }
 
-  protected checkout() {
+  protected checkout(): void {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -761,7 +761,7 @@ export class OrderEditor implements OnInit {
     this.checkoutModal().triggerOpen();
   }
 
-  protected onOrderSaved() {
+  protected onOrderSaved(): void {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -787,7 +787,7 @@ export class OrderEditor implements OnInit {
     amountReceived?: number;
     changeAmount?: number;
     tips?: number;
-  }) {
+  }): void {
     if (!this.canManageOrderActions()) {
       this.alertService.errorUnauthorized();
       return;
@@ -808,7 +808,7 @@ export class OrderEditor implements OnInit {
       changeAmount?: number;
       tips?: number;
     },
-  ) {
+  ): void {
     if (this.isSavingOrder()) {
       return;
     }
@@ -854,7 +854,7 @@ export class OrderEditor implements OnInit {
       changeAmount?: number;
       tips?: number;
     },
-  ) {
+  ): void {
     const order = this.currentOrder();
     if (!order) return;
 
@@ -896,7 +896,7 @@ export class OrderEditor implements OnInit {
     });
   }
 
-  private applyFiltersToCache() {
+  private applyFiltersToCache(): void {
     const { searchTerm } = this.filterForm.value;
 
     const allowedCategories = this.selectedProductCategories();
@@ -915,12 +915,12 @@ export class OrderEditor implements OnInit {
     this.products.set(items);
   }
 
-  protected onProductCategoryFilterChange(selectedIds: (string | number)[]) {
+  protected onProductCategoryFilterChange(selectedIds: (string | number)[]): void {
     this.selectedProductCategories.set(selectedIds as ProductCategoryEnum[]);
     this.applyFiltersToCache();
   }
 
-  protected onProductCategoryFilterReset() {
+  protected onProductCategoryFilterReset(): void {
     this.selectedProductCategories.set([]);
     this.applyFiltersToCache();
   }

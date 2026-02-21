@@ -75,7 +75,7 @@ export class ProductDetailsComponent implements OnInit {
     this.linkedProducts().reduce((sum, group) => sum + group.options.length, 0),
   );
 
-  ngOnInit() {
+  public ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
@@ -83,7 +83,7 @@ export class ProductDetailsComponent implements OnInit {
     }
   }
 
-  private loadProduct(id: string) {
+  private loadProduct(id: string): void {
     this.isLoading.set(true);
 
     this.productService.getProduct(id).subscribe({
@@ -124,11 +124,11 @@ export class ProductDetailsComponent implements OnInit {
     });
   }
 
-  protected goBack() {
+  protected goBack(): void {
     this.router.navigate(['/management/products']);
   }
 
-  protected navigateToEdit() {
+  protected navigateToEdit(): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -139,7 +139,7 @@ export class ProductDetailsComponent implements OnInit {
     }
   }
 
-  protected deleteProduct() {
+  protected deleteProduct(): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -152,7 +152,7 @@ export class ProductDetailsComponent implements OnInit {
     this.showDeleteModal.set(true);
   }
 
-  protected cancelDelete() {
+  protected cancelDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -160,7 +160,7 @@ export class ProductDetailsComponent implements OnInit {
     this.showDeleteModal.set(false);
   }
 
-  protected confirmDelete() {
+  protected confirmDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -195,19 +195,19 @@ export class ProductDetailsComponent implements OnInit {
     return ProductCategoryEnum[category];
   }
 
-  protected openPriceHistory() {
+  protected openPriceHistory(): void {
     this.isHistoryOpen.set(true);
   }
 
-  protected closePriceHistory() {
+  protected closePriceHistory(): void {
     this.isHistoryOpen.set(false);
   }
 
-  protected toggleShowAllAddOns() {
+  protected toggleShowAllAddOns(): void {
     this.showAllAddOns.update((v) => !v);
   }
 
-  protected toggleShowAllLinked() {
+  protected toggleShowAllLinked(): void {
     this.showAllLinked.update((v) => !v);
   }
 

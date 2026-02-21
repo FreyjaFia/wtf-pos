@@ -25,7 +25,7 @@ export class CustomerDetailsComponent implements OnInit {
   protected readonly showDeleteModal = signal(false);
   protected readonly isDeleting = signal(false);
 
-  ngOnInit() {
+  public ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
@@ -33,7 +33,7 @@ export class CustomerDetailsComponent implements OnInit {
     }
   }
 
-  private loadCustomer(id: string) {
+  private loadCustomer(id: string): void {
     this.isLoading.set(true);
 
     this.customerService.getCustomer(id).subscribe({
@@ -48,11 +48,11 @@ export class CustomerDetailsComponent implements OnInit {
     });
   }
 
-  protected goBack() {
+  protected goBack(): void {
     this.router.navigate(['/management/customers']);
   }
 
-  protected navigateToEdit() {
+  protected navigateToEdit(): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -62,7 +62,7 @@ export class CustomerDetailsComponent implements OnInit {
     }
   }
 
-  protected deleteCustomer() {
+  protected deleteCustomer(): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -74,7 +74,7 @@ export class CustomerDetailsComponent implements OnInit {
     this.showDeleteModal.set(true);
   }
 
-  protected cancelDelete() {
+  protected cancelDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -82,7 +82,7 @@ export class CustomerDetailsComponent implements OnInit {
     this.showDeleteModal.set(false);
   }
 
-  protected confirmDelete() {
+  protected confirmDelete(): void {
     if (this.isDeleting()) {
       return;
     }

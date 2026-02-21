@@ -120,7 +120,7 @@ export class UserListComponent implements OnInit {
     return users;
   });
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.restoreState();
     this.loadUsers();
 
@@ -130,7 +130,7 @@ export class UserListComponent implements OnInit {
     });
   }
 
-  protected loadUsers() {
+  protected loadUsers(): void {
     this.isLoading.set(true);
 
     this.userService.getUsers().subscribe({
@@ -148,12 +148,12 @@ export class UserListComponent implements OnInit {
     });
   }
 
-  protected refresh() {
+  protected refresh(): void {
     this.isRefreshing.set(true);
     this.loadUsers();
   }
 
-  private applyFiltersToCache() {
+  private applyFiltersToCache(): void {
     const { searchTerm } = this.filterForm.value;
     let items = [...this.usersCache()];
 
@@ -188,7 +188,7 @@ export class UserListComponent implements OnInit {
     this.users.set(items);
   }
 
-  protected navigateToEditor(userId?: string) {
+  protected navigateToEditor(userId?: string): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -201,11 +201,11 @@ export class UserListComponent implements OnInit {
     }
   }
 
-  protected navigateToDetails(userId: string) {
+  protected navigateToDetails(userId: string): void {
     this.router.navigate(['/management/users/details', userId]);
   }
 
-  protected deleteUser(user: UserDto) {
+  protected deleteUser(user: UserDto): void {
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -215,7 +215,7 @@ export class UserListComponent implements OnInit {
     this.showDeleteModal.set(true);
   }
 
-  protected cancelDelete() {
+  protected cancelDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -224,7 +224,7 @@ export class UserListComponent implements OnInit {
     this.userToDelete.set(null);
   }
 
-  protected confirmDelete() {
+  protected confirmDelete(): void {
     if (this.isDeleting()) {
       return;
     }
@@ -256,7 +256,7 @@ export class UserListComponent implements OnInit {
     });
   }
 
-  protected toggleSort(column: SortColumn) {
+  protected toggleSort(column: SortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -267,25 +267,25 @@ export class UserListComponent implements OnInit {
     this.saveState();
   }
 
-  protected onStatusFilterChange(selectedIds: (string | number)[]) {
+  protected onStatusFilterChange(selectedIds: (string | number)[]): void {
     this.selectedStatuses.set(selectedIds as string[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onRoleFilterChange(selectedIds: (string | number)[]) {
+  protected onRoleFilterChange(selectedIds: (string | number)[]): void {
     this.selectedRoles.set(selectedIds as number[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onRoleFilterReset() {
+  protected onRoleFilterReset(): void {
     this.selectedRoles.set([]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  protected onStatusFilterReset() {
+  protected onStatusFilterReset(): void {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
     this.saveState();
@@ -303,7 +303,7 @@ export class UserListComponent implements OnInit {
     return this.authService.canWriteManagement();
   }
 
-  private restoreState() {
+  private restoreState(): void {
     const state = this.listState.load<UserListState>(this.stateKey, {
       searchTerm: '',
       selectedRoles: [],
@@ -324,7 +324,7 @@ export class UserListComponent implements OnInit {
     this.sortDirection.set(state.sortDirection);
   }
 
-  private saveState() {
+  private saveState(): void {
     this.listState.save<UserListState>(this.stateKey, {
       searchTerm: this.filterForm.controls.searchTerm.value ?? '',
       selectedRoles: this.selectedRoles(),
