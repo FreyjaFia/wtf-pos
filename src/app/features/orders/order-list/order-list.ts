@@ -107,7 +107,7 @@ export class OrderList implements OnInit {
     });
   }
 
-  loadOrders() {
+  protected loadOrders() {
     this.isLoading.set(true);
 
     this.orderService.getOrders().subscribe({
@@ -125,24 +125,24 @@ export class OrderList implements OnInit {
     });
   }
 
-  refresh() {
+  protected refresh() {
     this.isRefreshing.set(true);
     this.loadOrders();
   }
 
-  onStatusFilterChange(selectedIds: (string | number)[]) {
+  protected onStatusFilterChange(selectedIds: (string | number)[]) {
     this.selectedStatuses.set(selectedIds as OrderStatusEnum[]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  onStatusFilterReset() {
+  protected onStatusFilterReset() {
     this.selectedStatuses.set([]);
     this.applyFiltersToCache();
     this.saveState();
   }
 
-  toggleSort(column: SortColumn) {
+  protected toggleSort(column: SortColumn) {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -153,7 +153,7 @@ export class OrderList implements OnInit {
     this.saveState();
   }
 
-  resetFilters() {
+  protected resetFilters() {
     this.filterForm.reset({
       searchTerm: '',
     });
@@ -162,7 +162,7 @@ export class OrderList implements OnInit {
     this.saveState();
   }
 
-  getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' | 'default' {
+  protected getStatusVariant(status: OrderStatusEnum): 'success' | 'error' | 'warning' | 'info' | 'default' {
     switch (status) {
       case OrderStatusEnum.Pending:
         return 'warning';
@@ -177,7 +177,7 @@ export class OrderList implements OnInit {
     }
   }
 
-  getStatusLabel(status: OrderStatusEnum): string {
+  protected getStatusLabel(status: OrderStatusEnum): string {
     switch (status) {
       case OrderStatusEnum.Pending:
         return 'Pending';
@@ -192,11 +192,11 @@ export class OrderList implements OnInit {
     }
   }
 
-  getOrderDate(order: OrderDto): string {
+  protected getOrderDate(order: OrderDto): string {
     return order.updatedAt || order.createdAt;
   }
 
-  getItemsText(order: OrderDto): string {
+  protected getItemsText(order: OrderDto): string {
     const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
     return count === 1 ? '1 item' : `${count} items`;
   }
@@ -225,15 +225,15 @@ export class OrderList implements OnInit {
     }
   }
 
-  editOrder(order: OrderDto) {
+  protected editOrder(order: OrderDto) {
     this.router.navigate(['/orders/editor', order.id]);
   }
 
-  isSortActive(column: SortColumn): boolean {
+  protected isSortActive(column: SortColumn): boolean {
     return this.sortColumn() === column;
   }
 
-  stopPropagation(event: Event): void {
+  protected stopPropagation(event: Event): void {
     event.stopPropagation();
   }
 
