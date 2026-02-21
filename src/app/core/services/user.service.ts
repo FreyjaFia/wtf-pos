@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { CreateUserDto, GetUsersQuery, UpdateUserDto, UserDto } from '@app/shared/models';
+import { CreateUserDto, GetUsersQuery, UpdateUserDto, UserDto } from '@shared/models';
 import { environment } from '@environments/environment.development';
 import { Observable, catchError, throwError } from 'rxjs';
 
@@ -10,7 +10,7 @@ export class UserService {
 
   private readonly http = inject(HttpClient);
 
-  getUsers(query?: GetUsersQuery): Observable<UserDto[]> {
+  public getUsers(query?: GetUsersQuery): Observable<UserDto[]> {
     let params = new HttpParams();
 
     if (query) {
@@ -35,7 +35,7 @@ export class UserService {
     );
   }
 
-  getUserById(id: string): Observable<UserDto> {
+  public getUserById(id: string): Observable<UserDto> {
     return this.http.get<UserDto>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching user:', error);
@@ -52,7 +52,7 @@ export class UserService {
     );
   }
 
-  createUser(dto: CreateUserDto): Observable<UserDto> {
+  public createUser(dto: CreateUserDto): Observable<UserDto> {
     return this.http.post<UserDto>(this.baseUrl, dto).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error creating user:', error);
@@ -67,7 +67,7 @@ export class UserService {
     );
   }
 
-  updateUser(dto: UpdateUserDto): Observable<UserDto> {
+  public updateUser(dto: UpdateUserDto): Observable<UserDto> {
     return this.http.put<UserDto>(`${this.baseUrl}/${dto.id}`, dto).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error updating user:', error);
@@ -84,7 +84,7 @@ export class UserService {
     );
   }
 
-  deleteUser(id: string): Observable<void> {
+  public deleteUser(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error deleting user:', error);
@@ -101,7 +101,7 @@ export class UserService {
     );
   }
 
-  uploadUserImage(id: string, file: File): Observable<UserDto> {
+  public uploadUserImage(id: string, file: File): Observable<UserDto> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -124,7 +124,7 @@ export class UserService {
     );
   }
 
-  deleteUserImage(id: string): Observable<UserDto> {
+  public deleteUserImage(id: string): Observable<UserDto> {
     return this.http.delete<UserDto>(`${this.baseUrl}/${id}/images`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error deleting user image:', error);
