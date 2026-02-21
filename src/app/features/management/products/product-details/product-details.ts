@@ -42,6 +42,7 @@ export class ProductDetailsComponent implements OnInit {
   protected readonly showAllAddOns = signal(false);
   protected readonly showAllLinked = signal(false);
   protected readonly showDeleteModal = signal(false);
+  protected readonly isDeleting = signal(false);
 
   protected readonly flattenedAddOns = computed(() => {
     return this.addOns()
@@ -144,10 +145,18 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   protected cancelDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     this.showDeleteModal.set(false);
   }
 
   protected confirmDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -158,13 +167,16 @@ export class ProductDetailsComponent implements OnInit {
     }
 
     const productId = this.product()!.id;
-    this.showDeleteModal.set(false);
+    this.isDeleting.set(true);
 
     this.productService.deleteProduct(productId).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.showDeleteModal.set(false);
         this.router.navigateByUrl('/management/products');
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.alertService.error(err.message || this.alertService.getDeleteErrorMessage('product'));
       },
     });

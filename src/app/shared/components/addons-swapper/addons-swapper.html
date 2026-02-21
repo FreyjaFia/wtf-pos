@@ -172,7 +172,7 @@
         @if (isSaving()) {
           <span class="loading loading-spinner loading-sm"></span>
         }
-        Save Add-ons
+        {{ isSaving() ? 'Saving Add-ons...' : 'Save Add-ons' }}
       </button>
     </div>
   </div>

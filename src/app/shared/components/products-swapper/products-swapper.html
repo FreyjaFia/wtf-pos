@@ -18,20 +18,34 @@
           <h4 class="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">
             Available Products
           </h4>
-          <!-- Search Filter -->
-          <div class="relative mb-3">
-            <app-icon
-              name="icon-search"
-              fill="none"
-              [class]="'absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 stroke-current text-gray-400'"
-            />
-            <input
-              type="text"
-              placeholder="Search products..."
-              class="input input-sm w-full rounded-xl border-transparent bg-gray-50 pl-9 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
-              [value]="searchTerm()"
-              (input)="onSearchInput($event)"
-            />
+          <!-- Search + Category Filters -->
+          <div class="mb-3 grid grid-cols-[1fr_auto] gap-2">
+            <div class="relative">
+              <app-icon
+                name="icon-search"
+                fill="none"
+                [class]="'absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 stroke-current text-gray-400'"
+              />
+              <input
+                type="text"
+                placeholder="Search products..."
+                class="input input-sm w-full rounded-xl border-transparent bg-gray-50 pl-9 transition-all focus:border-[#047857] focus:bg-white focus:ring-1 focus:ring-[#047857]/20"
+                [value]="searchTerm()"
+                (input)="onSearchInput($event)"
+              />
+            </div>
+            <select
+              class="select select-sm w-36 rounded-xl border-gray-200 bg-white text-sm focus:border-[#047857] focus:ring-1 focus:ring-[#047857]/20"
+              [value]="selectedCategory() ?? ''"
+              (change)="onCategoryChange($event)"
+            >
+              <option value="">All categories</option>
+              @for (category of categoryOptions; track category.value) {
+                <option [value]="category.value">
+                  {{ category.label }}
+                </option>
+              }
+            </select>
           </div>
           <ul
             #availableList
@@ -69,9 +83,9 @@
                 </span>
               </li>
             }
-            @if (filteredAvailableProducts().length === 0 && searchTerm()) {
+            @if (filteredAvailableProducts().length === 0 && (searchTerm() || selectedCategory())) {
               <div class="flex flex-col items-center justify-center py-8 text-gray-400">
-                <p class="text-sm">No matches for "{{ searchTerm() }}"</p>
+                <p class="text-sm">No products match your filters</p>
               </div>
             } @else if (availableProducts().length === 0) {
               <div class="flex flex-col items-center justify-center gap-1 py-8 text-gray-400">
@@ -172,7 +186,7 @@
         @if (isSaving()) {
           <span class="loading loading-spinner loading-sm"></span>
         }
-        Save Products
+        {{ isSaving() ? 'Saving Products...' : 'Save Products' }}
       </button>
     </div>
   </div>

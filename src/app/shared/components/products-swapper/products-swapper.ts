@@ -11,7 +11,7 @@ import {
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
 import { AvatarComponent } from '@shared/components/avatar/avatar';
-import { AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
+import { AddOnTypeEnum, ProductCategoryEnum, ProductSimpleDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
@@ -32,6 +32,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
   protected readonly availableProducts = signal<ProductSimpleDto[]>([]);
   protected readonly linkedProducts = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
+  protected readonly selectedCategory = signal<ProductCategoryEnum | null>(null);
 
   protected readonly AddOnTypeEnum = AddOnTypeEnum;
 
@@ -42,14 +43,27 @@ export class ProductsSwapperComponent implements AfterViewInit {
     { value: AddOnTypeEnum.Extra, label: 'Extra' },
   ];
 
+  protected readonly categoryOptions = [
+    { value: ProductCategoryEnum.Drink, label: 'Drink' },
+    { value: ProductCategoryEnum.Food, label: 'Food' },
+    { value: ProductCategoryEnum.Dessert, label: 'Dessert' },
+    { value: ProductCategoryEnum.Other, label: 'Other' },
+  ];
+
   protected readonly filteredAvailableProducts = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
+    const category = this.selectedCategory();
+    let products = this.availableProducts();
 
-    if (!term) {
-      return this.availableProducts();
+    if (category !== null) {
+      products = products.filter((product) => product.category === category);
     }
 
-    return this.availableProducts().filter((product) => product.name.toLowerCase().includes(term));
+    if (!term) {
+      return products;
+    }
+
+    return products.filter((product) => product.name.toLowerCase().includes(term));
   });
 
   addOnId = '';
@@ -100,41 +114,6 @@ export class ProductsSwapperComponent implements AfterViewInit {
     });
   }
 
-  //   private loadProductsWithoutAddOnInfo() {
-  //     this.isLoading.set(true);
-
-  //     // Load all non-add-on active products
-  //     this.productService.getProducts({ isAddOn: false, isActive: true }).subscribe({
-  //       next: (allProducts) => {
-  //         // Get the currently linked products for this add-on
-  //         this.productService.getLinkedProducts(this.addOnId).subscribe({
-  //           next: (linkedProducts) => {
-  //             const linkedIds = new Set(linkedProducts.map((p) => p.id));
-
-  //             // Split: available (not linked) on left, linked on right
-  //             const availableNotLinked = allProducts.filter((p) => !linkedIds.has(p.id));
-  //             const linkedWithType = linkedProducts.map((p) => ({ ...p, type: this.addOnType }));
-
-  //             this.availableProducts.set(availableNotLinked);
-  //             this.linkedProducts.set(linkedWithType);
-  //             this.isLoading.set(false);
-
-  //             // Initialize Sortable after data is loaded and DOM is populated
-  //             this.initializeSortable();
-  //           },
-  //           error: (err) => {
-  //             this.alertService.error(err.message);
-  //             this.isLoading.set(false);
-  //           },
-  //         });
-  //       },
-  //       error: (err) => {
-  //         this.alertService.error(err.message);
-  //         this.isLoading.set(false);
-  //       },
-  //     });
-  //   }
-
   private initializeSortable() {
     setTimeout(() => {
       if (!this.availableList || !this.assignedList) {
@@ -161,22 +140,19 @@ export class ProductsSwapperComponent implements AfterViewInit {
       return;
     }
 
-    const availableIds = Array.from(
-      this.availableList.nativeElement.querySelectorAll('[data-id]'),
-    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
-
     const linkedIds = Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
       (el) => (el as HTMLElement).getAttribute('data-id') || '',
     );
 
     const allProducts = [...this.availableProducts(), ...this.linkedProducts()];
     const productById = new Map(allProducts.map((p) => [p.id, p]));
+    const linkedIdsSet = new Set(linkedIds);
 
     // Build a map of existing type selections to preserve them
     const existingTypes = new Map(this.linkedProducts().map((p) => [p.id, p.type]));
 
     this.availableProducts.set(
-      availableIds.map((id) => productById.get(id)).filter((p): p is ProductSimpleDto => !!p),
+      this.sortByName(allProducts.filter((p) => !linkedIdsSet.has(p.id))),
     );
     this.linkedProducts.set(
       linkedIds
@@ -223,6 +199,12 @@ export class ProductsSwapperComponent implements AfterViewInit {
   protected onSearchInput(event: Event) {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
+  }
+
+  protected onCategoryChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const value = select.value;
+    this.selectedCategory.set(value ? (Number(value) as ProductCategoryEnum) : null);
   }
 
   protected changeProductType(productId: string, event: Event) {

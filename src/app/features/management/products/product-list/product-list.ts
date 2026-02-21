@@ -47,6 +47,7 @@ export class ProductListComponent implements OnInit {
   protected readonly sortDirection = signal<SortDirection>('asc');
   protected readonly showDeleteModal = signal(false);
   protected readonly productToDelete = signal<ProductDto | null>(null);
+  protected readonly isDeleting = signal(false);
 
   protected readonly categoryCounts = computed(() => {
     const cache = this.productsCache();
@@ -201,11 +202,19 @@ export class ProductListComponent implements OnInit {
   }
 
   protected cancelDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     this.showDeleteModal.set(false);
     this.productToDelete.set(null);
   }
 
   protected confirmDelete() {
+    if (this.isDeleting()) {
+      return;
+    }
+
     if (!this.canWriteManagement()) {
       this.alertService.errorUnauthorized();
       return;
@@ -217,14 +226,17 @@ export class ProductListComponent implements OnInit {
       return;
     }
 
-    this.showDeleteModal.set(false);
-    this.productToDelete.set(null);
+    this.isDeleting.set(true);
 
     this.productService.deleteProduct(product.id).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.showDeleteModal.set(false);
+        this.productToDelete.set(null);
         this.loadProducts();
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.alertService.error(err.message);
       },
     });

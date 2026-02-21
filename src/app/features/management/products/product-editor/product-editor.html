@@ -49,7 +49,11 @@
         @if (isSaving()) {
           <span class="loading loading-spinner loading-sm"></span>
         }
-        {{ isEditMode() ? 'Update' : 'Create' }} Product
+        {{
+          isSaving()
+            ? (isEditMode() ? 'Updating Product...' : 'Creating Product...')
+            : (isEditMode() ? 'Update' : 'Create') + ' Product'
+        }}
       </button>
     </div>
   </div>
@@ -291,7 +295,7 @@
                           @if (isDeletingImage()) {
                             <span class="loading loading-spinner loading-xs"></span>
                           }
-                          Remove current image
+                          {{ isDeletingImage() ? 'Removing image...' : 'Remove current image' }}
                         </button>
                       </div>
                     </div>
@@ -469,6 +473,7 @@
                                 >
                                   @if (isAddOnOverrideSaving(addon.id)) {
                                     <span class="loading loading-spinner loading-xs"></span>
+                                    Saving...
                                   } @else {
                                     {{ hasAddOnPriceOverride(addon.id) ? 'Update' : 'Set' }}
                                   }
