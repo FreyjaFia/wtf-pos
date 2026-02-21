@@ -385,12 +385,17 @@
             <button
               class="btn btn-outline pointer-events-auto flex-1 rounded-lg transition-all disabled:opacity-50"
               [style.cursor]="
-                cart().length === 0 || !canManageOrderActions() ? 'not-allowed' : 'pointer'
+                cart().length === 0 || !canManageOrderActions() || isSavingOrder()
+                  ? 'not-allowed'
+                  : 'pointer'
               "
               (click)="onOrderSaved()"
-              [disabled]="cart().length === 0 || !canManageOrderActions()"
+              [disabled]="cart().length === 0 || !canManageOrderActions() || isSavingOrder()"
             >
-              Save
+              @if (isSavingOrder()) {
+                <span class="loading loading-spinner loading-xs mr-2"></span>
+              }
+              {{ isSavingOrder() ? (editMode() ? 'Updating Order...' : 'Saving Order...') : 'Save' }}
             </button>
           </div>
           @if (editMode() && isCancellable() && canManageOrderActions()) {
@@ -511,7 +516,7 @@
           @if (isCreatingCustomer()) {
             <span class="loading loading-spinner loading-xs mr-2"></span>
           }
-          Save Customer
+          {{ isCreatingCustomer() ? 'Saving Customer...' : 'Save Customer' }}
         </button>
       </div>
     </div>

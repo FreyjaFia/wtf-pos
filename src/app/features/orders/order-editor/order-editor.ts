@@ -84,6 +84,7 @@ export class OrderEditor implements OnInit {
   protected readonly showOrderSummaryModal = signal(false);
   protected readonly showCreateCustomerModal = signal(false);
   protected readonly isCreatingCustomer = signal(false);
+  protected readonly isSavingOrder = signal(false);
 
   protected readonly createCustomerForm = new FormGroup({
     firstName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -769,6 +770,10 @@ export class OrderEditor implements OnInit {
       return;
     }
 
+    if (this.isSavingOrder()) {
+      return;
+    }
+
     if (this.editMode()) {
       this.updateExistingOrder(OrderStatusEnum.Pending);
     } else {
@@ -803,6 +808,12 @@ export class OrderEditor implements OnInit {
       tips?: number;
     },
   ) {
+    if (this.isSavingOrder()) {
+      return;
+    }
+
+    this.isSavingOrder.set(true);
+
     const command: CreateOrderCommand = {
       customerId: this.selectedCustomerId(),
       items: this.cart().map((c) => ({
@@ -823,10 +834,12 @@ export class OrderEditor implements OnInit {
 
     this.orderService.createOrder(command).subscribe({
       next: () => {
+        this.isSavingOrder.set(false);
         this.skipGuard = true;
         this.router.navigate(['/orders/list']);
       },
       error: (err) => {
+        this.isSavingOrder.set(false);
         console.error('Failed to create order', err);
         this.alertService.error(err.message || this.alertService.getCreateErrorMessage('order'));
       },
@@ -844,6 +857,12 @@ export class OrderEditor implements OnInit {
   ) {
     const order = this.currentOrder();
     if (!order) return;
+
+    if (this.isSavingOrder()) {
+      return;
+    }
+
+    this.isSavingOrder.set(true);
 
     const command: UpdateOrderCommand = {
       id: order.id,
@@ -866,10 +885,12 @@ export class OrderEditor implements OnInit {
 
     this.orderService.updateOrder(command).subscribe({
       next: () => {
+        this.isSavingOrder.set(false);
         this.skipGuard = true;
         this.router.navigate(['/orders/list']);
       },
       error: (err) => {
+        this.isSavingOrder.set(false);
         console.error('Failed to update order', err);
         this.alertService.error(err.message || this.alertService.getUpdateErrorMessage('order'));
       },
