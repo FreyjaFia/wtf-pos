@@ -1,4 +1,4 @@
-﻿<div class="flex h-full w-full flex-col ps-6">
+﻿<div class="flex h-full flex-col ps-6">
   <!-- Header: Title on Left, Tools on Right -->
   <div class="mb-6 flex shrink-0 items-center justify-between">
     <!-- Left: Title -->
@@ -62,7 +62,7 @@
       </button>
 
       <!-- Add Customer Button -->
-      @if (canWriteCustomers()) {
+      @if (canWriteManagement()) {
         <a
           class="btn btn-sm rounded-lg border-0 bg-[#047857] text-white shadow-md transition-all hover:bg-[#065f46] hover:shadow-lg"
           [routerLink]="['/management/customers/new']"
@@ -152,7 +152,7 @@
           @if (sortedCustomers().length > 0) {
             @for (customer of sortedCustomers(); track customer.id) {
               <div
-                class="grid grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-shadow duration-200 hover:shadow-xl"
+                class="relative grid grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-shadow duration-200 hover:z-10 hover:shadow-xl focus-within:z-30"
               >
                 <a
                   class="col-span-11 grid grid-cols-11 items-center gap-4 self-stretch cursor-pointer no-underline focus:outline-none"
@@ -199,7 +199,7 @@
 
                 <!-- Actions -->
                 <div class="col-span-1 flex justify-end" role="presentation">
-                  @if (canWriteCustomers()) {
+                  @if (canWriteManagement()) {
                     <div class="dropdown dropdown-end">
                       <button
                         type="button"
@@ -215,7 +215,7 @@
                       </button>
                       <ul
                         tabindex="0"
-                        class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
+                        class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow"
                       >
                         <li>
                           <a

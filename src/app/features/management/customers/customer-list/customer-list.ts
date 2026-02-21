@@ -159,7 +159,8 @@ export class CustomerListComponent implements OnInit {
   }
 
   protected navigateToEditor(customerId?: string) {
-    if (!this.canWriteCustomers()) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
       return;
     }
 
@@ -175,7 +176,8 @@ export class CustomerListComponent implements OnInit {
   }
 
   protected deleteCustomer(customer: CustomerDto) {
-    if (!this.canWriteCustomers()) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
       return;
     }
     this.customerToDelete.set(customer);
@@ -193,6 +195,11 @@ export class CustomerListComponent implements OnInit {
 
   protected confirmDelete() {
     if (this.isDeleting()) {
+      return;
+    }
+
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
       return;
     }
 
@@ -241,8 +248,8 @@ export class CustomerListComponent implements OnInit {
     this.saveState();
   }
 
-  protected canWriteCustomers(): boolean {
-    return this.authService.canWriteCustomers();
+  protected canWriteManagement(): boolean {
+    return this.authService.canWriteManagement();
   }
 
   private restoreState() {

@@ -53,7 +53,8 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   protected navigateToEdit() {
-    if (!this.canWriteCustomers()) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
       return;
     }
     if (this.customer()) {
@@ -62,7 +63,8 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   protected deleteCustomer() {
-    if (!this.canWriteCustomers()) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
       return;
     }
     if (!this.customer()) {
@@ -85,9 +87,11 @@ export class CustomerDetailsComponent implements OnInit {
       return;
     }
 
-    if (!this.canWriteCustomers()) {
+    if (!this.canWriteManagement()) {
+      this.alertService.errorUnauthorized();
       return;
     }
+
     if (!this.customer()) {
       return;
     }
@@ -99,6 +103,7 @@ export class CustomerDetailsComponent implements OnInit {
       next: () => {
         this.isDeleting.set(false);
         this.showDeleteModal.set(false);
+        this.alertService.successDeleted('Customer');
         this.router.navigateByUrl('/management/customers');
       },
       error: (err) => {
@@ -108,7 +113,7 @@ export class CustomerDetailsComponent implements OnInit {
     });
   }
 
-  protected canWriteCustomers(): boolean {
-    return this.authService.canWriteCustomers();
+  protected canWriteManagement(): boolean {
+    return this.authService.canWriteManagement();
   }
 }
