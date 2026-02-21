@@ -1,10 +1,29 @@
 ﻿<div class="dropdown dropdown-end">
   <button
-    class="btn btn-sm cursor-pointer border-gray-300 bg-white whitespace-nowrap shadow-sm hover:bg-gray-50"
+    class="btn btn-sm cursor-pointer gap-2 whitespace-nowrap shadow-sm"
+    [class.border-gray-300]="!isActive()"
+    [class.bg-white]="!isActive()"
+    [class.hover:bg-gray-50]="!isActive()"
+    [class.border-[#047857]/30]="isActive()"
+    [class.bg-[#047857]/10]="isActive()"
+    [class.text-[#065f46]]="isActive()"
+    [attr.title]="isActive() ? selectedSummary() : null"
     aria-label="Filter"
   >
-    <app-icon [name]="icon()" [class]="'h-5 w-5 text-gray-700'" [fill]="'currentColor'" />
+    <app-icon
+      [name]="icon()"
+      [class]="isActive() ? 'h-5 w-5 text-[#047857]' : 'h-5 w-5 text-gray-700'"
+      [fill]="'currentColor'"
+    />
     <span class="font-semibold">{{ title() }}</span>
+    @if (isActive()) {
+      <span class="sr-only">Selected: {{ selectedSummary() }}</span>
+      <span
+        class="inline-flex min-w-5 items-center justify-center rounded-full bg-[#047857] px-1.5 text-[10px] font-semibold text-white"
+      >
+        {{ selectedCount() }}
+      </span>
+    }
   </button>
   <ul
     class="dropdown-content menu rounded-box z-50 w-56 border border-gray-200 bg-white p-2 shadow-lg"

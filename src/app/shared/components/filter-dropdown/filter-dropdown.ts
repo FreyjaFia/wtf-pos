@@ -19,6 +19,7 @@ export class FilterDropdown {
   readonly icon = input<string>('icon-status');
   readonly options = input<FilterOption[]>([]);
   readonly selectedIds = input<(string | number)[]>([]);
+  readonly showSelectedState = input<boolean>(false);
 
   readonly filterChange = output<(string | number)[]>();
   readonly filterReset = output<void>();
@@ -33,6 +34,32 @@ export class FilterDropdown {
 
   resetFilters() {
     this.filterReset.emit();
+  }
+
+  protected selectedCount(): number {
+    return this.selectedIds().length;
+  }
+
+  protected isActive(): boolean {
+    return this.showSelectedState() && this.selectedCount() > 0;
+  }
+
+  protected selectedSummary(): string {
+    const selected = this.selectedIds();
+
+    if (selected.length === 0) {
+      return '';
+    }
+
+    const labels = this.options()
+      .filter((option) => selected.includes(option.id))
+      .map((option) => option.label);
+
+    if (labels.length <= 1) {
+      return labels.join(', ');
+    }
+
+    return `${labels.length} selected`;
   }
 
   stopPropagation(event: Event) {
