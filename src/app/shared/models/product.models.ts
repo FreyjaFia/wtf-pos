@@ -37,6 +37,7 @@ export interface ProductDto {
   updatedBy?: string | null;
   imageUrl?: string | null;
   priceHistory: ProductPriceHistoryDto[];
+  addOnCount: number;
 }
 
 export interface ProductListDto {

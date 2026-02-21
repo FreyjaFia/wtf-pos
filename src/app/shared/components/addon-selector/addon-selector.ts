@@ -145,6 +145,21 @@ export class AddonSelectorComponent {
     }
   }
 
+  protected getGroupHeader(group: AddOnGroupDto): string {
+    switch (group.type) {
+      case AddOnTypeEnum.Size:
+        return 'Sizes';
+      case AddOnTypeEnum.Flavor:
+        return 'Flavors';
+      case AddOnTypeEnum.Topping:
+        return 'Toppings';
+      case AddOnTypeEnum.Extra:
+        return 'Extras';
+      default:
+        return group.displayName.endsWith('s') ? group.displayName : `${group.displayName}s`;
+    }
+  }
+
   protected isRadioGroup(type: AddOnTypeEnum): boolean {
     return type === AddOnTypeEnum.Size || type === AddOnTypeEnum.Flavor;
   }
