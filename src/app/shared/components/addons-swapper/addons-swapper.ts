@@ -11,7 +11,7 @@ import {
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
 import { AvatarComponent } from '@shared/components/avatar/avatar';
-import { AddOnTypeEnum, ProductSimpleDto } from '@shared/models';
+import { AddOnTypeEnum, ProductDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
@@ -29,8 +29,8 @@ export class AddonsSwapperComponent implements AfterViewInit {
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
-  protected readonly availableAddOns = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
-  protected readonly assignedAddOns = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
+  protected readonly availableAddOns = signal<(ProductDto & { type: AddOnTypeEnum })[]>([]);
+  protected readonly assignedAddOns = signal<(ProductDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
 
   protected readonly AddOnTypeEnum = AddOnTypeEnum;
@@ -40,6 +40,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
     { value: AddOnTypeEnum.Flavor, label: 'Flavor' },
     { value: AddOnTypeEnum.Topping, label: 'Topping' },
     { value: AddOnTypeEnum.Extra, label: 'Extra' },
+    { value: AddOnTypeEnum.Sauce, label: 'Sauce' },
   ];
 
   protected readonly filteredAvailableAddOns = computed(() => {
@@ -128,30 +129,31 @@ export class AddonsSwapperComponent implements AfterViewInit {
       return;
     }
 
-    // Get all item IDs from available list
-    const availableIds = Array.from(
-      this.availableList.nativeElement.querySelectorAll('[data-id]'),
-    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
+    // Get all item IDs currently in the assigned list DOM
+    const assignedIds = new Set(
+      Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
+        (el) => (el as HTMLElement).getAttribute('data-id') || '',
+      ),
+    );
 
-    // Get all item IDs from assigned list
-    const assignedIds = Array.from(
-      this.assignedList.nativeElement.querySelectorAll('[data-id]'),
-    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
-
-    // Get all add-ons from both current lists
+    // Build a lookup of all known add-ons
     const allAddOns = [...this.availableAddOns(), ...this.assignedAddOns()];
     const addOnById = new Map(allAddOns.map((addon) => [addon.id, addon]));
 
-    // Update signals to reflect current state after drag
+    // Available = everything not assigned (includes filtered-out items)
     this.availableAddOns.set(
-      availableIds
-        .map((id) => addOnById.get(id))
-        .filter((addon): addon is ProductSimpleDto & { type: AddOnTypeEnum } => !!addon),
+      this.sortByName(allAddOns.filter((addon) => !assignedIds.has(addon.id))),
     );
+
+    // Assigned = items in the assigned DOM, preserving order
+    const assignedIdsArray = Array.from(
+      this.assignedList.nativeElement.querySelectorAll('[data-id]'),
+    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
+
     this.assignedAddOns.set(
-      assignedIds
+      assignedIdsArray
         .map((id) => addOnById.get(id))
-        .filter((addon): addon is ProductSimpleDto & { type: AddOnTypeEnum } => !!addon),
+        .filter((addon): addon is ProductDto & { type: AddOnTypeEnum } => !!addon),
     );
   }
 

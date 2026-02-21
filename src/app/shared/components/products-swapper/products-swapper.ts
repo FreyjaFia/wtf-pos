@@ -11,7 +11,7 @@ import {
 import { AlertService, ProductService } from '@core/services';
 import { Icon } from '@shared/components/icons/icon/icon';
 import { AvatarComponent } from '@shared/components/avatar/avatar';
-import { AddOnTypeEnum, ProductCategoryEnum, ProductSimpleDto } from '@shared/models';
+import { AddOnTypeEnum, ProductCategoryEnum, ProductDto } from '@shared/models';
 import Sortable from 'sortablejs';
 
 @Component({
@@ -29,8 +29,8 @@ export class ProductsSwapperComponent implements AfterViewInit {
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
-  protected readonly availableProducts = signal<ProductSimpleDto[]>([]);
-  protected readonly linkedProducts = signal<(ProductSimpleDto & { type: AddOnTypeEnum })[]>([]);
+  protected readonly availableProducts = signal<ProductDto[]>([]);
+  protected readonly linkedProducts = signal<(ProductDto & { type: AddOnTypeEnum })[]>([]);
   protected readonly searchTerm = signal('');
   protected readonly selectedCategory = signal<ProductCategoryEnum | null>(null);
 
@@ -41,6 +41,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
     { value: AddOnTypeEnum.Flavor, label: 'Flavor' },
     { value: AddOnTypeEnum.Topping, label: 'Topping' },
     { value: AddOnTypeEnum.Extra, label: 'Extra' },
+    { value: AddOnTypeEnum.Sauce, label: 'Sauce' },
   ];
 
   protected readonly categoryOptions = [
@@ -140,24 +141,29 @@ export class ProductsSwapperComponent implements AfterViewInit {
       return;
     }
 
-    const linkedIds = Array.from(this.assignedList.nativeElement.querySelectorAll('[data-id]')).map(
-      (el) => (el as HTMLElement).getAttribute('data-id') || '',
-    );
+    // Get all item IDs currently in the assigned list DOM
+    const linkedIdsArray = Array.from(
+      this.assignedList.nativeElement.querySelectorAll('[data-id]'),
+    ).map((el) => (el as HTMLElement).getAttribute('data-id') || '');
+    const linkedIdsSet = new Set(linkedIdsArray);
 
+    // Build a lookup of all known products
     const allProducts = [...this.availableProducts(), ...this.linkedProducts()];
     const productById = new Map(allProducts.map((p) => [p.id, p]));
-    const linkedIdsSet = new Set(linkedIds);
 
-    // Build a map of existing type selections to preserve them
+    // Preserve existing type selections
     const existingTypes = new Map(this.linkedProducts().map((p) => [p.id, p.type]));
 
+    // Available = everything not linked (includes filtered-out items)
     this.availableProducts.set(
       this.sortByName(allProducts.filter((p) => !linkedIdsSet.has(p.id))),
     );
+
+    // Linked = items in the assigned DOM, preserving order
     this.linkedProducts.set(
-      linkedIds
+      linkedIdsArray
         .map((id) => productById.get(id))
-        .filter((p): p is ProductSimpleDto => !!p)
+        .filter((p): p is ProductDto => !!p)
         .map((p) => ({ ...p, type: existingTypes.get(p.id) ?? this.addOnType })),
     );
   }

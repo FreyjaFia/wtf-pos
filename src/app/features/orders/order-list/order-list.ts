@@ -9,12 +9,12 @@ import { debounceTime } from 'rxjs';
 
 type SortColumn = 'orderNumber' | 'date' | 'totalAmount';
 type SortDirection = 'asc' | 'desc';
-type OrderListState = {
+interface OrderListState {
   searchTerm: string;
   selectedStatuses: OrderStatusEnum[];
   sortColumn: SortColumn | null;
   sortDirection: SortDirection;
-};
+}
 
 interface OrderGroup {
   label: string;

@@ -16,13 +16,13 @@ import { debounceTime } from 'rxjs';
 
 type SortColumn = 'name' | 'role';
 type SortDirection = 'asc' | 'desc';
-type UserListState = {
+interface UserListState {
   searchTerm: string;
   selectedRoles: number[];
   selectedStatuses: string[];
   sortColumn: SortColumn | null;
   sortDirection: SortDirection;
-};
+}
 
 @Component({
   selector: 'app-user-list',

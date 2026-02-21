@@ -16,12 +16,12 @@ import { debounceTime } from 'rxjs';
 
 type SortColumn = 'name' | 'address';
 type SortDirection = 'asc' | 'desc';
-type CustomerListState = {
+interface CustomerListState {
   searchTerm: string;
   selectedStatuses: string[];
   sortColumn: SortColumn | null;
   sortDirection: SortDirection;
-};
+}
 
 @Component({
   selector: 'app-customer-list',

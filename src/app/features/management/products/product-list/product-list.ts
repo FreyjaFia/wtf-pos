@@ -11,13 +11,13 @@ import { debounceTime } from 'rxjs';
 
 type SortColumn = 'name' | 'price';
 type SortDirection = 'asc' | 'desc';
-type ProductListState = {
+interface ProductListState {
   searchTerm: string;
   selectedTypes: number[];
   selectedStatuses: string[];
   sortColumn: SortColumn | null;
   sortDirection: SortDirection;
-};
+}
 
 @Component({
   selector: 'app-product-list',
