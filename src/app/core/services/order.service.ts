@@ -10,7 +10,7 @@ export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/orders`;
 
-  getOrders(query?: {
+  public getOrders(query?: {
     status?: OrderStatusEnum | null;
     customerId?: string | null;
   }): Observable<OrderDto[]> {
@@ -42,7 +42,7 @@ export class OrderService {
     );
   }
 
-  getOrder(id: string): Observable<OrderDto> {
+  public getOrder(id: string): Observable<OrderDto> {
     return this.http.get<OrderDto>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching order:', error);
@@ -59,7 +59,7 @@ export class OrderService {
     );
   }
 
-  createOrder(command: CreateOrderCommand): Observable<OrderDto> {
+  public createOrder(command: CreateOrderCommand): Observable<OrderDto> {
     return this.http.post<OrderDto>(this.baseUrl, command).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error creating order:', error);
@@ -76,7 +76,7 @@ export class OrderService {
     );
   }
 
-  updateOrder(command: UpdateOrderCommand): Observable<OrderDto> {
+  public updateOrder(command: UpdateOrderCommand): Observable<OrderDto> {
     return this.http.put<OrderDto>(`${this.baseUrl}/${command.id}`, command).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error updating order:', error);
@@ -95,7 +95,7 @@ export class OrderService {
     );
   }
 
-  voidOrder(id: string): Observable<OrderDto> {
+  public voidOrder(id: string): Observable<OrderDto> {
     return this.http.patch<OrderDto>(`${this.baseUrl}/${id}/void`, {}).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error voiding order:', error);

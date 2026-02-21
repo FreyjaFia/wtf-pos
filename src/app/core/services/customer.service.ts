@@ -10,7 +10,7 @@ export class CustomerService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/customers`;
 
-  getCustomers(query?: {
+  public getCustomers(query?: {
     searchTerm?: string | null;
     isActive?: boolean | null;
   }): Observable<CustomerDto[]> {
@@ -40,7 +40,7 @@ export class CustomerService {
     );
   }
 
-  getCustomer(id: string): Observable<CustomerDto> {
+  public getCustomer(id: string): Observable<CustomerDto> {
     return this.http.get<CustomerDto>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching customer:', error);
@@ -59,7 +59,7 @@ export class CustomerService {
     );
   }
 
-  createCustomer(customer: CreateCustomerDto): Observable<CustomerDto> {
+  public createCustomer(customer: CreateCustomerDto): Observable<CustomerDto> {
     return this.http.post<CustomerDto>(this.baseUrl, customer).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error creating customer:', error);
@@ -76,7 +76,7 @@ export class CustomerService {
     );
   }
 
-  updateCustomer(customer: UpdateCustomerDto): Observable<CustomerDto> {
+  public updateCustomer(customer: UpdateCustomerDto): Observable<CustomerDto> {
     return this.http.put<CustomerDto>(`${this.baseUrl}/${customer.id}`, customer).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error updating customer:', error);
@@ -95,7 +95,7 @@ export class CustomerService {
     );
   }
 
-  deleteCustomer(id: string): Observable<void> {
+  public deleteCustomer(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error deleting customer:', error);
@@ -114,10 +114,7 @@ export class CustomerService {
     );
   }
 
-  /**
-   * Upload customer image
-   */
-  uploadCustomerImage(id: string, file: File): Observable<CustomerDto> {
+  public uploadCustomerImage(id: string, file: File): Observable<CustomerDto> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<CustomerDto>(`${this.baseUrl}/${id}/image`, formData).pipe(
@@ -134,7 +131,7 @@ export class CustomerService {
     );
   }
 
-  deleteCustomerImage(id: string): Observable<CustomerDto> {
+  public deleteCustomerImage(id: string): Observable<CustomerDto> {
     return this.http.delete<CustomerDto>(`${this.baseUrl}/${id}/image`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error deleting customer image:', error);

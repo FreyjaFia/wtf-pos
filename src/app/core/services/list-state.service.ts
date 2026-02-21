@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ListStateService {
-  load<T>(key: string, fallback: T): T {
+  public load<T>(key: string, fallback: T): T {
     try {
       const raw = localStorage.getItem(key);
 
@@ -16,7 +16,7 @@ export class ListStateService {
     }
   }
 
-  save<T>(key: string, value: T): void {
+  public save<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {

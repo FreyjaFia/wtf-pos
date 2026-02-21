@@ -14,7 +14,7 @@ export class AlertService {
     visible: false,
   });
 
-  readonly alert = this.alertState.asReadonly();
+  public readonly alert = this.alertState.asReadonly();
 
   constructor() {
     effect(() => {
@@ -30,75 +30,75 @@ export class AlertService {
     });
   }
 
-  success(message: string): void {
+  public success(message: string): void {
     this.show('success', message);
   }
 
-  error(message: string): void {
+  public error(message: string): void {
     this.show('error', message);
   }
 
-  warning(message: string): void {
+  public warning(message: string): void {
     this.show('warning', message);
   }
 
-  info(message: string): void {
+  public info(message: string): void {
     this.show('info', message);
   }
 
-  successCreated(entity: string): void {
+  public successCreated(entity: string): void {
     this.success(`${entity} created successfully.`);
   }
 
-  successUpdated(entity: string): void {
+  public successUpdated(entity: string): void {
     this.success(`${entity} updated successfully.`);
   }
 
-  successDeleted(entity: string): void {
+  public successDeleted(entity: string): void {
     this.success(`${entity} deleted successfully.`);
   }
 
-  successSaved(entity: string): void {
+  public successSaved(entity: string): void {
     this.success(`${entity} saved successfully.`);
   }
 
-  successUploaded(entity = 'Image'): void {
+  public successUploaded(entity = 'Image'): void {
     this.success(`${entity} uploaded successfully.`);
   }
 
-  errorUnauthorized(): void {
+  public errorUnauthorized(): void {
     this.error('You are not authorized to perform this action.');
   }
 
-  errorInvalidImageType(): void {
+  public errorInvalidImageType(): void {
     this.error('Invalid image file type. Only JPG, PNG, GIF, and WebP are allowed.');
   }
 
-  errorFileTooLarge(maxSizeMb = 5): void {
+  public errorFileTooLarge(maxSizeMb = 5): void {
     this.error(`File size exceeds ${maxSizeMb}MB limit.`);
   }
 
-  errorNothingToUpdate(): void {
+  public errorNothingToUpdate(): void {
     this.error('No changes to update.');
   }
 
-  getLoadErrorMessage(entity: string): string {
+  public getLoadErrorMessage(entity: string): string {
     return `Failed to load ${entity.toLowerCase()}.`;
   }
 
-  getCreateErrorMessage(entity: string): string {
+  public getCreateErrorMessage(entity: string): string {
     return `Failed to create ${entity.toLowerCase()}.`;
   }
 
-  getUpdateErrorMessage(entity: string): string {
+  public getUpdateErrorMessage(entity: string): string {
     return `Failed to update ${entity.toLowerCase()}.`;
   }
 
-  getDeleteErrorMessage(entity: string): string {
+  public getDeleteErrorMessage(entity: string): string {
     return `Failed to delete ${entity.toLowerCase()}.`;
   }
 
-  getUploadErrorMessage(entity = 'image'): string {
+  public getUploadErrorMessage(entity = 'image'): string {
     return `Failed to upload ${entity.toLowerCase()}.`;
   }
 
@@ -106,7 +106,7 @@ export class AlertService {
     this.alertState.set({ type, message, visible: true });
   }
 
-  dismiss(): void {
+  public dismiss(): void {
     this.alertState.update((state) => ({ ...state, visible: false }));
   }
 }

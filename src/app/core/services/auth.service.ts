@@ -12,15 +12,15 @@ export class AuthService {
   private _isLoggedIn = new BehaviorSubject<boolean>(!!localStorage.getItem('token'));
   private readonly rolesSubject = new BehaviorSubject<string[]>([]);
   private readonly meRefreshSubject = new Subject<void>();
-  readonly isLoggedIn$ = this._isLoggedIn.asObservable();
-  readonly roles$ = this.rolesSubject.asObservable();
-  readonly meRefresh$ = this.meRefreshSubject.asObservable();
+  public readonly isLoggedIn$ = this._isLoggedIn.asObservable();
+  public readonly roles$ = this.rolesSubject.asObservable();
+  public readonly meRefresh$ = this.meRefreshSubject.asObservable();
 
   constructor() {
     this.syncRolesFromToken();
   }
 
-  login(username: string, password: string): Observable<boolean> {
+  public login(username: string, password: string): Observable<boolean> {
     if (!username || !password) {
       return throwError(() => new Error('Username and password are required'));
     }
@@ -69,7 +69,7 @@ export class AuthService {
     );
   }
 
-  getMe(): Observable<MeDto> {
+  public getMe(): Observable<MeDto> {
     return this.http.get<MeDto>(`${this.baseUrl}/me`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Get me error:', error);
@@ -86,7 +86,7 @@ export class AuthService {
     );
   }
 
-  updateMe(password: string): Observable<void> {
+  public updateMe(password: string): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/me`, { password }).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Update me error:', error);
@@ -106,7 +106,7 @@ export class AuthService {
     );
   }
 
-  uploadMeImage(file: File): Observable<{ imageUrl?: string | null }> {
+  public uploadMeImage(file: File): Observable<{ imageUrl?: string | null }> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -129,29 +129,29 @@ export class AuthService {
     );
   }
 
-  notifyMeUpdated(): void {
+  public notifyMeUpdated(): void {
     this.meRefreshSubject.next();
   }
 
-  logout() {
+  public logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     this._isLoggedIn.next(false);
     this.rolesSubject.next([]);
   }
 
-  getToken(): string | null {
+  public getToken(): string | null {
     return localStorage.getItem('token');
   }
 
-  getRefreshToken(): string | null {
+  public getRefreshToken(): string | null {
     return localStorage.getItem('refreshToken');
   }
 
   /**
    * Determines if the token is expired or about to expire (within 5 minutes)
    */
-  isTokenExpired(): boolean {
+  public isTokenExpired(): boolean {
     const token = this.getToken();
 
     if (!token) {
@@ -183,7 +183,7 @@ export class AuthService {
    * Validates the current token
    * @returns true if token is valid and not expired
    */
-  isTokenValid(): boolean {
+  public isTokenValid(): boolean {
     const token = this.getToken();
 
     if (!token) {
@@ -209,7 +209,7 @@ export class AuthService {
   /**
    * Refreshes the access token using the refresh token
    */
-  refreshToken(): Observable<boolean> {
+  public refreshToken(): Observable<boolean> {
     const refreshToken = this.getRefreshToken();
 
     if (!refreshToken) {
@@ -266,27 +266,27 @@ export class AuthService {
     }
   }
 
-  isAuthenticated(): boolean {
+  public isAuthenticated(): boolean {
     return this._isLoggedIn.value || !!this.getToken();
   }
 
-  canReadCustomers(): boolean {
+  public canReadCustomers(): boolean {
     return this.hasAnyRole(['Admin', 'AdminViewer']);
   }
 
-  canWriteCustomers(): boolean {
+  public canWriteCustomers(): boolean {
     return this.hasAnyRole(['Admin']);
   }
 
-  canAccessManagement(): boolean {
+  public canAccessManagement(): boolean {
     return this.hasAnyRole(['Admin', 'AdminViewer']);
   }
 
-  canWriteManagement(): boolean {
+  public canWriteManagement(): boolean {
     return this.hasAnyRole(['Admin']);
   }
 
-  canCreateCustomerInOrder(isEditMode: boolean): boolean {
+  public canCreateCustomerInOrder(isEditMode: boolean): boolean {
     if (this.hasAnyRole(['Admin'])) {
       return true;
     }
@@ -294,11 +294,11 @@ export class AuthService {
     return !isEditMode && this.hasAnyRole(['Cashier']);
   }
 
-  canManageOrders(): boolean {
+  public canManageOrders(): boolean {
     return this.hasAnyRole(['Admin', 'Cashier']);
   }
 
-  getCurrentRoleLabel(): string {
+  public getCurrentRoleLabel(): string {
     const roles = this.rolesSubject.value.map((role) => role.toLowerCase());
 
     if (roles.includes('admin')) {
@@ -314,7 +314,7 @@ export class AuthService {
     return 'Unknown';
   }
 
-  hasAnyRole(requiredRoles: string[]): boolean {
+  public hasAnyRole(requiredRoles: string[]): boolean {
     const roleSet = new Set(this.rolesSubject.value.map((role) => role.toLowerCase()));
     return requiredRoles.some((role) => roleSet.has(role.toLowerCase()));
   }

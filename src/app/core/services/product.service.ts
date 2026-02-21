@@ -21,7 +21,7 @@ export class ProductService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/products`;
 
-  getProducts(query?: {
+  public getProducts(query?: {
     searchTerm?: string | null;
     category?: ProductCategoryEnum | null;
     isAddOn?: boolean | null;
@@ -59,7 +59,7 @@ export class ProductService {
     );
   }
 
-  getProduct(id: string): Observable<ProductDto> {
+  public getProduct(id: string): Observable<ProductDto> {
     return this.http.get<ProductDto>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching product:', error);
@@ -76,7 +76,7 @@ export class ProductService {
     );
   }
 
-  createProduct(product: CreateProductDto): Observable<ProductDto> {
+  public createProduct(product: CreateProductDto): Observable<ProductDto> {
     return this.http.post<ProductDto>(this.baseUrl, product).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error creating product:', error);
@@ -91,7 +91,7 @@ export class ProductService {
     );
   }
 
-  updateProduct(product: UpdateProductDto): Observable<ProductDto> {
+  public updateProduct(product: UpdateProductDto): Observable<ProductDto> {
     return this.http.put<ProductDto>(`${this.baseUrl}/${product.id}`, product).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error updating product:', error);
@@ -108,7 +108,7 @@ export class ProductService {
     );
   }
 
-  deleteProduct(id: string): Observable<void> {
+  public deleteProduct(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error deleting product:', error);
@@ -125,7 +125,7 @@ export class ProductService {
     );
   }
 
-  uploadProductImage(productId: string, file: File): Observable<ProductDto> {
+  public uploadProductImage(productId: string, file: File): Observable<ProductDto> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<ProductDto>(`${this.baseUrl}/${productId}/images`, formData).pipe(
@@ -147,7 +147,7 @@ export class ProductService {
     );
   }
 
-  deleteProductImage(productId: string): Observable<ProductDto> {
+  public deleteProductImage(productId: string): Observable<ProductDto> {
     return this.http.delete<ProductDto>(`${this.baseUrl}/${productId}/images`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error deleting product image:', error);
@@ -165,7 +165,7 @@ export class ProductService {
     );
   }
 
-  getProductAddOns(productId: string): Observable<AddOnGroupDto[]> {
+  public getProductAddOns(productId: string): Observable<AddOnGroupDto[]> {
     return this.http.get<AddOnGroupDto[]>(`${this.baseUrl}/${productId}/addons`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching product add-ons:', error);
@@ -182,7 +182,7 @@ export class ProductService {
     );
   }
 
-  getLinkedProducts(addOnId: string): Observable<AddOnGroupDto[]> {
+  public getLinkedProducts(addOnId: string): Observable<AddOnGroupDto[]> {
     return this.http.get<AddOnGroupDto[]>(`${this.baseUrl}/addons/${addOnId}/products`).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching linked products:', error);
@@ -199,7 +199,7 @@ export class ProductService {
     );
   }
 
-  assignProductAddOns(productId: string, addOns: ProductAddOnAssignmentDto[]): Observable<void> {
+  public assignProductAddOns(productId: string, addOns: ProductAddOnAssignmentDto[]): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/${productId}/addons`, { productId, addOns }).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error assigning product add-ons:', error);
@@ -220,7 +220,7 @@ export class ProductService {
     );
   }
 
-  assignLinkedProducts(addOnId: string, products: AddOnProductAssignmentDto[]): Observable<void> {
+  public assignLinkedProducts(addOnId: string, products: AddOnProductAssignmentDto[]): Observable<void> {
     return this.http
       .post<void>(`${this.baseUrl}/addons/${addOnId}/products`, { addOnId, products })
       .pipe(
@@ -243,13 +243,13 @@ export class ProductService {
       );
   }
 
-  getProductAddOnPriceOverrides(productId: string): Observable<ProductAddOnPriceOverrideDto[]> {
+  public getProductAddOnPriceOverrides(productId: string): Observable<ProductAddOnPriceOverrideDto[]> {
     return this.http.get<ProductAddOnPriceOverrideDto[]>(
       `${this.baseUrl}/${productId}/addon-price-overrides`,
     );
   }
 
-  createProductAddOnPriceOverride(
+  public createProductAddOnPriceOverride(
     payload: CreateProductAddOnPriceOverrideDto,
   ): Observable<ProductAddOnPriceOverrideDto> {
     return this.http
@@ -276,7 +276,7 @@ export class ProductService {
       );
   }
 
-  updateProductAddOnPriceOverride(
+  public updateProductAddOnPriceOverride(
     payload: UpdateProductAddOnPriceOverrideDto,
   ): Observable<ProductAddOnPriceOverrideDto> {
     return this.http
@@ -303,7 +303,7 @@ export class ProductService {
       );
   }
 
-  deleteProductAddOnPriceOverride(productId: string, addOnId: string): Observable<void> {
+  public deleteProductAddOnPriceOverride(productId: string, addOnId: string): Observable<void> {
     return this.http
       .delete<void>(`${this.baseUrl}/${productId}/addon-price-overrides/${addOnId}`)
       .pipe(
