@@ -10,7 +10,17 @@ export enum AddOnTypeEnum {
   Flavor = 2,
   Topping = 3,
   Extra = 4,
+  Sauce = 5,
 }
+
+/** Display order: required types first, then optional */
+export const ADD_ON_TYPE_ORDER: Record<AddOnTypeEnum, number> = {
+  [AddOnTypeEnum.Size]: 0,
+  [AddOnTypeEnum.Flavor]: 1,
+  [AddOnTypeEnum.Sauce]: 2,
+  [AddOnTypeEnum.Topping]: 3,
+  [AddOnTypeEnum.Extra]: 4,
+};
 
 export interface ProductPriceHistoryDto {
   id: string;
@@ -38,6 +48,7 @@ export interface ProductDto {
   imageUrl?: string | null;
   priceHistory: ProductPriceHistoryDto[];
   addOnCount: number;
+  overridePrice?: number | null;
 }
 
 export interface ProductListDto {
@@ -69,17 +80,6 @@ export interface UpdateProductDto {
   isActive: boolean;
 }
 
-export interface ProductSimpleDto {
-  id: string;
-  name: string;
-  code: string;
-  description?: string | null;
-  price: number;
-  category: ProductCategoryEnum;
-  isActive: boolean;
-  imageUrl?: string | null;
-}
-
 export interface ProductAddOnAssignmentDto {
   addOnId: string;
   addOnType: AddOnTypeEnum;
@@ -93,7 +93,7 @@ export interface AddOnProductAssignmentDto {
 export interface AddOnGroupDto {
   type: AddOnTypeEnum;
   displayName: string;
-  options: ProductSimpleDto[];
+  options: ProductDto[];
 }
 
 export interface ProductAddOnPriceOverrideDto {
