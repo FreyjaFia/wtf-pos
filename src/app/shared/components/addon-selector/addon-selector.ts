@@ -3,13 +3,7 @@ import { Component, computed, inject, output, signal } from '@angular/core';
 import { ProductService } from '@core/services';
 import { AvatarComponent } from '@shared/components/avatar/avatar';
 import { Icon } from '@shared/components/icons/icon/icon';
-import {
-  AddOnGroupDto,
-  AddOnTypeEnum,
-  CartAddOnDto,
-  ProductDto,
-  ProductSimpleDto,
-} from '@shared/models';
+import { ADD_ON_TYPE_ORDER, AddOnGroupDto, AddOnTypeEnum, CartAddOnDto, ProductDto } from '@shared/models';
 
 @Component({
   selector: 'app-addon-selector',
@@ -52,7 +46,9 @@ export class AddonSelectorComponent {
       const activeOptions = group.options.filter((o) => o.isActive);
 
       if (
-        (group.type === AddOnTypeEnum.Size || group.type === AddOnTypeEnum.Flavor) &&
+        (group.type === AddOnTypeEnum.Size ||
+          group.type === AddOnTypeEnum.Flavor ||
+          group.type === AddOnTypeEnum.Sauce) &&
         activeOptions.length > 0
       ) {
         const totalSelected = selected
@@ -60,7 +56,12 @@ export class AddonSelectorComponent {
           : 0;
 
         if (totalSelected !== 1) {
-          const label = group.type === AddOnTypeEnum.Size ? 'size' : 'flavor';
+          const label =
+            group.type === AddOnTypeEnum.Size
+              ? 'size'
+              : group.type === AddOnTypeEnum.Sauce
+                ? 'sauce'
+                : 'flavor';
           return `Please select a ${label} to continue.`;
         }
       }
@@ -88,7 +89,7 @@ export class AddonSelectorComponent {
           result.push({
             addOnId: option.id,
             name: option.name,
-            price: option.price,
+            price: option.overridePrice ?? option.price,
             addOnType: group.type,
           });
         }
@@ -114,7 +115,9 @@ export class AddonSelectorComponent {
     this.productService.getProductAddOns(productId).subscribe({
       next: (groups) => {
         // Deduplicate options within each group (display only)
-        const deduped = groups.map((g) => ({
+        const deduped = groups
+          .sort((a, b) => ADD_ON_TYPE_ORDER[a.type] - ADD_ON_TYPE_ORDER[b.type])
+          .map((g) => ({
           ...g,
           options: g.options
             .filter((opt, i, arr) => arr.findIndex((o) => o.id === opt.id) === i)
@@ -136,6 +139,8 @@ export class AddonSelectorComponent {
         return 'Required · Pick one';
       case AddOnTypeEnum.Flavor:
         return 'Required · Pick one';
+      case AddOnTypeEnum.Sauce:
+        return 'Required · Pick one';
       case AddOnTypeEnum.Topping:
         return 'Optional · Pick many';
       case AddOnTypeEnum.Extra:
@@ -151,6 +156,8 @@ export class AddonSelectorComponent {
         return 'Sizes';
       case AddOnTypeEnum.Flavor:
         return 'Flavors';
+      case AddOnTypeEnum.Sauce:
+        return 'Sauces';
       case AddOnTypeEnum.Topping:
         return 'Toppings';
       case AddOnTypeEnum.Extra:
@@ -161,7 +168,7 @@ export class AddonSelectorComponent {
   }
 
   protected isRadioGroup(type: AddOnTypeEnum): boolean {
-    return type === AddOnTypeEnum.Size || type === AddOnTypeEnum.Flavor;
+    return type === AddOnTypeEnum.Size || type === AddOnTypeEnum.Flavor || type === AddOnTypeEnum.Sauce;
   }
 
   protected isSelected(type: AddOnTypeEnum, optionId: string): boolean {
@@ -174,7 +181,7 @@ export class AddonSelectorComponent {
     return sel[type]?.get(optionId) ?? 0;
   }
 
-  protected toggleOption(group: AddOnGroupDto, option: ProductSimpleDto) {
+  protected toggleOption(group: AddOnGroupDto, option: ProductDto) {
     if (!option.isActive) {
       return;
     }
@@ -210,7 +217,7 @@ export class AddonSelectorComponent {
     this.selections.set(sel);
   }
 
-  protected incrementOption(group: AddOnGroupDto, option: ProductSimpleDto, event: Event) {
+  protected incrementOption(group: AddOnGroupDto, option: ProductDto, event: Event) {
     event.stopPropagation();
 
     if (!option.isActive) {
@@ -227,7 +234,7 @@ export class AddonSelectorComponent {
     this.selections.set(sel);
   }
 
-  protected decrementOption(group: AddOnGroupDto, option: ProductSimpleDto, event: Event) {
+  protected decrementOption(group: AddOnGroupDto, option: ProductDto, event: Event) {
     event.stopPropagation();
 
     const sel = { ...this.selections() };
