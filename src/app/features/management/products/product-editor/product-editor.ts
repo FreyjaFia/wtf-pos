@@ -11,9 +11,9 @@ import {
   ProductsSwapperComponent,
 } from '@shared/components';
 import {
+  ADD_ON_TYPE_ORDER,
   AddOnGroupDto,
   AddOnProductAssignmentDto,
-  AddOnTypeEnum,
   CreateProductAddOnPriceOverrideDto,
   CreateProductDto,
   ProductAddOnAssignmentDto,
@@ -79,21 +79,31 @@ export class ProductEditorComponent implements OnInit {
   protected readonly showAllAddOns = signal(false);
   protected readonly showAllLinked = signal(false);
 
-  protected readonly flattenedAssignedAddOns = computed(() => {
-    return this.assignedAddOns()
-      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
+  protected readonly sortedAssignedAddOns = computed(() =>
+    [...this.assignedAddOns()]
+      .sort((a, b) => ADD_ON_TYPE_ORDER[a.type] - ADD_ON_TYPE_ORDER[b.type])
+      .map((group) => ({
+        ...group,
+        options: [...group.options].sort((a, b) => a.name.localeCompare(b.name)),
+      })),
+  );
 
-  protected readonly flattenedLinkedProducts = computed(() => {
-    return this.linkedProducts()
-      .flatMap((group) => group.options.map((opt) => ({ ...opt, addOnType: group.type })))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
+  protected readonly sortedLinkedProducts = computed(() =>
+    [...this.linkedProducts()]
+      .sort((a, b) => ADD_ON_TYPE_ORDER[a.type] - ADD_ON_TYPE_ORDER[b.type])
+      .map((group) => ({
+        ...group,
+        options: [...group.options].sort((a, b) => a.name.localeCompare(b.name)),
+      })),
+  );
 
-  protected getAddOnTypeName(type: AddOnTypeEnum): string {
-    return AddOnTypeEnum[type];
-  }
+  protected readonly totalAssignedAddOnsCount = computed(() =>
+    this.assignedAddOns().reduce((sum, group) => sum + group.options.length, 0),
+  );
+
+  protected readonly totalLinkedCount = computed(() =>
+    this.linkedProducts().reduce((sum, group) => sum + group.options.length, 0),
+  );
 
   protected readonly productForm = new FormGroup({
     name: new FormControl('', {
