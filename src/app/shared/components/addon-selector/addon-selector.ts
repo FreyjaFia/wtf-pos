@@ -11,11 +11,6 @@ import { ADD_ON_TYPE_ORDER, AddOnGroupDto, AddOnTypeEnum, CartAddOnDto, ProductD
   templateUrl: './addon-selector.html',
 })
 export class AddonSelectorComponent {
-  // Handler for textarea input
-  protected onSpecialInstructionsInput(event: Event) {
-    const value = event.target instanceof HTMLTextAreaElement ? event.target.value : '';
-    this.specialInstructions.set(value);
-  }
   private readonly productService = inject(ProductService);
 
   // Special instructions for this item
@@ -103,14 +98,15 @@ export class AddonSelectorComponent {
     return this.selectedAddOns().reduce((sum, a) => sum + a.price, 0);
   });
 
-  open(product: ProductDto) {
+  public open(product: ProductDto): void {
     this.product.set(product);
     this.selections.set({});
     this.specialInstructions.set('');
     this.isOpen.set(true);
     this.loadAddOns(product.id);
   }
-  private loadAddOns(productId: string) {
+
+  private loadAddOns(productId: string): void {
     this.isLoading.set(true);
     this.productService.getProductAddOns(productId).subscribe({
       next: (groups) => {
@@ -181,7 +177,7 @@ export class AddonSelectorComponent {
     return sel[type]?.get(optionId) ?? 0;
   }
 
-  protected toggleOption(group: AddOnGroupDto, option: ProductDto) {
+  protected toggleOption(group: AddOnGroupDto, option: ProductDto): void {
     if (!option.isActive) {
       return;
     }
@@ -217,7 +213,7 @@ export class AddonSelectorComponent {
     this.selections.set(sel);
   }
 
-  protected incrementOption(group: AddOnGroupDto, option: ProductDto, event: Event) {
+  protected incrementOption(group: AddOnGroupDto, option: ProductDto, event: Event): void {
     event.stopPropagation();
 
     if (!option.isActive) {
@@ -234,7 +230,7 @@ export class AddonSelectorComponent {
     this.selections.set(sel);
   }
 
-  protected decrementOption(group: AddOnGroupDto, option: ProductDto, event: Event) {
+  protected decrementOption(group: AddOnGroupDto, option: ProductDto, event: Event): void {
     event.stopPropagation();
 
     const sel = { ...this.selections() };
@@ -253,7 +249,13 @@ export class AddonSelectorComponent {
     this.selections.set(sel);
   }
 
-  protected confirm() {
+  // Handler for textarea input
+  protected onSpecialInstructionsInput(event: Event): void {
+    const value = event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+    this.specialInstructions.set(value);
+  }
+
+  protected confirm(): void {
     if (this.validationError()) {
       return;
     }
@@ -273,7 +275,7 @@ export class AddonSelectorComponent {
     this.close();
   }
 
-  protected close() {
+  protected close(): void {
     this.isOpen.set(false);
     this.product.set(null);
     this.addOnGroups.set([]);

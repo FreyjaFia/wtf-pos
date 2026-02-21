@@ -11,11 +11,11 @@ export class AvatarComponent {
   readonly size = input(40);
   readonly imageUrl = input<string | null>();
 
-  get fontSize(): number {
+  protected get fontSize(): number {
     return Math.round(this.size() * 0.45);
   }
 
-  get initials(): string {
+  protected get initials(): string {
     const value = this.label()?.trim() || '';
 
     if (!value) {

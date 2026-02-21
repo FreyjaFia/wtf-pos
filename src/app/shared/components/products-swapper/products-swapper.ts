@@ -24,8 +24,8 @@ export class ProductsSwapperComponent implements AfterViewInit {
   private readonly productService = inject(ProductService);
   private readonly alertService = inject(AlertService);
 
-  @ViewChild('availableList') availableList!: ElementRef;
-  @ViewChild('assignedList') assignedList!: ElementRef;
+  @ViewChild('availableList') private availableList!: ElementRef;
+  @ViewChild('assignedList') private assignedList!: ElementRef;
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
@@ -67,16 +67,16 @@ export class ProductsSwapperComponent implements AfterViewInit {
     return products.filter((product) => product.name.toLowerCase().includes(term));
   });
 
-  addOnId = '';
-  addOnType = AddOnTypeEnum.Size; // Default type
+  public addOnId = '';
+  public addOnType = AddOnTypeEnum.Size; // Default type
 
-  ngAfterViewInit() {
+  public ngAfterViewInit(): void {
     if (this.addOnId) {
       this.loadProducts();
     }
   }
 
-  private loadProducts() {
+  private loadProducts(): void {
     this.isLoading.set(true);
 
     // Load all non-add-on active products
@@ -115,7 +115,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
     });
   }
 
-  private initializeSortable() {
+  private initializeSortable(): void {
     setTimeout(() => {
       if (!this.availableList || !this.assignedList) {
         return;
@@ -136,7 +136,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
     }, 100);
   }
 
-  private syncSignalsWithDOM() {
+  private syncSignalsWithDOM(): void {
     if (!this.availableList || !this.assignedList) {
       return;
     }
@@ -168,7 +168,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
     );
   }
 
-  protected saveProducts() {
+  protected saveProducts(): void {
     if (!this.assignedList) {
       return;
     }
@@ -194,7 +194,7 @@ export class ProductsSwapperComponent implements AfterViewInit {
     });
   }
 
-  protected closeModal() {
+  protected closeModal(): void {
     const modal = document.querySelector('#products-swapper-modal') as HTMLDialogElement;
 
     if (modal) {
@@ -202,18 +202,18 @@ export class ProductsSwapperComponent implements AfterViewInit {
     }
   }
 
-  protected onSearchInput(event: Event) {
+  protected onSearchInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
   }
 
-  protected onCategoryChange(event: Event) {
+  protected onCategoryChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     const value = select.value;
     this.selectedCategory.set(value ? (Number(value) as ProductCategoryEnum) : null);
   }
 
-  protected changeProductType(productId: string, event: Event) {
+  protected changeProductType(productId: string, event: Event): void {
     const select = event.target as HTMLSelectElement;
     const newType = Number(select.value) as AddOnTypeEnum;
 

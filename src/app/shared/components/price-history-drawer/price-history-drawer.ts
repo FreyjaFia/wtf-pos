@@ -24,7 +24,7 @@ export class PriceHistoryDrawerComponent {
     });
   }
 
-  protected closeDrawer() {
+  protected closeDrawer(): void {
     this.closed.emit();
   }
 }

@@ -24,7 +24,7 @@ export class FilterDropdown {
   readonly filterChange = output<(string | number)[]>();
   readonly filterReset = output<void>();
 
-  toggleFilter(optionId: string | number) {
+  protected toggleFilter(optionId: string | number): void {
     const updated = this.selectedIds().includes(optionId)
       ? this.selectedIds().filter((id) => id !== optionId)
       : [...this.selectedIds(), optionId];
@@ -32,7 +32,7 @@ export class FilterDropdown {
     this.filterChange.emit(updated);
   }
 
-  resetFilters() {
+  protected resetFilters(): void {
     this.filterReset.emit();
   }
 
@@ -62,7 +62,7 @@ export class FilterDropdown {
     return `${labels.length} selected`;
   }
 
-  stopPropagation(event: Event) {
+  protected stopPropagation(event: Event): void {
     event.stopPropagation();
   }
 }

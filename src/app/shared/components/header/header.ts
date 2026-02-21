@@ -25,7 +25,7 @@ export class Header implements OnInit, OnDestroy {
   private readonly onOnline = () => this.isOnline.set(true);
   private readonly onOffline = () => this.isOnline.set(false);
 
-  ngOnInit() {
+  public ngOnInit(): void {
     this.clockIntervalId = setInterval(() => {
       this.now.set(new Date());
     }, 1000);
@@ -43,7 +43,7 @@ export class Header implements OnInit, OnDestroy {
     this.loadMe();
   }
 
-  ngOnDestroy() {
+  public ngOnDestroy(): void {
     if (this.clockIntervalId) {
       clearInterval(this.clockIntervalId);
       this.clockIntervalId = null;
@@ -54,18 +54,18 @@ export class Header implements OnInit, OnDestroy {
     this.meRefreshSubscription?.unsubscribe();
   }
 
-  protected goToMyProfile(event?: Event) {
+  protected goToMyProfile(event?: Event): void {
     event?.preventDefault();
     this.closeDropdownFocus();
     this.router.navigateByUrl('/my-profile');
   }
 
-  logout() {
+  protected logout(): void {
     this.authService.logout();
     this.router.navigateByUrl('/login');
   }
 
-  private loadMe() {
+  private loadMe(): void {
     this.isLoadingMe.set(true);
     this.authService.getMe().subscribe({
       next: (me) => {
@@ -83,7 +83,7 @@ export class Header implements OnInit, OnDestroy {
     });
   }
 
-  private closeDropdownFocus() {
+  private closeDropdownFocus(): void {
     const activeEl = document.activeElement;
     if (activeEl instanceof HTMLElement) {
       activeEl.blur();

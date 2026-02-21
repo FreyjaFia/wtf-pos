@@ -24,8 +24,8 @@ export class AddonsSwapperComponent implements AfterViewInit {
   private readonly productService = inject(ProductService);
   private readonly alertService = inject(AlertService);
 
-  @ViewChild('availableList') availableList!: ElementRef;
-  @ViewChild('assignedList') assignedList!: ElementRef;
+  @ViewChild('availableList') private availableList!: ElementRef;
+  @ViewChild('assignedList') private assignedList!: ElementRef;
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
@@ -53,15 +53,15 @@ export class AddonsSwapperComponent implements AfterViewInit {
     return this.availableAddOns().filter((addon) => addon.name.toLowerCase().includes(term));
   });
 
-  productId = '';
+  public productId = '';
 
-  ngAfterViewInit() {
+  public ngAfterViewInit(): void {
     if (this.productId) {
       this.loadAddOns();
     }
   }
 
-  private loadAddOns() {
+  private loadAddOns(): void {
     this.isLoading.set(true);
 
     // Load all available add-ons (products marked as add-ons)
@@ -102,7 +102,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
     });
   }
 
-  private initializeSortable() {
+  private initializeSortable(): void {
     setTimeout(() => {
       if (!this.availableList || !this.assignedList) {
         return;
@@ -124,7 +124,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
     }, 100);
   }
 
-  private syncSignalsWithDOM() {
+  private syncSignalsWithDOM(): void {
     if (!this.availableList || !this.assignedList) {
       return;
     }
@@ -157,7 +157,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
     );
   }
 
-  protected saveAddOns() {
+  protected saveAddOns(): void {
     if (!this.assignedList) {
       return;
     }
@@ -183,7 +183,7 @@ export class AddonsSwapperComponent implements AfterViewInit {
     });
   }
 
-  protected closeModal() {
+  protected closeModal(): void {
     // Close the modal - implementation depends on how parent handles this
     const modal = document.querySelector('#addons-swapper-modal') as HTMLDialogElement;
 
@@ -192,12 +192,12 @@ export class AddonsSwapperComponent implements AfterViewInit {
     }
   }
 
-  protected onSearchInput(event: Event) {
+  protected onSearchInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.searchTerm.set(input.value);
   }
 
-  protected changeAddOnType(addonId: string, event: Event) {
+  protected changeAddOnType(addonId: string, event: Event): void {
     const select = event.target as HTMLSelectElement;
     const newType = Number(select.value) as AddOnTypeEnum;
 

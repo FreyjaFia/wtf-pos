@@ -52,7 +52,7 @@ export class CustomerDropdown {
     return selected?.label ?? this.walkInLabel();
   });
 
-  protected toggle() {
+  protected toggle(): void {
     if (this.disabled()) {
       return;
     }
@@ -63,19 +63,19 @@ export class CustomerDropdown {
     }
   }
 
-  protected select(optionId: string | null) {
+  protected select(optionId: string | null): void {
     this.selectedIdChange.emit(optionId);
     this.isOpen.set(false);
     this.searchTerm.set('');
   }
 
-  protected onSearchInput(event: Event) {
+  protected onSearchInput(event: Event): void {
     const value = event.target instanceof HTMLInputElement ? event.target.value : '';
     this.searchTerm.set(value);
   }
 
   @HostListener('document:click', ['$event'])
-  protected onDocumentClick(event: MouseEvent) {
+  protected onDocumentClick(event: MouseEvent): void {
     if (!this.isOpen()) {
       return;
     }
@@ -87,7 +87,7 @@ export class CustomerDropdown {
   }
 
   @HostListener('document:keydown.escape')
-  protected onEscapeKey() {
+  protected onEscapeKey(): void {
     this.isOpen.set(false);
   }
 }
