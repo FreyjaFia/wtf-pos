@@ -1,4 +1,4 @@
-﻿<div class="flex h-full flex-col px-6">
+﻿<div class="flex h-full flex-col ps-6">
   <!-- Sticky Header -->
   <div
     class="sticky top-0 z-10 mb-6 flex shrink-0 items-center justify-between bg-white/95 backdrop-blur-sm"
@@ -433,17 +433,17 @@
         <div class="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
-            class="cursor-pointer px-4 py-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
-            (click)="cancelDiscard()"
+            class="cursor-pointer px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:text-red-700"
+            (click)="confirmDiscard()"
           >
-            Cancel
+            Discard
           </button>
           <button
             type="button"
-            class="cursor-pointer rounded-xl bg-amber-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-amber-700 hover:shadow-md active:scale-[0.97]"
-            (click)="confirmDiscard()"
+            class="cursor-pointer rounded-xl bg-[#047857] px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#065f46] hover:shadow-md active:scale-[0.97]"
+            (click)="cancelDiscard()"
           >
-            Discard Changes
+            Keep Editing
           </button>
         </div>
       </div>

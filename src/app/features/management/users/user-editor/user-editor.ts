@@ -9,15 +9,14 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService, AuthService, UserService } from '@app/core/services';
-import { AvatarComponent, Icon } from '@app/shared/components';
-import { CreateUserDto, UpdateUserDto, UserRoleEnum } from '@app/shared/models';
+import { AlertService, AuthService, UserService } from '@core/services';
+import { AvatarComponent, Icon } from '@shared/components';
+import { CreateUserDto, UpdateUserDto, UserRoleEnum } from '@shared/models';
 import { jwtDecode } from 'jwt-decode';
 import { of, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-user-editor',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, Icon, AvatarComponent],
   templateUrl: './user-editor.html',
   host: {
@@ -25,12 +24,11 @@ import { of, switchMap } from 'rxjs';
   },
 })
 export class UserEditorComponent implements OnInit {
-  // Angular-injected dependencies
-  protected readonly userService = inject(UserService);
-  protected readonly router = inject(Router);
-  protected readonly route = inject(ActivatedRoute);
-  protected readonly alertService = inject(AlertService);
-  protected readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly alertService = inject(AlertService);
+  private readonly authService = inject(AuthService);
 
   // UI state signals
   protected readonly isEditMode = signal(false);
@@ -327,7 +325,7 @@ export class UserEditorComponent implements OnInit {
             this.isSaving.set(false);
             this.skipGuard = true;
             this.alertService.successUpdated('User');
-            this.goBack();
+            this.navigateToDetails(this.userId!);
           }
         },
         error: (err) => {
@@ -353,7 +351,7 @@ export class UserEditorComponent implements OnInit {
             this.isSaving.set(false);
             this.skipGuard = true;
             this.alertService.successCreated('User');
-            this.goBack();
+            this.navigateToDetails(createdUser.id);
           }
         },
         error: (err) => {
@@ -447,14 +445,12 @@ export class UserEditorComponent implements OnInit {
         this.imagePreview.set(null);
         this.isSaving.set(false);
         this.skipGuard = true;
-        if (this.isProfileMode()) {
-          this.authService.notifyMeUpdated();
-        }
-        this.goBack();
-        if (this.isEditMode()) {
-          this.alertService.successUpdated('User');
-        } else {
+        if (userId) {
           this.alertService.successCreated('User');
+          this.navigateToDetails(userId);
+        } else if (this.userId) {
+          this.alertService.successUpdated('User');
+          this.navigateToDetails(this.userId);
         }
       },
       error: (err) => {
@@ -468,13 +464,21 @@ export class UserEditorComponent implements OnInit {
   /**
    * Navigates back to the user list
    */
-  protected goBack(): void {
-    this.skipGuard = true;
+  protected goBack() {
     if (this.isProfileMode()) {
       this.router.navigate(['/orders/list']);
       return;
     }
-    this.router.navigate(['/management/users']);
+
+    if (this.isEditMode() && this.userId) {
+      this.router.navigate(['/management/users/details', this.userId]);
+    } else {
+      this.router.navigate(['/management/users']);
+    }
+  }
+
+  private navigateToDetails(userId: string) {
+    this.router.navigate(['/management/users/details', userId]);
   }
 
   /**
@@ -535,9 +539,9 @@ export class UserEditorComponent implements OnInit {
   /**
    * Unsaved changes guard logic for navigation
    */
-  canDeactivate(): Promise<boolean> {
+  canDeactivate(): boolean | Promise<boolean> {
     if (this.skipGuard || !this.userForm.dirty) {
-      return Promise.resolve(true);
+      return true;
     }
 
     this.showDiscardModal.set(true);
@@ -560,13 +564,13 @@ export class UserEditorComponent implements OnInit {
   /**
    * Confirms the discard action in the modal
    */
-  protected confirmDiscard(): void {
+  protected confirmDiscard() {
     this.showDiscardModal.set(false);
+
     if (this.pendingDeactivateResolve) {
       this.pendingDeactivateResolve(true);
       this.pendingDeactivateResolve = null;
     }
-    this.goBack();
   }
 
   /**

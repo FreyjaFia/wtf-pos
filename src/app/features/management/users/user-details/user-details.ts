@@ -1,13 +1,12 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AlertService, AuthService, UserService } from '@app/core/services';
-import { AvatarComponent, BadgeComponent, Icon } from '@app/shared/components';
-import { UserDto, UserRoleEnum } from '@app/shared/models';
+import { AlertService, AuthService, UserService } from '@core/services';
+import { AvatarComponent, BadgeComponent, Icon } from '@shared/components';
+import { UserDto, UserRoleEnum } from '@shared/models';
 
 @Component({
   selector: 'app-user-details',
-  standalone: true,
   imports: [CommonModule, RouterLink, Icon, BadgeComponent, AvatarComponent],
   templateUrl: './user-details.html',
   host: {
@@ -110,7 +109,7 @@ export class UserDetailsComponent implements OnInit {
         this.isDeleting.set(false);
         this.showDeleteModal.set(false);
         this.alertService.successDeleted('User');
-        this.goBack();
+        this.router.navigateByUrl('/management/users');
       },
       error: (err) => {
         this.isDeleting.set(false);

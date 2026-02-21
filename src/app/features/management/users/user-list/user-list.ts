@@ -26,7 +26,6 @@ interface UserListState {
 
 @Component({
   selector: 'app-user-list',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
