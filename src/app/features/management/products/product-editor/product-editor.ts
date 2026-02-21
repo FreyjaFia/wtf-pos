@@ -13,8 +13,8 @@ import {
 import {
   AddOnGroupDto,
   AddOnProductAssignmentDto,
-  CreateProductAddOnPriceOverrideDto,
   AddOnTypeEnum,
+  CreateProductAddOnPriceOverrideDto,
   CreateProductDto,
   ProductAddOnAssignmentDto,
   ProductAddOnPriceOverrideDto,
@@ -217,6 +217,7 @@ export class ProductEditorComponent implements OnInit {
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
+            this.alertService.successUpdated('Product');
             this.navigateToDetails(this.productId!);
           }
         },
@@ -239,6 +240,7 @@ export class ProductEditorComponent implements OnInit {
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
+            this.alertService.successCreated('Product');
             this.navigateToDetails(createdProduct.id);
           }
         },
@@ -378,9 +380,11 @@ export class ProductEditorComponent implements OnInit {
 
         if (productId) {
           // If we just created the product and uploaded image, navigate to details
+          this.alertService.successCreated('Product');
           this.navigateToDetails(productId);
         } else if (this.productId) {
           // Update flow with image upload
+          this.alertService.successUpdated('Product');
           this.navigateToDetails(this.productId);
         }
       },
@@ -431,9 +435,7 @@ export class ProductEditorComponent implements OnInit {
   }
 
   private navigateToDetails(productId: string) {
-    this.router.navigate(['/management/products/details', productId], {
-      queryParams: { saved: true },
-    });
+    this.router.navigate(['/management/products/details', productId]);
   }
 
   protected getErrorMessage(controlName: string): string | null {

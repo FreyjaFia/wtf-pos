@@ -31,10 +31,6 @@ export class CustomerDetailsComponent implements OnInit {
     if (id) {
       this.loadCustomer(id);
     }
-
-    if (this.route.snapshot.queryParamMap.get('saved')) {
-      this.alertService.successSaved('Customer');
-    }
   }
 
   private loadCustomer(id: string) {
@@ -116,5 +112,3 @@ export class CustomerDetailsComponent implements OnInit {
     return this.authService.canWriteCustomers();
   }
 }
-
-

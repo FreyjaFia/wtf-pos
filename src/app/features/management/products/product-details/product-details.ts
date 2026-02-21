@@ -11,15 +11,22 @@ import {
 import {
   AddOnGroupDto,
   AddOnTypeEnum,
-  ProductCategoryEnum,
   ProductAddOnPriceOverrideDto,
+  ProductCategoryEnum,
   ProductDto,
   ProductPriceHistoryDto,
 } from '@shared/models';
 
 @Component({
   selector: 'app-product-details',
-  imports: [CommonModule, RouterLink, Icon, BadgeComponent, PriceHistoryDrawerComponent, AvatarComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    Icon,
+    BadgeComponent,
+    PriceHistoryDrawerComponent,
+    AvatarComponent,
+  ],
   templateUrl: './product-details.html',
   host: {
     class: 'block h-full',
@@ -65,10 +72,6 @@ export class ProductDetailsComponent implements OnInit {
 
     if (id) {
       this.loadProduct(id);
-    }
-
-    if (this.route.snapshot.queryParamMap.get('saved')) {
-      this.alertService.successSaved('Product');
     }
   }
 

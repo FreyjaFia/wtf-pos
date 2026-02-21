@@ -34,10 +34,6 @@ export class UserDetailsComponent implements OnInit {
     if (id) {
       this.loadUser(id);
     }
-
-    if (this.route.snapshot.queryParamMap.get('saved')) {
-      this.alertService.successSaved('User');
-    }
   }
 
   private loadUser(id: string) {

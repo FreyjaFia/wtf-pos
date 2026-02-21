@@ -249,6 +249,7 @@ export class CustomerEditorComponent implements OnInit {
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
+            this.alertService.successUpdated('Customer');
             this.navigateToDetails(this.customerId!);
           }
         },
@@ -272,6 +273,7 @@ export class CustomerEditorComponent implements OnInit {
           } else {
             this.isSaving.set(false);
             this.skipGuard = true;
+            this.alertService.successCreated('Customer');
             this.navigateToDetails(createdCustomer.id);
           }
         },
@@ -352,9 +354,7 @@ export class CustomerEditorComponent implements OnInit {
   }
 
   private navigateToDetails(customerId: string) {
-    this.router.navigate(['/management/customers/details', customerId], {
-      queryParams: { saved: true },
-    });
+    this.router.navigate(['/management/customers/details', customerId]);
   }
 
   protected getErrorMessage(controlName: string): string | null {
