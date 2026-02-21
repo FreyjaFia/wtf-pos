@@ -246,6 +246,16 @@ export class ProductListComponent implements OnInit {
     return ProductCategoryEnum[category];
   }
 
+  protected getAssociationLabel(product: ProductDto): string {
+    const count = product.addOnCount ?? 0;
+
+    if (product.isAddOn) {
+      return `${count} ${count === 1 ? 'linked item' : 'linked items'}`;
+    }
+
+    return `${count} ${count === 1 ? 'associated add-on' : 'associated add-ons'}`;
+  }
+
   protected toggleSort(column: SortColumn) {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');

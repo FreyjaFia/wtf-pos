@@ -168,7 +168,7 @@
           @if (sortedProducts().length > 0) {
             @for (product of sortedProducts(); track product.id) {
               <div
-                class="grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
+                class="relative grid cursor-pointer grid-cols-12 items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-lg transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:shadow-xl focus-within:z-30"
                 (click)="navigateToDetails(product.id)"
                 (keydown.enter)="navigateToDetails(product.id)"
                 (keydown.space)="navigateToDetails(product.id)"
@@ -212,6 +212,9 @@
                   <div class="text-sm text-gray-700">
                     {{ getProductCategoryName(product.category) }}
                   </div>
+                  <div class="text-xs text-gray-400">
+                    {{ getAssociationLabel(product) }}
+                  </div>
                 </div>
 
                 <!-- Price -->
@@ -223,7 +226,7 @@
 
                 <!-- Actions -->
                 <div
-                  class="col-span-1 flex justify-end"
+                  class="relative z-40 col-span-1 flex justify-end"
                   (click)="$event.stopPropagation()"
                   (keydown)="$event.stopPropagation()"
                   role="presentation"
@@ -244,7 +247,7 @@
                     </button>
                     <ul
                       tabindex="0"
-                      class="dropdown-content menu bg-base-100 rounded-box z-20 w-52 p-2 shadow"
+                      class="dropdown-content menu bg-base-100 rounded-box z-50 w-52 p-2 shadow"
                     >
                       <li>
                         <button
