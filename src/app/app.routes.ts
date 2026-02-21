@@ -3,6 +3,7 @@ import { authGuard } from '@core/guards/auth.guard';
 import { roleGuard } from '@core/guards/role.guard';
 import { unsavedChangesGuard } from '@core/guards/unsaved-changes.guard';
 import { Login } from '@features/login/login';
+import { NotFoundComponent } from '@features/not-found/not-found';
 import { CustomerDetailsComponent } from '@features/management/customers/customer-details/customer-details';
 import { CustomerEditorComponent } from '@features/management/customers/customer-editor/customer-editor';
 import { CustomerListComponent } from '@features/management/customers/customer-list/customer-list';
@@ -152,6 +153,10 @@ export const routes: Routes = [
         ],
       },
     ],
+  },
+  {
+    path: '**',
+    component: NotFoundComponent,
   },
 ];
 
